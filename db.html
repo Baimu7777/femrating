@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>评分数据库（搜索）</title>
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🔎</text></svg>">
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="./db.js"></script>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="title" id="topTitle">评分数据库</div>
+        <div class="subtitle" id="topSubtitle">搜索你手动收录的书籍/影视评分</div>
+      </div>
+      <nav class="navtabs" aria-label="页面切换">
+        <a href="./index.html">书籍评分</a>
+        <a href="./film.html">影视评分</a>
+        <a class="active" href="./db.html">数据库</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="db-wrap">
+    <div class="db-panel">
+      <div class="db-controls">
+        <input id="q" type="search" placeholder="搜索：标题 / 链接 / id（支持模糊匹配）" autocomplete="off" />
+        <div class="db-filter" id="filter" aria-label="类型筛选">
+          <button class="active" type="button" data-type="all">全部</button>
+          <button type="button" data-type="book">书籍</button>
+          <button type="button" data-type="film">影视</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px; color: var(--muted); font-size: 13px;">
+        共 <span id="count">0</span> 条记录（数据来自 <code>./data/ratings.json</code>）
+      </div>
+
+      <div id="loadError" style="display:none; margin-top:10px; color:#b42318; font-size:13px;">
+        没能加载 <code>./data/ratings.json</code>：请确认文件存在且是合法 JSON 数组（Vercel/本地均可直接作为静态文件读取）。
+      </div>
+
+      <div id="empty" style="display:none; margin-top:14px; color: var(--muted); font-size: 13px;">
+        没搜到结果。试试换关键词，或检查 <code>ratings.json</code> 里有没有收录。
+      </div>
+
+      <section class="db-results" id="results" aria-label="搜索结果"></section>
+
+      <hr style="border:none; border-top:1px solid var(--line); margin:14px 0 10px;" />
+
+      <details>
+        <summary style="cursor:pointer; font-weight:900;">如何“后台手动收录”</summary>
+        <div style="margin-top:8px; color: var(--muted); font-size: 13px; line-height:1.5;">
+          1) 在“书籍评分 / 影视评分”页点 <b>导出本条为 JSON</b>，得到一个 JSON 文件；<br/>
+          2) 打开 <code>./data/ratings.json</code>，把这个对象粘进去（作为数组里的一项）；<br/>
+          3) 推送到 GitHub/Vercel 部署后，数据库页即可搜索到。
+        </div>
+      </details>
+    </div>
+  </main>
+</body>
+</html>

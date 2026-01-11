@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>影视友好度评分 · 3.0（占位）</title>
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📋</text></svg>">
+  <link rel="stylesheet" href="./styles.css" />
+  <script>
+    // Page config (no build tools)
+    window.PAGE_CONFIG = {
+      type: "film",
+      pageTitle: "影视友好度评分 · 3.0（占位）",
+      pageSubtitle: "暂用游戏 3.0 题库，后续你改成影视版即可",
+      entityLabel: "片名 / 剧名",
+      storageKey: "rating_film_state_v1",
+      nameKey: "rating_film_name_v1",
+      linkKey: "rating_film_link_v1"
+    };
+  </script>
+  <script defer src="./questions.js"></script>
+  <script defer src="./rating.js"></script>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="title" id="topTitle">影视友好度评分 · 3.0（占位）</div>
+        <div class="subtitle" id="topSubtitle">暂用游戏 3.0 题库，后续你改成影视版即可</div>
+      </div>
+      <nav class="navtabs" aria-label="页面切换">
+        <a class="" href="./index.html">书籍评分</a>
+        <a class="active" href="./film.html">影视评分</a>
+        <a class="" href="./db.html">数据库</a>
+      </nav>
+    </div>
+  </header>
+
+  <div id="mobileEntityHost" class="mobile-entity-host" aria-label="片名 / 剧名（移动端）"></div>
+
+  <div class="mobile-top-toggle" role="region" aria-label="评定说明或补充开关">
+    <div class="mobile-toggle-inner">
+      <div class="mobile-toggle-left">
+        <input id="toggleRemarksTop" type="checkbox" checked />
+        <label for="toggleRemarksTop">评定说明或补充</label>
+      </div>
+      <button id="btnResetTop" class="mobile-reset" type="button" title="清空所有得分与备注">清空</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <div class="main" id="mainScroll">
+      <div id="content"></div>
+    </div>
+
+    <aside class="side" id="sideScroll">
+      <div class="source-note">数据库：手动维护 <code>./data/ratings.json</code>；本页可导出 JSON 方便收录</div>
+
+      <div class="card entity-card" aria-label="片名 / 剧名（可选）">
+        <div class="label">片名 / 剧名</div>
+        <input id="entityName" type="text" placeholder="可选填" />
+        <div class="hint">链接（可选）：</div>
+        <input id="entityLink" type="text" placeholder="可选填（如豆瓣/IMDb/Goodreads等）" />
+      </div>
+
+      <div class="card">
+        <table><tbody id="summaryBody"></tbody></table>
+      </div>
+
+      <div class="toggle" title="勾选可隐藏/显示所有评定说明或补充框">
+        <input id="toggleRemarks" type="checkbox" checked />
+        <label for="toggleRemarks">评定说明或补充</label>
+      </div>
+
+      <div class="side-actions">
+        <button id="btnExportJson" type="button">导出本条为 JSON</button>
+        <button id="btnReset" type="button">清空</button>
+      </div>
+
+      <div class="grid" id="qGrid"></div>
+    </aside>
+  </div>
+</body>
+</html>
