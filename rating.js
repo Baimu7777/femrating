@@ -32,7 +32,7 @@
 
   const btnReset = $("#btnReset");
   const btnResetTop = $("#btnResetTop");
-  const btnExportJson = $("#btnExportJson");
+  const btnExportJpg = $("#btnExportJpg");
 
   function setText(el, txt){ if (el) el.textContent = txt; }
 
@@ -413,28 +413,53 @@
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
-  function exportAsJson(){
-    const { total, bySection } = computeTotals();
-    const now = new Date().toISOString();
+  
+  async function exportAsJpg(){
+    // Requires html2canvas (loaded from CDN in HTML)
+    if (typeof html2canvas !== "function"){
+      alert("导出失败：缺少 html2canvas。请检查网络或脚本是否加载成功。");
+      return;
+    }
+    const target = document.getElementById("exportCapture") || document.querySelector(".app") || document.body;
+    const title = (getName() || (CFG.type === "film" ? "未命名影视" : "未命名书籍")).trim();
+    const safe = title.replace(/[\\\/:"*?<>|]+/g, "_").slice(0, 60) || "export";
+    const stamp = new Date().toISOString().slice(0,10);
+    const filename = `${CFG.type || "item"}_${safe}_${stamp}.jpg`;
 
-    const payload = {
-      id: (CFG.type || "item") + "_" + Math.random().toString(36).slice(2, 10),
-      type: CFG.type || "book",               // "book" | "film"
-      title: getName() || "(未命名)",
-      link: getLink() || "",
-      totalScore: total,
-      sectionScores: bySection,
-      answers: state,
-      updatedAt: now
-    };
+    // temporarily add class to avoid hover/active weirdness
+    document.documentElement.classList.add("is-exporting");
+    try{
+      const canvas = await html2canvas(target, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+      });
 
-    const safeTitle = payload.title.replace(/[\\\/:*?"<>|]/g, "_").slice(0, 60);
-    downloadText(JSON.stringify(payload, null, 2), `${safeTitle}_${CFG.type || "rating"}.json`);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.92));
+      if (!blob){
+        alert("导出失败：无法生成图片。");
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch (e){
+      console.error(e);
+      alert("导出失败：请打开控制台查看错误信息。");
+    } finally {
+      document.documentElement.classList.remove("is-exporting");
+    }
   }
 
-  if (btnExportJson) btnExportJson.addEventListener("click", exportAsJson);
-
-  // mobile: move entity card to top host
+// mobile: move entity card to top host
   const MQL = window.matchMedia("(max-width: 680px)");
   function placeEntityCard(){
     const card = document.querySelector(".card.entity-card");
@@ -451,7 +476,9 @@
   else if (MQL.addListener) MQL.addListener(placeEntityCard);
   window.addEventListener("orientationchange", placeEntityCard);
 
-  // boot
+    if (btnExportJpg) btnExportJpg.addEventListener("click", exportAsJpg);
+
+// boot
   render();
   setRemarkToggleChecked(remarkToggleChecked());
   updateAll();

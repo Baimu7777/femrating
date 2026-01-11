@@ -18,11 +18,13 @@
       linkKey: "rating_book_link_v1"
     };
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script defer src="./questions.js"></script>
   <script defer src="./rating.js"></script>
 </head>
 
 <body>
+  <div id="exportCapture">
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
@@ -55,7 +57,7 @@
     </div>
 
     <aside class="side" id="sideScroll">
-      <div class="source-note">数据库：手动维护 <code>./data/ratings.json</code>；本页可导出 JSON 方便收录</div>
+      <div class="source-note">导出：仅提供 JPG（用于手动记录/分享）。数据库页如需收录，请手动维护 <code>./data/ratings.json</code></div>
 
       <div class="card entity-card" aria-label="书名（可选）">
         <div class="label">书名</div>
@@ -74,12 +76,13 @@
       </div>
 
       <div class="side-actions">
-        <button id="btnExportJson" type="button">导出本条为 JSON</button>
+        <button id="btnExportJpg" type="button">导出 JPG</button>
         <button id="btnReset" type="button">清空</button>
       </div>
 
       <div class="grid" id="qGrid"></div>
     </aside>
+  </div>
   </div>
 </body>
 </html>
