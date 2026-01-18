@@ -5,7 +5,6 @@
   const $ = (sel, root=document) => root.querySelector(sel);
 
   const QUESTIONS = window.QUESTIONS || [];
-  const NOTES = window.NOTES || {};
   const SECTION_NOTES = window.SECTION_NOTES || {};
   const SECTION_ORDER = window.SECTION_ORDER || [];
 
@@ -89,13 +88,16 @@
         const opt = (q.options||[]).find(o=>o.label===label);
         if (opt) sum += Number(opt.value);
       }
-      if (q.special === "single_zero_cap4"){
+      // special: single option => 0, and apply cap (positive or negative)
+      // supports: "single_zero_cap4", "single_zero_cap-5", "single_zero_cap:4"
+      if (typeof q.special === "string" && q.special.startsWith("single_zero_cap")){
+        const m = q.special.match(/single_zero_cap[:]?(-?\d+)/);
+        const cap = m ? Number(m[1]) : null;
         if (selected.length === 1) sum = 0;
-        if (sum > 4) sum = 4;
-      }
-      if (q.special === "single_zero_cap-4"){
-        if (selected.length === 1) sum = 0;
-        if (sum < -4) sum = -4;
+        if (typeof cap === "number" && Number.isFinite(cap)){
+          if (cap >= 0 && sum > cap) sum = cap;
+          if (cap < 0 && sum < cap) sum = cap;
+        }
       }
       return sum;
     }
@@ -126,6 +128,12 @@
   function render(){
     contentEl.innerHTML = "";
 
+    function getSectionNotes(section){
+      const raw = SECTION_NOTES[section] || [];
+      const notesMap = window.NOTES || {};
+      return raw.map(x => (typeof x === "number" ? notesMap[x] : x)).filter(Boolean);
+    }
+
     for (const section of SECTION_ORDER){
       const qs = QUESTIONS.filter(q => q.section === section);
       if (!qs.length) continue;
@@ -139,7 +147,7 @@
       h2.textContent = section;
       sec.appendChild(h2);
 
-      const sn = (SECTION_NOTES[section] || []).map(n => NOTES[n]).filter(Boolean);
+      const sn = getSectionNotes(section);
       if (sn.length){
         const p = document.createElement("div");
         p.className = "section-note";

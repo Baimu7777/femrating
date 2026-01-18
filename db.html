@@ -17,7 +17,8 @@
         <div class="subtitle" id="topSubtitle">搜索你手动收录的书籍/影视评分</div>
       </div>
       <nav class="navtabs" aria-label="页面切换">
-        <a href="./index.html">书籍评分</a>
+        <a href="./index.html">叙事书籍</a>
+        <a href="./socsci.html">社科书籍</a>
         <a href="./film.html">影视评分</a>
         <a class="active" href="./db.html">数据库</a>
       </nav>
@@ -30,17 +31,18 @@
         <input id="q" type="search" placeholder="搜索：标题 / 链接 / id（支持模糊匹配）" autocomplete="off" />
         <div class="db-filter" id="filter" aria-label="类型筛选">
           <button class="active" type="button" data-type="all">全部</button>
-          <button type="button" data-type="book">书籍</button>
+          <button type="button" data-type="narrative">叙事书籍</button>
+          <button type="button" data-type="socsci">社科书籍</button>
           <button type="button" data-type="film">影视</button>
         </div>
       </div>
 
       <div style="margin-top:10px; color: var(--muted); font-size: 13px;">
-        共 <span id="count">0</span> 条记录（数据来自 <code>./data/ratings.json</code>）
+        共 <span id="count">0</span> 条记录（数据来自 <code>./ratings.json</code>）
       </div>
 
       <div id="loadError" style="display:none; margin-top:10px; color:#b42318; font-size:13px;">
-        没能加载 <code>./data/ratings.json</code>：请确认文件存在且是合法 JSON 数组（Vercel/本地均可直接作为静态文件读取）。
+        没能加载 <code>./ratings.json</code>：请确认文件存在且是合法 JSON 数组（Vercel/本地均可直接作为静态文件读取）。
       </div>
 
       <div id="empty" style="display:none; margin-top:14px; color: var(--muted); font-size: 13px;">
