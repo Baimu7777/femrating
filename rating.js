@@ -4,12 +4,20 @@
 (function(){
   const $ = (sel, root=document) => root.querySelector(sel);
 
-  const QUESTIONS = window.QUESTIONS || [];
+  const CFG = window.PAGE_CONFIG || {};
+
+  // Prefer unified QUESTION_BANK (provided by questions.js)
+  // Fallback to legacy globals (window.QUESTIONS / window.SECTION_ORDER).
+  const BANK = window.QUESTION_BANK || {};
+  const pickedKey = (CFG.questionSet || CFG.type || "").trim();
+  const picked = pickedKey && BANK[pickedKey] ? BANK[pickedKey] : null;
+
+  const QUESTIONS = (picked && Array.isArray(picked.questions)) ? picked.questions : (window.QUESTIONS || []);
+  const SECTION_ORDER = (picked && Array.isArray(picked.sectionOrder)) ? picked.sectionOrder : (window.SECTION_ORDER || []);
+
+  // Legacy notes (safe to keep; most questions now embed note as q.note)
   const NOTES = window.NOTES || {};
   const SECTION_NOTES = window.SECTION_NOTES || {};
-  const SECTION_ORDER = window.SECTION_ORDER || [];
-
-  const CFG = window.PAGE_CONFIG || {};
   const STORAGE_KEY = CFG.storageKey || "rating_state_v1";
   const NAME_KEY = CFG.nameKey || "rating_name_v1";
   const LINK_KEY = CFG.linkKey || "rating_link_v1";
@@ -38,6 +46,25 @@
 
   setText(topTitle, CFG.pageTitle || "评分表");
   setText(topSubtitle, CFG.pageSubtitle || "（占位内容，稍后可改题库）");
+
+  // If question bank failed to load, keep the shell UI but show a clear error.
+  if (!Array.isArray(QUESTIONS) || !QUESTIONS.length || !Array.isArray(SECTION_ORDER) || !SECTION_ORDER.length){
+    if (contentEl){
+      contentEl.innerHTML = `
+        <div class="card" style="max-width:720px; margin:16px auto;">
+          <div class="label" style="font-weight:700; margin-bottom:8px;">题库未加载，页面因此是空白的</div>
+          <div class="hint" style="color:#667085; line-height:1.6;">
+            请检查：<br/>
+            1) <code>questions.js</code> 是否在此页先于 <code>rating.js</code> 加载；<br/>
+            2) 本页 <code>PAGE_CONFIG.questionSet</code> 是否为 <code>narrative / socsci / film</code> 之一；<br/>
+            3) 控制台是否有脚本报错。
+          </div>
+        </div>
+      `;
+    }
+    console.error("Question bank not loaded.", { pickedKey, picked, hasBank: !!window.QUESTION_BANK });
+    return;
+  }
 
   // Load query params (optional prefill)
   try{
