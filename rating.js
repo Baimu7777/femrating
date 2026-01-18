@@ -69,13 +69,6 @@
     const sourceNoteEl = document.querySelector(".source-note");
     if (sourceNoteEl) sourceNoteEl.remove();
 
-    // --- remove link field (no prefill, no export)
-    if (linkInput) {
-      const prev = linkInput.previousElementSibling;
-      // the "链接（可选）：" hint is usually right before the input
-      if (prev && prev.classList && prev.classList.contains("hint")) prev.remove();
-      linkInput.remove();
-    }
 
     // --- do not prefill book name (keep blank on load)
     if (nameInput) {
