@@ -262,26 +262,12 @@
     // 需求：不要显示内部编号（如 N-F1），统一显示 Q1/Q2...；
     // 并把分区分成 4 组分行显示（若分区超过 4，则后面的合并到第 4 行）。
     function buildChipGroups(){
-      const sections = [...SECTION_ORDER];
-      const groups = [];
-
-      if (sections.length <= 4){
-        for (const s of sections) groups.push([s]);
-      } else {
-        // 前 3 个分区单独一行，其余分区合并到第 4 行
-        groups.push([sections[0]]);
-        groups.push([sections[1]]);
-        groups.push([sections[2]]);
-        groups.push(sections.slice(3));
-      }
-
-      // 保持题目原始顺序
-      return groups
-        .map(secList => ({
-          secList,
-          qs: QUESTIONS.filter(q => secList.includes(q.section))
-        }))
-        .filter(g => g.qs.length);
+      // One row per section; numbering restarts at Q1 for each row.
+      const groups = SECTION_ORDER.map(s => ({
+        secList: [s],
+        qs: QUESTIONS.filter(q => q.section === s)
+      })).filter(g => g.qs.length);
+      return groups;
     }
 
     qGrid.innerHTML = "";
