@@ -19,13 +19,21 @@
 
 *{ box-sizing:border-box; }
 html,body{
-  height:100%;
+  /* Default: allow browser scrollbar (e.g., database page) */
+  height:auto;
+  min-height:100%;
   margin:0;
   font-family:"XiqueJuzhen",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;
   color:var(--text);
   background:var(--bg);
-  /* allow normal document scrolling (DB page needs it); rating pages still use internal scroll containers */
   overflow:auto;
+  /* Keep layout stable when scrollbars appear/disappear */
+  scrollbar-gutter: stable;
+}
+
+/* Rating pages use internal scrolling (main/side). Lock the outer page scrollbar only there. */
+body:has(.app){
+  overflow:hidden;
 }
 button,input,select,textarea{ font-family:inherit; font-size:inherit; }
 textarea::placeholder,input::placeholder{ font-family:inherit; }
@@ -98,6 +106,7 @@ textarea::placeholder,input::placeholder{ font-family:inherit; }
   height:100%;
   overflow:auto;
   padding: 24px 34px 40px;
+  scrollbar-gutter: stable;
 }
 .side{
   height:100%;
@@ -105,6 +114,7 @@ textarea::placeholder,input::placeholder{ font-family:inherit; }
   padding: 22px 18px;
   border-left:1px solid var(--line);
   background:#fff;
+  scrollbar-gutter: stable;
 }
 
 /* sections */
@@ -277,6 +287,16 @@ h2.section-title{
   display:grid;
   grid-template-columns: repeat(8, 1fr);
   gap:8px;
+}
+
+/* 题目快捷跳转分组：按分区分行显示 */
+#qGrid.qgrid-groups{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.chip-row{
+  /* uses .grid layout; keep only spacing tweaks here */
 }
 .chip{
   display:inline-flex;
