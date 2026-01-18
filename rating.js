@@ -103,7 +103,7 @@
       btnExportJpgMulti = document.createElement("button");
       btnExportJpgMulti.type = "button";
       btnExportJpgMulti.id = "btnExportJpgMulti";
-      btnExportJpgMulti.textContent = "分4张导出";
+      btnExportJpgMulti.textContent = "分节导出";
       btnExportJpgMulti.style.marginLeft = "8px";
       btnExportJpg.parentElement.insertBefore(btnExportJpgMulti, btnExportJpg.nextSibling);
     }
@@ -632,7 +632,7 @@
       return "—";
     }
   
-    function buildExportStage() {
+    function buildExportStage(onlySection = null) {
       const old = document.getElementById("exportStage");
       if (old) old.remove();
   
@@ -688,7 +688,7 @@
       `;
       const tb = table.querySelector("tbody");
   
-      for (const section of SECTION_ORDER) {
+      for (const section of (onlySection ? [onlySection] : SECTION_ORDER)) {
         const secQs = QUESTIONS.filter((q) => q.section === section);
         if (!secQs.length) continue;
   
@@ -778,6 +778,70 @@
       return await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
     }
   
+    function safeSlug(s){
+      return String(s || "")
+        .trim()
+        .replace(/[\\\/":*?<>|]+/g, "_")
+        .replace(/\s+/g, "_")
+        .slice(0, 30) || "section";
+    }
+    
+    async function captureSectionCanvas(sectionName){
+      if (typeof html2canvas !== "function") {
+        alert("导出失败：缺少 html2canvas。请检查网络或脚本是否加载成功。");
+        return null;
+      }
+      const stage = buildExportStage(sectionName); // ✅ 只导出这一节
+      try {
+        const canvas = await html2canvas(stage, {
+          backgroundColor: "#ffffff",
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+        });
+        return canvas;
+      } catch (e) {
+        console.error(e);
+        alert("导出失败：请打开控制台查看错误信息。");
+        return null;
+      } finally {
+        stage.remove();
+      }
+    }
+    
+    async function exportJpgBySection() {
+      // ✅ 只导出“有题目”的分区
+      const sections = SECTION_ORDER.filter((s) => QUESTIONS.some((q) => q.section === s));
+      if (!sections.length) {
+        alert("没有可导出的分区（题库为空）。");
+        return;
+      }
+    
+      const { safe, stamp } = makeSafeName();
+      const base = `${TYPE}_${safe}_${stamp}`;
+    
+      for (let i = 0; i < sections.length; i++) {
+        const sectionName = sections[i];
+        const canvas = await captureSectionCanvas(sectionName);
+        if (!canvas) return;
+    
+        const blob = await canvasToBlob(canvas);
+        if (!blob) {
+          alert(`导出失败：分区「${sectionName}」无法生成图片。`);
+          return;
+        }
+    
+        const idx = String(i + 1).padStart(2, "0");
+        const secSlug = safeSlug(sectionName);
+        triggerDownloadBlob(blob, `${base}_sec${idx}_${secSlug}.jpg`);
+    
+        // 给浏览器一点时间，避免连续下载被拦截
+        await new Promise((r) => setTimeout(r, 250));
+      }
+    }
+    
+
     async function exportJpgSingle() {
       const canvas = await captureExportCanvas();
       if (!canvas) return;
@@ -824,7 +888,7 @@
     }
   
     if (btnExportJpg) btnExportJpg.addEventListener("click", exportJpgSingle);
-    if (btnExportJpgMulti) btnExportJpgMulti.addEventListener("click", () => exportJpgSplit(4));
+    if (btnExportJpgMulti) btnExportJpgMulti.addEventListener("click", exportJpgBySection);
   
     // ---- update all ----
     function updateAll() {
