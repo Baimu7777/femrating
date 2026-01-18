@@ -18,13 +18,16 @@
       .toLowerCase();
   }
 
+  function normType(t){
+    const x = (t || "").toString().trim().toLowerCase();
+    if (x === "book") return "narrative";
+    if (x === "movie") return "film";
+    return x || "narrative";
+  }
+
   function prettyType(t){
-    if (t === "narrative") return "叙事书籍";
-    if (t === "socsci") return "社科书籍";
-    if (t === "film") return "影视";
-    // backward compatibility
-    if (t === "book") return "叙事书籍";
-    return t || "";
+    const tt = normType(t);
+    return tt === "narrative" ? "叙事书籍" : (tt === "socsci" ? "社科书籍" : (tt === "film" ? "影视" : tt));
   }
 
   function safeText(s){
@@ -47,28 +50,20 @@
   }
 
   function buildOpenRatingUrl(item){
-    const t = item.type;
-
-    // new routes (no .html)
-    const base = (t === "film") ? "/film/" : (t === "socsci") ? "/socsci/" : "/";
-
-    // If older data uses type=book, treat as narrative
-    const resolvedBase = (t === "film") ? "/film/" : (t === "socsci") ? "/socsci/" : "/";
-
-    const url = new URL(resolvedBase, location.origin);
+    const t = normType(item.type);
+    const base = (t === "film") ? "/film/" : (t === "socsci" ? "/socsci/" : "/");
+    const url = new URL(base, location.origin);
     if (item.title) url.searchParams.set("name", item.title);
     if (item.link) url.searchParams.set("link", item.link);
     return url.toString();
   }
-
-  function setText(el, t){ if (el) el.textContent = t; }
 
   function render(){
     const q = norm(qInput.value);
     let list = all.slice();
 
     if (filterType !== "all"){
-      list = list.filter(x => (x.type || "") === filterType || (filterType === "narrative" && (x.type || "") === "book"));
+      list = list.filter(x => normType(x.type) === filterType);
     }
 
     if (q){
@@ -137,9 +132,12 @@
       actions.appendChild(openRating);
 
       card.appendChild(actions);
+
       resultsEl.appendChild(card);
     }
   }
+
+  function setText(el, t){ if (el) el.textContent = t; }
 
   async function load(){
     try{
@@ -151,8 +149,7 @@
     }catch(e){
       all = [];
       console.warn("Failed to load ratings.json:", e);
-      const le = $("#loadError");
-      if (le) le.style.display = "";
+      $("#loadError").style.display = "";
     }
     render();
   }
@@ -168,5 +165,6 @@
   });
 
   qInput.addEventListener("input", render);
+
   load();
 })();
