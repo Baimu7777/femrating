@@ -24,7 +24,9 @@ html,body{
   font-family:"XiqueJuzhen",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;
   color:var(--text);
   background:var(--bg);
-  overflow:hidden;
+  /* Allow the document to scroll by default (e.g. /db/ pages).
+     Rating pages use internal scroll areas; see :has(.app) below. */
+  overflow:auto;
 }
 button,input,select,textarea{ font-family:inherit; font-size:inherit; }
 textarea::placeholder,input::placeholder{ font-family:inherit; }
@@ -89,18 +91,21 @@ textarea::placeholder,input::placeholder{ font-family:inherit; }
 }
 
 .app{
-  height: calc(100% - 52px); /* topbar height approx */
+  /* Let the whole page scroll (so the browser scrollbar is always present). */
+  min-height: calc(100vh - 52px); /* topbar height approx */
+  height: auto;
   display:grid;
   grid-template-columns: minmax(720px,1fr) 380px;
 }
+
 .main{
-  height:100%;
-  overflow:auto;
+  height:auto;
+  overflow:visible;
   padding: 24px 34px 40px;
 }
 .side{
-  height:100%;
-  overflow:auto;
+  height:auto;
+  overflow:visible;
   padding: 22px 18px;
   border-left:1px solid var(--line);
   background:#fff;
