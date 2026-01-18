@@ -1,704 +1,494 @@
-/* Question bank for 4-part site:
-   - Narrative books (叙事书籍)
-   - Social science / non-fiction books (社科书籍)
-   - Film/TV (影视)
-
-   Each rating page sets window.PAGE_CONFIG.questionSet to:
-   "narrative" | "socsci" | "film"
-*/
+// questions.js
+// Unified question bank for 4 site sections:
+// - narrative (叙事书籍)
+// - socsci (社科书籍)
+// - film (影视)
+// Each page sets PAGE_CONFIG.questionSet to pick the set.
 
 (function(){
-  const NONFEMALE_NOTE = "此处及后面所有“非女”指所有生理性别或心理性别未明确表示为女的角色/作者/参与者，包括但不限于男性、跨性别、无性别。";
+  const NONFEMALE_NOTE = "说明：此处及后面所有非女指所有生理性别或心理性别未明确表示为女的角色，包括但不限于男性、跨性别、无性别。";
+
+  function opt(label, value){ return { label, value }; }
+
+  // helpers
+  function yesNo(id, section, title, yesVal, noVal, note){
+    return { id, section, title, type:"single", options:[opt("是", yesVal), opt("否", noVal)], note };
+  }
+  function tri(id, section, title, aLabel, aVal, bLabel, bVal, cLabel, cVal, note){
+    return { id, section, title, type:"single", options:[opt(aLabel,aVal), opt(bLabel,bVal), opt(cLabel,cVal)], note };
+  }
+  function scale(id, section, title, min, max, note, step){
+    return { id, section, title, type:"scale", min, max, step: (step==null?1:step), note };
+  }
+  function multi(id, section, title, options, note, special){
+    const q = { id, section, title, type:"multi", options, note };
+    if (special) q.special = special;
+    return q;
+  }
 
   const BANK = {
     narrative: {
-      sectionOrder: ["作者", "基础世界观", "女性角色刻画", "男性角色刻画", "其她"],
-      sectionNotes: {
-        "作者": [NONFEMALE_NOTE],
-        "基础世界观": ["基础世界观的‘正分’仅建议在：世界观为全女或默认女为第一性时使用（按你的规则）。"]
-      },
+      title: "叙事书籍",
+      sectionOrder: ["作者/译者/出版社", "作品", "女性角色刻画", "男性角色刻画", "其她"],
       questions: [
-        // ===== 作者 =====
-        { id:"N-A1", section:"作者", title:"作者性别比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"有非女参与", value:-2},
-          {label:"全非女", value:-4}
-        ]},
-        { id:"N-A2", section:"作者", title:"译者性别比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"有非女参与", value:-2},
-          {label:"全非女", value:-4}
-        ]},
-        { id:"N-A3", section:"作者", title:"作者曾发表厌女言论、反对女权言论", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-A4", section:"作者", title:"译者曾发表厌女言论、反对女权言论", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-A5", section:"作者", title:"作者出版过非批判男同相关内容", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-A6", section:"作者", title:"女作者现实已阍或有性缘关系", type:"single", options:[
-          {label:"已阍或有男友", value:-2},
-          {label:"有女友", value:-1},
-          {label:"未知", value:0},
-          {label:"单身女性", value:1}
-        ]},
-        { id:"N-A7", section:"作者", title:"出版社曾发表厌女言论、反对女权言论", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-A8", section:"作者", title:"书籍封面含有男性 ego（男大头、无意义男凝照片等）", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-A9", section:"作者", title:"翻译歪曲标题", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ], note:"例如将《后悔成为母亲》翻译成《成为母亲的选择》。" },
+        // 作者/译者/出版社
+        {
+          id:"N-A1", section:"作者/译者/出版社", title:"作者性别比", type:"single",
+          options:[opt("全女", 2), opt("有非女参与", -2), opt("全非女", -4)], note: NONFEMALE_NOTE
+        },
+        { id:"N-A2", section:"作者/译者/出版社", title:"译者性别比", type:"single", options:[opt("全女", 2), opt("有非女参与", -2), opt("全非女", -4)] },
+        yesNo("N-A3","作者/译者/出版社","作者曾发表厌女言论、反对女权言论", -2, 0),
+        yesNo("N-A4","作者/译者/出版社","译者曾发表厌女言论、反对女权言论", -2, 0),
+        yesNo("N-A5","作者/译者/出版社","作者出版过非批判VGBTQ相关内容", -2, 0),
+        {
+          id:"N-A6", section:"作者/译者/出版社", title:"女作者现实已阍或有性缘关系", type:"single",
+          options:[opt("已阍或有男友", -2), opt("有女友", -1), opt("未知", 0), opt("单身女性", 1)]
+        },
+        yesNo("N-A7","作者/译者/出版社","出版社曾发表厌女言论、反对女权言论", -2, 0),
+        yesNo("N-A8","作者/译者/出版社","书籍封面以男性为视觉中心(雄性生物、男性人物、男凝照片等)", -2, 0),
+        yesNo("N-A9","作者/译者/出版社","翻译歪曲标题", -1, 0, "说明：如将“后悔成为母亲”翻译成“成为母亲的选择”。"),
 
-        // ===== 作品｜基础世界观 =====
-        { id:"N-W1", section:"基础世界观", title:"单主角性别", type:"single", options:[
-          {label:"女", value:2},
-          {label:"非女", value:-2}
-        ]},
-        { id:"N-W2", section:"基础世界观", title:"若主角有核心团队，团队性别情况", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"女多于非女", value:1},
-          {label:"女、非女相等", value:0},
-          {label:"女少于非女", value:-1},
-          {label:"全非女", value:-2}
-        ]},
-        { id:"N-W3", section:"基础世界观", title:"全体角色女男比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"女多于非女", value:1},
-          {label:"女、非女相等", value:0},
-          {label:"女少于非女", value:-1},
-          {label:"全非女", value:-2}
-        ]},
-        { id:"N-W4", section:"基础世界观", title:"存在跨性别角色", type:"single", options:[
-          {label:"主角团", value:-2},
-          {label:"背景角色", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-W5", section:"基础世界观", title:"存在男同角色", type:"single", options:[
-          {label:"主角团", value:-2},
-          {label:"背景角色", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-W6", section:"基础世界观", title:"存在辱女词、厌女词", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-W7", section:"基础世界观", title:"女男存在刻板差异", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-W8", section:"基础世界观", title:"主角团母父设定（按人数情况叠加后填总值）", type:"scale", min:-5, max:5, step:1,
-          note:"有母无父记 +1；有母有父或无母无父记 0；无母有父记 -1。若多名主角团成员可叠加，例如3名‘有母无父’可填 +3。" },
-        { id:"N-W9", section:"基础世界观", title:"主角团是否含有性缘关系（多选叠加）", type:"multi", options:[
-          {label:"含女且无", value:2},
-          {label:"女同", value:-1},
-          {label:"女男", value:-1},
-          {label:"女单恋男", value:-3},
-          {label:"男同", value:-3},
-          {label:"不含女且无", value:-3}
-        ]},
-        { id:"N-W10", section:"基础世界观", title:"存在性缘关系时，性缘叙事占全剧情的比例（程度）", type:"scale", min:-2, max:0, step:1 },
-        { id:"N-W11", section:"基础世界观", title:"存在纳入式生殖行为", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-W12", section:"基础世界观", title:"对纳入式生殖行为进行细致描写", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-W13", section:"基础世界观", title:"推广或倡导女权思想与行为", type:"single", options:[
-          {label:"是", value:2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-W14", section:"基础世界观", title:"有性别战争内容且女性获胜", type:"single", options:[
-          {label:"是", value:1},
-          {label:"否", value:-1},
-          {label:"没有提及", value:0}
-        ]},
-        { id:"N-W15", section:"基础世界观", title:"基础世界观厌女（-3~+3）", type:"scale", min:-3, max:3, step:1,
-          note:"仅当世界观为全女或默认女为第一性时可打正分。" },
-        { id:"N-W16", section:"基础世界观", title:"使用女本位词", type:"single", options:[
-          {label:"是", value:1},
-          {label:"否", value:0}
-        ]},
+        // 作品（基础世界观）
+        { id:"N-W1", section:"作品", title:"单主角性别", type:"single", options:[opt("女", 4), opt("非女", -4)] },
+        {
+          id:"N-W2", section:"作品", title:"若主角有核心团队，团队性别情况", type:"single",
+          options:[opt("全女", 2), opt("女多于非女", 0), opt("女、非女相等", -1), opt("女少于非女", -2), opt("全非女", -3)]
+        },
+        {
+          id:"N-W3", section:"作品", title:"全体角色女男比", type:"single",
+          options:[opt("全女", 2), opt("女多于非女", 1), opt("女、非女相等", 0), opt("女少于非女", -1), opt("全非女", -2)]
+        },
+        tri("N-W4","作品","存在跨性别角色", "主角团", -2, "背景角色", -1, "否", 0),
+        tri("N-W5","作品","存在男同角色", "主角团", -2, "背景角色", -1, "否", 0),
+        yesNo("N-W6","作品","存在辱女词、厌女词", -2, 0),
+        yesNo("N-W7","作品","女男存在刻板差异", -1, 0),
+        scale("N-W8","作品","主角团母父设定（有母无父+1；有母有父或无母无父0；无母有父-1；按人数情况叠加）", -5, 5),
+        {
+          id:"N-W9", section:"作品",
+          title:"在非全女世界中，故事是否以宗族为核心、主角（团）是否最终在宗族之中或美化亲缘（家族血脉、虜点亲戚互助）、强调亲缘的重要性",
+          type:"single",
+          options:[opt("是", -1), opt("否 / 主角脱离宗族", 0), opt("明确反亲缘宗族", 1)]
+        },
+        multi(
+          "N-W10","作品","主角团是否含有性缘关系（多选叠加计算）",
+          [
+            opt("含女且无", 2),
+            opt("女同", -1),
+            opt("女男", -1),
+            opt("女单恋男", -3),
+            opt("男同", -3),
+            opt("不含女且无", -3)
+          ]
+        ),
+        scale("N-W11","作品","存在性缘关系时，性缘叙事占全剧情的比例（程度）", -3, -1),
+        multi(
+          "N-W12","作品","含有性缘关系（多选）",
+          [
+            opt("女比男小三岁以上", -1),
+            opt("早阍早育", -1),
+            opt("女性为未成年且批判性质", -1),
+            opt("女性为未成年且非批判性质", -5)
+          ]
+        ),
+        yesNo("N-W13","作品","存在纳入式生殖行为", -1, 0),
+        yesNo("N-W14","作品","对纳入式生殖行为进行细致描写", -2, 0),
+        yesNo("N-W15","作品","推广或倡导女权思想与行为", 2, 0),
+        tri("N-W16","作品","有性别战争内容", "女性获胜", 1, "女性没有获胜", -1, "没有提及", 0),
+        tri("N-W17","作品","存在宗教相关内容", "批判", 1, "非批评", -1, "未提及", 0),
+        scale("N-W18","作品","基础世界观厌女（仅当世界观为全女或默认女为第一性时可打正分）", -3, 3),
+        yesNo("N-W19","作品","使用女本位词", 1, 0),
 
-        // ===== 女性角色刻画 =====
-        { id:"N-F1", section:"女性角色刻画", title:"女角色参与核心剧情", type:"single", options:[
-          {label:"是", value:1},
-          {label:"否", value:-1}
-        ]},
-        { id:"N-F2", section:"女性角色刻画", title:"存在领导者角色时，性别数量对比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"女比男多", value:1},
-          {label:"女男相等", value:0},
-          {label:"男比女多", value:-1},
-          {label:"全男", value:-2}
-        ]},
-        { id:"N-F3", section:"女性角色刻画", title:"女性角色年龄段丰富度（多选）", type:"multi", options:[
-          {label:"幼年", value:1},
-          {label:"少年", value:1},
-          {label:"成年", value:1},
-          {label:"中年", value:1},
-          {label:"老年", value:1}
-        ], special:"single_zero_cap4", note:"各占1分；若仅勾选一项则记 0 分；最高封顶 +4。" },
-        { id:"N-F4", section:"女性角色刻画", title:"女角色形象设置丰富度（程度 0~2）", type:"scale", min:0, max:2, step:1,
-          note:"包括体型、发型、肤色、职业等。" },
-        { id:"N-F5", section:"女性角色刻画", title:"主要女性角色个人能力（程度 0~2）", type:"scale", min:0, max:2, step:1,
-          note:"如武力、智慧、敏锐等。" },
-        { id:"N-F6", section:"女性角色刻画", title:"女性角色有完整的成长线/高光/立体塑造（程度 0~2）", type:"scale", min:0, max:2, step:1 },
-        { id:"N-F7", section:"女性角色刻画", title:"女女关系多样化（不包括女同）（程度 0~3）", type:"scale", min:0, max:3, step:1 },
-        { id:"N-F8", section:"女性角色刻画", title:"存在女同关系时对其刻画（程度 -2~0）", type:"scale", min:-2, max:0, step:1 },
-        { id:"N-F9", section:"女性角色刻画", title:"含有女性传承的情节", type:"single", options:[
-          {label:"是", value:2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-F10", section:"女性角色刻画", title:"女角色存在男性支持（妹兄、姐弟、师生等）（程度 -2~0）", type:"scale", min:-2, max:0, step:1 },
-        { id:"N-F11", section:"女性角色刻画", title:"含有驴竞行为", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ], note:"例如除女主角外的女性形象刻板，以此突出女主角特殊。" },
-        { id:"N-F12", section:"女性角色刻画", title:"含有性缘关系（多选）", type:"multi", options:[
-          {label:"女比男小三岁以上", value:-1},
-          {label:"早阍早育", value:-1},
-          {label:"女性为未成年且批判性质", value:-1},
-          {label:"女性为未成年且非批判性质", value:-5}
-        ]},
-        { id:"N-F13", section:"女性角色刻画", title:"女性角色设置随意（取名 abb / x小x 等）", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-F14", section:"女性角色刻画", title:"含有物化女性的情节（闝倡、代孕、同妻等）", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-F15", section:"女性角色刻画", title:"含有描写女性外貌红利、身材焦虑等内容", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-F16", section:"女性角色刻画", title:"含有描写性自由、荡妇羞辱的内容", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-F17", section:"女性角色刻画", title:"含有女角色软色情、擦边内容", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-F18", section:"女性角色刻画", title:"性别认知障碍叙事（女扮男/自称哥/对女喊兄弟、buddy、guy等）", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-F19", section:"女性角色刻画", title:"含有女角色魅男/爱男/利男行为（程度 -2~-5）", type:"scale", min:-5, max:-2, step:1,
-          note:"男包括男性亲属与陌生男性，如生育男性后代、帮扶兄弟、扶贫、男人分享女角色成果/遗产等。" },
-        { id:"N-F20", section:"女性角色刻画", title:"过度渲染女性苦楚/雄堕但反抗/觉醒占比很少（程度 -2~0）", type:"scale", min:-2, max:0, step:1 },
-        { id:"N-F21", section:"女性角色刻画", title:"含有女角色死亡情节（多选）", type:"multi", options:[
-          {label:"被虐杀", value:-4},
-          {label:"被女杀", value:-1},
-          {label:"被男杀", value:-2},
-          {label:"为女牺牲", value:-1},
-          {label:"为男牺牲", value:-2},
-          {label:"意外死亡", value:-1},
-          {label:"自然死亡", value:0}
-        ]},
-        { id:"N-F22", section:"女性角色刻画", title:"忽视女性困境（美化伎女处境/拐卖/强暴等）", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-F23", section:"女性角色刻画", title:"女角色自愿堕落且以‘自由’包装（如明有选择仍当伎女/末世战争生育等）", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-F24", section:"女性角色刻画", title:"含有与男相关的‘弱女叙事’（哭丧/悲剧/徒劳等）（程度 -2~0）", type:"scale", min:-2, max:0, step:1 },
-        { id:"N-F25", section:"女性角色刻画", title:"含有虐女情节（包括性犯罪、着重描绘女人受苦）", type:"scale", min:-5, max:-3, step:1 },
+        // 女性角色刻画
+        yesNo("N-F1","女性角色刻画","女角色参与核心剧情", 1, -1),
+        {
+          id:"N-F2", section:"女性角色刻画", title:"女角色剧情篇幅占比多于男角色", type:"single",
+          options:[opt("没有男角色", 1), opt("是", 0), opt("否", -1)]
+        },
+        {
+          id:"N-F3", section:"女性角色刻画", title:"存在领导者角色时，性别数量对比", type:"single",
+          options:[opt("全女", 2), opt("女多于非女", 1), opt("女、非女相等", 0), opt("女少于非女", -1), opt("全非女", -2)]
+        },
+        multi(
+          "N-F4","女性角色刻画","女性角色年龄段丰富度（幼年/少年/成年/中年/老年；各占1分，若仅有一项则为0）",
+          [opt("幼年",1), opt("少年",1), opt("成年",1), opt("中年",1), opt("老年",1)],
+          null,
+          "single_zero_cap4"
+        ),
+        scale("N-F5","女性角色刻画","女角色形象设置丰富度（包括体型、发型、肤色、职业等）", 0, 2),
+        scale("N-F6","女性角色刻画","主要女性角色个人能力（如武力、智慧、敏锐等）", 0, 2),
+        scale("N-F7","女性角色刻画","女女关系多样化（女性友谊/互动/对抗；不包括女同）", 0, 3),
+        {
+          id:"N-F8", section:"女性角色刻画", title:"女角色高光时刻多于男角色", type:"single",
+          options:[opt("没有男角色", 2), opt("是", 0), opt("否", -2)]
+        },
+        scale("N-F9","女性角色刻画","存在女同关系时对其刻画（程度）", -2, 0),
+        yesNo("N-F10","女性角色刻画","含有女性传承的情节", 2, 0),
+        yesNo("N-F11","女性角色刻画","女角色存在男性支持，妹兄、姐弟、师生等", -2, 0),
+        yesNo("N-F12","女性角色刻画","含有驴竞行为（例如除了女主角外的女性形象刻板，以此突出女主角特殊）", -1, 0),
+        yesNo("N-F13","女性角色刻画","女性角色设置随意/去人格化命名（无名、仅用称谓/关系称呼、abb或x小x式命名）", -1, 0),
+        yesNo("N-F14","女性角色刻画","含有制度性剥削女性的情节（闝倡、代孕、同妻、买卖婚姻、强迫婚育等）", -2, 0),
+        yesNo("N-F15","女性角色刻画","含有描写女性从外貌中得利、身材焦虑等内容", -1, 0),
+        yesNo("N-F16","女性角色刻画","含有描写性自由、荡妇羞辱的内容", -1, 0),
+        yesNo("N-F17","女性角色刻画","含有女角色软色情、擦边内容", -1, 0),
+        scale("N-F18","女性角色刻画","含有虐女情节（包括性犯罪、着重描绘女人受苦惨状）", -5, -3),
+        yesNo("N-F19","女性角色刻画","性别认知障碍（女扮男、自称哥、对女喊兄弟/buddy/guy等）", -1, 0),
+        scale("N-F20","女性角色刻画","含有女角色魅男、爱男、利男行为的情节（程度）", -5, -2),
+        scale("N-F21","女性角色刻画","含有与男相关的“弱女叙事”（哭丧、悲剧、徒劳等）（程度）", -2, 0),
+        {
+          id:"N-F22", section:"女性角色刻画", title:"含有女性反抗/觉醒情节（拒绝昏育规训、拒绝服弱役、拒绝男性控制、经济自立等）", type:"single",
+          options:[
+            opt("成功反抗/觉醒为主线", 3),
+            opt("有明确成功反抗行为或觉醒观点", 2),
+            opt("无", 0),
+            opt("有反抗但苦楚/雄堕描写占比较大", -1),
+            opt("过度渲染苦难且反抗篇幅很少", -2),
+            opt("反抗失败", -3)
+          ]
+        },
+        tri("N-F23","女性角色刻画","含有女性争权夺利的情节", "有正面描写", 3, "无描写", 0, "有负面描写", -3),
+        multi(
+          "N-F24","女性角色刻画","含有女角色死亡情节（多选）",
+          [
+            opt("被虐杀", -4),
+            opt("被女杀", -1),
+            opt("被男杀", -2),
+            opt("为女牺牲", -1),
+            opt("为男牺牲", -2),
+            opt("意外死亡", -1),
+            opt("自然死亡", 0)
+          ]
+        ),
+        yesNo("N-F25","女性角色刻画","忽视女性困境（美化伎女处境、美化拐卖、美化强暴等）", -2, 0),
+        yesNo("N-F26","女性角色刻画","女角色有其她选择，却选择堕落（进入伎女/被性剥削行业、在明显不具备养育条件时坚持生育、回到暴力关系等）", -1, 0),
+        {
+          id:"N-F27", section:"女性角色刻画", title:"对女性生理周期（月经、更年期等）有描写", type:"single",
+          options:[opt("有非负面描写", 2), opt("无描写", 0), opt("有负面描写", -2)]
+        },
+        {
+          id:"N-F28", section:"女性角色刻画", title:"对女性生理疾病（乳腺结节/乳腺癌等）有描写", type:"single",
+          options:[opt("非负面描写", 1), opt("无描写", 0), opt("负面描写", -1)]
+        },
+        {
+          id:"N-F29", section:"女性角色刻画", title:"对女性怀孕相关生理行为（生产、堕胎等）呈现代价、风险、痛苦", type:"single",
+          options:[opt("清晰呈现代价、风险、痛苦", 2), opt("无描写", 0), opt("美化/神圣化描写", -2)]
+        },
 
-        // ===== 男性角色刻画 =====
-        { id:"N-M1", section:"男性角色刻画", title:"男性角色参与核心剧情", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-M2", section:"男性角色刻画", title:"男性角色年龄段丰富度（多选）", type:"multi", options:[
-          {label:"幼年", value:-1},
-          {label:"少年", value:-1},
-          {label:"成年", value:-1},
-          {label:"中年", value:-1},
-          {label:"老年", value:-1}
-        ], special:"single_zero_cap-5", note:"各占-1分；若仅勾选一项则记 0 分；最低封底 -5。" },
-        { id:"N-M3", section:"男性角色刻画", title:"男角色形象设置丰富度（程度 -2~0）", type:"scale", min:-2, max:0, step:1 },
-        { id:"N-M4", section:"男性角色刻画", title:"主要男性角色个人能力（程度 -2~0）", type:"scale", min:-2, max:0, step:1,
-          note:"如武力、智慧、敏锐等。" },
-        { id:"N-M5", section:"男性角色刻画", title:"男性角色有完整成长线/高光/立体塑造（程度 -2~0）", type:"scale", min:-2, max:0, step:1 },
-        { id:"N-M6", section:"男性角色刻画", title:"男男关系多样化（程度 -3~0）", type:"scale", min:-3, max:0, step:1 },
-        { id:"N-M7", section:"男性角色刻画", title:"美化男性（母父对比、男性友情、男性深情等）", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-M8", section:"男性角色刻画", title:"含有男性生殖崇拜", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-M9", section:"男性角色刻画", title:"含有父系传承情节（包括随父姓）", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-M10", section:"男性角色刻画", title:"含有夸大男性苦难的情节", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-M11", section:"男性角色刻画", title:"男性角色获得更好待遇/结局等（程度 -3~0）", type:"scale", min:-3, max:0, step:1 },
-        { id:"N-M12", section:"男性角色刻画", title:"男性掠夺女性生育能力或成果（男性生育/产翁等）", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"N-M13", section:"男性角色刻画", title:"含有污辱女性的言论或行为", type:"single", options:[
-          {label:"是且并非用于批判", value:-2},
-          {label:"是但用于批判讽刺", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-M14", section:"男性角色刻画", title:"存在男性对女性的猥亵、黄段子", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-M15", section:"男性角色刻画", title:"含有臆女童情节", type:"single", options:[
-          {label:"是且非用于批判", value:-5},
-          {label:"是但用于批判", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-M16", section:"男性角色刻画", title:"含有男角色死亡情节（多选）", type:"multi", options:[
-          {label:"被虐杀", value:2},
-          {label:"被女杀", value:2},
-          {label:"被男杀", value:1},
-          {label:"意外死亡", value:1},
-          {label:"自然死亡", value:0}
-        ]},
+        // 男性角色刻画
+        yesNo("N-M1","男性角色刻画","男性角色参与核心剧情", -1, 0),
+        multi(
+          "N-M2","男性角色刻画","男性角色年龄段丰富度（幼年/少年/成年/中年/老年；若仅有一项则为0；两项为-2；每多一项-1；最高-5）",
+          [opt("幼年",-1), opt("少年",-1), opt("成年",-1), opt("中年",-1), opt("老年",-1)],
+          null,
+          "single_zero_cap-5"
+        ),
+        scale("N-M3","男性角色刻画","男角色形象设置丰富度（程度）", -2, 0),
+        scale("N-M4","男性角色刻画","主要男性角色个人能力（如武力、智慧、敏锐等）（程度）", -2, 0),
+        scale("N-M5","男性角色刻画","男性角色有完整的成长线或高光或立体的塑造（程度）", -2, 0),
+        scale("N-M6","男性角色刻画","男男关系多样化（程度）", -3, 0),
+        yesNo("N-M7","男性角色刻画","美化男性（母父对比、男性友情、男性深情等）", -1, 0),
+        yesNo("N-M8","男性角色刻画","含有男性生殖崇拜", -1, 0),
+        yesNo("N-M9","男性角色刻画","含有父系传承情节（随父姓等）", -1, 0),
+        yesNo("N-M10","男性角色刻画","含有夸大男性苦难的情节", -1, 0),
+        scale("N-M11","男性角色刻画","男性角色获得更好待遇、结局等（程度）", -3, 0),
+        yesNo("N-M12","男性角色刻画","男性掠夺女性生育能力或成果（男性生育/产翁等）", -2, 0),
+        {
+          id:"N-M13", section:"男性角色刻画", title:"含有污辱女性的言论或行为", type:"single",
+          options:[opt("是且并非用于批判", -2), opt("是但用于批判讽刺", -1), opt("否", 0)]
+        },
+        yesNo("N-M14","男性角色刻画","存在男性对女性的猥亵、黄段子", -1, 0),
+        multi(
+          "N-M15","男性角色刻画","含有男角色死亡情节（多选）",
+          [opt("被虐杀", 2), opt("被女杀", 2), opt("被男杀", 1), opt("意外死亡", 1), opt("自然死亡", 0)]
+        ),
 
-        // ===== 其她 =====
-        { id:"N-O1", section:"其她", title:"文笔（程度 -2~2）", type:"scale", min:-2, max:2, step:1 },
-        { id:"N-O2", section:"其她", title:"主观感受（程度 -2~2）", type:"scale", min:-2, max:2, step:1 },
-        { id:"N-O3", section:"其她", title:"批判男性，但主要围绕性缘/男儿描写", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-O4", section:"其她", title:"对男性持有擦亮眼态度", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"N-O5", section:"其她", title:"鼓吹女凝男自由", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]}
+        // 其她
+        scale("N-O1","其她","文笔（程度）", -2, 2),
+        scale("N-O2","其她","主观感受（程度）", -2, 2),
+        yesNo("N-O3","其她","批判男性，但主要围绕性缘、男儿描写", -1, 0),
+        yesNo("N-O4","其她","对非女（包括男性VGBTQ等退步人）持有擦亮眼态度", -1, 0),
+        yesNo("N-O5","其她","对VGBTQ友好", -1, 0),
+        yesNo("N-O6","其她","鼓吹女凝男自由", -1, 0),
+        yesNo("N-O7","其她","女权男", -1, 0),
+        yesNo("N-O8","其她","污名化女权（使用人权/女男平等代替女权等）", -2, 0),
+        yesNo("N-O9","其她","认为政治倾向/阶级等大于性别", -2, 0),
       ]
     },
 
     socsci: {
+      title: "社科书籍",
       sectionOrder: ["作者", "作品"],
-      sectionNotes: {
-        "作者": ["（社科书籍）" + NONFEMALE_NOTE]
-      },
       questions: [
-        // ===== 作者 =====
-        { id:"S-A1", section:"作者", title:"作者性别比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"有男参与", value:-2},
-          {label:"全男", value:-4}
-        ]},
-        { id:"S-A2", section:"作者", title:"译者性别比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"有男参与", value:-2},
-          {label:"全男", value:-4}
-        ]},
-        { id:"S-A3", section:"作者", title:"作者曾发表厌女言论、反对女权言论", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-A4", section:"作者", title:"译者曾发表厌女言论、反对女权言论", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-A5", section:"作者", title:"作者出版过非批判男同相关内容", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-A6", section:"作者", title:"女作者现实已阍或有性缘关系", type:"single", options:[
-          {label:"已阍或有男友", value:-2},
-          {label:"有女友", value:-1},
-          {label:"未知", value:0},
-          {label:"单身女性", value:1}
-        ]},
-        { id:"S-A7", section:"作者", title:"出版社曾发表厌女言论、反对女权言论", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-A8", section:"作者", title:"书籍封面含有男性 ego（男大头、无意义男凝照片等）", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-A9", section:"作者", title:"翻译歪曲标题", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ], note:"例如将《后悔成为母亲》翻译成《成为母亲的选择》。" },
+        // 作者
+        {
+          id:"S-A1", section:"作者", title:"作者性别比", type:"single",
+          options:[opt("全女", 2), opt("有非女参与", -2), opt("全非女", -4)], note: NONFEMALE_NOTE
+        },
+        { id:"S-A2", section:"作者", title:"译者性别比", type:"single", options:[opt("全女", 2), opt("有非女参与", -2), opt("全非女", -4)] },
+        yesNo("S-A3","作者","作者曾发表厌女言论、反对女权言论", -2, 0),
+        yesNo("S-A4","作者","译者曾发表厌女言论、反对女权言论", -2, 0),
+        yesNo("S-A5","作者","作者出版过非批判VGBTQ相关内容", -2, 0),
+        {
+          id:"S-A6", section:"作者", title:"女作者现实已阍或有性缘关系", type:"single",
+          options:[opt("已阍或有男友", -2), opt("有女友", -1), opt("未知", 0), opt("单身女性", 1)]
+        },
+        yesNo("S-A7","作者","出版社曾发表厌女言论、反对女权言论", -2, 0),
+        yesNo("S-A8","作者","书籍封面以男性为视觉中心(雄性生物、男性人物、男凝照片等)", -2, 0),
+        yesNo("S-A9","作者","翻译歪曲标题（如将“后悔成为母亲”翻译成“成为母亲的选择”）", -1, 0),
 
-        // ===== 作品 =====
-        { id:"S-W1", section:"作品", title:"使用女本位词", type:"single", options:[
-          {label:"是", value:2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-W2", section:"作品", title:"存在辱女词、厌女词", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-W3", section:"作品", title:"支持跨性别，污名化 TERF", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-W4", section:"作品", title:"支持男同", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-W5", section:"作品", title:"鼓吹性自由", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-W6", section:"作品", title:"把纳入式生殖行为默认为性行为", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-W7", section:"作品", title:"若涉及性别题材，性别倾向", type:"single", options:[
-          {label:"推崇女社", value:2},
-          {label:"推崇母社/女尊", value:1},
-          {label:"女男/男女平等", value:-1},
-          {label:"男尊", value:-2}
-        ]},
-        { id:"S-W8", section:"作品", title:"介绍动植物时代入男性视角（默认王为男性/贬低雌性夸赞雄性）", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-W9", section:"作品", title:"列举正向事例时，涉及女男比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"女比男多", value:1},
-          {label:"女男相等", value:0},
-          {label:"男比女多", value:-1},
-          {label:"全男", value:-2}
-        ]},
-        { id:"S-W10", section:"作品", title:"列举负面事例时，涉及女男比", type:"single", options:[
-          {label:"全女", value:-2},
-          {label:"女比男多", value:-1},
-          {label:"女男相等", value:0},
-          {label:"男比女多", value:1},
-          {label:"全男", value:2}
-        ]},
-        { id:"S-W11", section:"作品", title:"介绍人体时，涉及女男比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"女比男多", value:1},
-          {label:"女男相等", value:0},
-          {label:"男比女多", value:1},
-          {label:"全男", value:2}
-        ], note:"按你给的规则原样录入（注意：‘男比女多’也为正分）。" },
-        { id:"S-W12", section:"作品", title:"为了叙事顺滑而美化压迫结构（阍育规训/母职惩罚/性别分工写成‘自然/温暖’）", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-W13", section:"作品", title:"作品整体推进或倡导基进女权思想与行动（程度 1~3）", type:"scale", min:1, max:3, step:1 },
-        { id:"S-W14", section:"作品", title:"把女性受压迫归因于‘天性/本能/生理注定’", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"S-W15", section:"作品", title:"美化拐卖/强暴/伎女处境/代孕等（淡化伤害/合理化）（程度 -3~-1）", type:"scale", min:-3, max:-1, step:1 },
-        { id:"S-W16", section:"作品", title:"把阍育当女性‘归宿/完成’，污名化反阍反育（程度 -3~-1）", type:"scale", min:-3, max:-1, step:1 },
-        { id:"S-W17", section:"作品", title:"把‘男性样本/男性身体’当默认标准（人体/药物/心理/运动等）（程度 -3~-1）", type:"scale", min:-3, max:-1, step:1 },
-        { id:"S-W18", section:"作品", title:"过度推崇男性权威理论（如弗洛伊德）且缺少批判（程度 -3~-1）", type:"scale", min:-3, max:-1, step:1 }
+        // 作品
+        yesNo("S-W1","作品","使用女本位词", 2, 0),
+        yesNo("S-W2","作品","存在辱女词、厌女词", -2, 0),
+        {
+          id:"S-W3", section:"作品", title:"支持跨性别，污名化TERF", type:"single",
+          options:[opt("是", -2), opt("未提及", 0), opt("否", 2)]
+        },
+        {
+          id:"S-W4", section:"作品", title:"支持男同", type:"single",
+          options:[opt("是", -2), opt("未提及", 0), opt("否", 2)]
+        },
+        {
+          id:"S-W5", section:"作品", title:"鼓吹性自由", type:"single",
+          options:[opt("是", -2), opt("未提及", 0), opt("否", 2)]
+        },
+        {
+          id:"S-W6", section:"作品", title:"把纳入式生殖行为默认为性行为", type:"single",
+          options:[opt("是", -2), opt("未提及", 0), opt("否", 2)]
+        },
+        {
+          id:"S-W7", section:"作品", title:"列举正向事例时，涉及女男比", type:"single",
+          options:[opt("全女", 2), opt("女比男多", 1), opt("女男相等", 0), opt("男比女多", -1), opt("全男", -2)]
+        },
+        {
+          id:"S-W8", section:"作品", title:"列举负面事例时，涉及女男比", type:"single",
+          options:[opt("全女", -2), opt("女比男多", -1), opt("女男相等", 0), opt("男比女多", 1), opt("全男", 2)]
+        },
+        {
+          id:"S-W9", section:"作品", title:"介绍人体时，涉及女男比", type:"single",
+          options:[opt("全女", 2), opt("女比男多", 1), opt("女男相等", 0), opt("男比女多", 1), opt("全男", 2)]
+        },
+        yesNo("S-W10","作品","介绍动植物时，代入男性视角（默认王为男性、贬低雌性夸赞雄性等）", -2, 0),
+        {
+          id:"S-W11", section:"作品", title:"若涉及性别题材，性别倾向", type:"single",
+          options:[opt("推崇女社", 2), opt("推崇母社/女尊", 1), opt("女男/男女平等", -1), opt("男尊", -2)]
+        },
+        scale("S-W12","作品","作品整体推进或倡导基进女权思想与行动（程度）", 1, 3),
+        {
+          id:"S-W13", section:"作品", title:"引用与凸显女性学者研究（含女性史料、女性口述、女性理论谱系）", type:"single",
+          options:[opt("女作者为主", 2), opt("女男混合", 0), opt("男性为主", -2)]
+        },
+        scale("S-W14","作品","过度推崇男性权威理论（例如弗洛伊德），缺少批判（程度）", -3, -1),
+        {
+          id:"S-W15", section:"作品", title:"性别高于政治倾向/阶级等", type:"single",
+          options:[opt("是", 2), opt("未提及", 0), opt("否", -2)]
+        },
+        {
+          id:"S-W16", section:"作品", title:"点名父权制/男权结构，而不是用传统/文化/家庭等含糊其辞", type:"single",
+          options:[opt("是", 2), opt("未提及", 0), opt("否", -2)]
+        },
+        yesNo("S-W17","作品","污名化女权（使用人权/女男平等等代替女权）", -2, 0),
+        {
+          id:"S-W18", section:"作品", title:"为了叙事顺滑而美化压迫结构（美化阍育规训、母职惩罚、性别分工）", type:"single",
+          options:[opt("是", -2), opt("未提及", 0), opt("否", -2)]
+        },
+        {
+          id:"S-W19", section:"作品", title:"把女男差异归因于天性/本能/生理注定", type:"single",
+          options:[opt("是", -2), opt("未提及", 0), opt("否", -2)]
+        },
+        scale("S-W20","作品","美化拐卖、强暴、伎女处境、代孕等剥削女性行为（程度）", -3, -1),
+        {
+          id:"S-W21", section:"作品", title:"把阍育作为女性归宿，污名化反阍反育", type:"single",
+          options:[opt("是", -2), opt("未提及", 0), opt("否", -2)]
+        },
+        scale("S-W22","作品","把男性样本/身体当作默认标准（人体、药物、心理、运动等）（程度）", -3, -1),
       ]
     },
 
     film: {
-      sectionOrder: ["导演/编剧", "作品", "女性角色刻画", "男性角色刻画"],
-      sectionNotes: {},
+      title: "影视",
+      sectionOrder: ["导演/编剧", "作品", "女性角色刻画", "男性角色刻画", "其她"],
       questions: [
-        // ===== 导演/编剧 =====
-        { id:"F-C1", section:"导演/编剧", title:"导演性别比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"有男参与", value:0},
-          {label:"全男", value:-2}
-        ]},
-        { id:"F-C2", section:"导演/编剧", title:"编剧性别比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"有男参与", value:0},
-          {label:"全男", value:-2}
-        ]},
-        { id:"F-C3", section:"导演/编剧", title:"导演曾发表厌女言论、反对女权言论", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-C4", section:"导演/编剧", title:"编剧曾发表厌女言论、反对女权言论", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-C5", section:"导演/编剧", title:"导演或编剧曾经作品中有男同题材（按人数叠加后填总值）", type:"scale", min:-5, max:0, step:1,
-          note:"按你规则：-1 ×（人数）。例如涉及2人可填 -2。" },
-        { id:"F-C6", section:"导演/编剧", title:"编剧参与过非批判男同相关电影项目", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
+        // 导演/编剧
+        {
+          id:"F-C1", section:"导演/编剧", title:"导演性别比", type:"single",
+          options:[opt("全女", 2), opt("有非女参与", 0), opt("全非女", -2)], note: NONFEMALE_NOTE
+        },
+        { id:"F-C2", section:"导演/编剧", title:"编剧性别比", type:"single", options:[opt("全女", 2), opt("有男参与", 0), opt("全男", -2)] },
+        yesNo("F-C3","导演/编剧","导演曾发表厌女言论、反对女权言论", -2, 0),
+        yesNo("F-C4","导演/编剧","编剧曾发表厌女言论、反对女权言论", -2, 0),
+        yesNo("F-C5","导演/编剧","演员曾发表厌女言论、反对女权言论", -2, 0),
+        yesNo("F-C6","导演/编剧","导演、编剧、演员曾陷入性骚扰、家暴等丑闻", -2, 0),
+        scale("F-C7","导演/编剧","导演/编剧/演员曾经作品中有非批判性VGBTQ内容（-1*(人数)）", -10, 0),
 
-        // ===== 作品 =====
-        { id:"F-W1", section:"作品", title:"单主角叙事：主角性别", type:"single", options:[
-          {label:"女", value:2},
-          {label:"无性别", value:0},
-          {label:"男", value:-2}
-        ]},
-        { id:"F-W2", section:"作品", title:"多主角叙事：主角团性别比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"女多于男", value:1},
-          {label:"女男相等", value:0},
-          {label:"男比女多", value:-1},
-          {label:"全男", value:-2}
-        ]},
-        { id:"F-W3", section:"作品", title:"是否有跨性别角色", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"F-W4", section:"作品", title:"有个人剧情的配角女男比例", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"女多于男", value:1},
-          {label:"女男相等", value:0},
-          {label:"男比女多", value:-1},
-          {label:"全男", value:-2}
-        ]},
-        { id:"F-W5", section:"作品", title:"叙事推进者/关键视角性别（旁白/配乐/镜头凝视/叙事重心）", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"女多于男", value:1},
-          {label:"女男相等", value:0},
-          {label:"男比女多", value:-1},
-          {label:"全男", value:-2}
-        ]},
-        { id:"F-W6", section:"作品", title:"配乐内容含有性缘关系", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"F-W7", section:"作品", title:"主角母父塑造", type:"single", options:[
-          {label:"有母无父", value:2},
-          {label:"母父俱全或母父均无", value:0},
-          {label:"无母有父", value:-2}
-        ]},
-        { id:"F-W8", section:"作品", title:"主角团是否含有性缘关系（多选叠加）", type:"multi", options:[
-          {label:"含女且无", value:2},
-          {label:"女同", value:-1},
-          {label:"女男", value:-3},
-          {label:"男同", value:-3},
-          {label:"不含女且无", value:-3}
-        ]},
-        { id:"F-W9", section:"作品", title:"存在纳入式生殖行为", type:"single", options:[
-          {label:"是", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"F-W10", section:"作品", title:"对纳入式生殖行为进行细致描写", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-W11", section:"作品", title:"镜头语言（多选）", type:"multi", options:[
-          {label:"男凝镜头描画女性", value:-2},
-          {label:"镜头对准受害者", value:-2}
-        ]},
+        // 作品
+        { id:"F-W1", section:"作品", title:"单主角叙事", type:"single", options:[opt("女", 4), opt("非女", -4)] },
+        {
+          id:"F-W2", section:"作品", title:"多主角叙事", type:"single",
+          options:[opt("全女", 2), opt("女多于非女", 0), opt("女、非女相等", -1), opt("非女比女多", -2), opt("全非女", -3)]
+        },
+        {
+          id:"F-W3", section:"作品", title:"有个人剧情的配角女男比例", type:"single",
+          options:[opt("全女", 2), opt("女多于非女", 0), opt("女、非女相等", -1), opt("非女比女多", -2), opt("全非女", -3)]
+        },
+        tri("F-W4","作品","存在跨性别角色", "主角团", -2, "背景角色", -1, "否", 0),
+        tri("F-W5","作品","存在男同角色", "主角团", -2, "背景角色", -1, "否", 0),
+        yesNo("F-W6","作品","存在辱女词、厌女词", -2, 0),
+        yesNo("F-W7","作品","女男存在刻板差异", -1, 0),
+        scale("F-W8","作品","主角团母父设定（有母无父+1；有母有父或无母无父0；无母有父-1；按人数情况叠加）", -5, 5),
+        multi(
+          "F-W9","作品","主角团是否含有性缘关系（多选叠加计算）",
+          [opt("含女且无", 2), opt("女同", -1), opt("女男", -1), opt("女单恋男", -3), opt("男同", -3), opt("不含女且无", -3)]
+        ),
+        scale("F-W10","作品","存在性缘关系时，性缘叙事占全剧情的比例（程度）", -3, -1),
+        multi(
+          "F-W11","作品","含有性缘关系（多选）",
+          [opt("女比男小三岁以上", -1), opt("早阍早育", -1), opt("女性为未成年且批判性质", -1), opt("女性为未成年且非批判性质", -5)]
+        ),
+        yesNo("F-W12","作品","存在纳入式生殖行为", -1, 0),
+        {
+          id:"F-W13", section:"作品", title:"叙事推进者/关键视角（旁白、配乐、镜头凝视、叙事重心）性别", type:"single",
+          options:[opt("全女", 2), opt("女多于男", 1), opt("女男相等", 0), opt("男比女多", -1), opt("全男", -2)]
+        },
+        yesNo("F-W14","作品","配乐内容含有性缘关系", -1, 0),
+        {
+          id:"F-W15", section:"作品",
+          title:"在非全女世界中，故事是否以宗族为核心、主角（团）是否最终在宗族之中或美化亲缘（家族血脉、虜点亲戚互助）、强调亲缘的重要性",
+          type:"single",
+          options:[opt("是", -1), opt("否 / 主角脱离宗族", 0), opt("明确反亲缘宗族", 1)]
+        },
+        yesNo("F-W16","作品","推广或倡导女权思想与行为", 2, 0),
+        tri("F-W17","作品","存在宗教相关内容", "批判", 1, "非批评", -1, "未提及", 0),
+        scale("F-W18","作品","基础世界观厌女（仅当世界观为全女或默认女为第一性时可打正分）", -3, 3),
 
-        // ===== 女性角色刻画 =====
-        { id:"F-F1", section:"女性角色刻画", title:"女性角色年龄段丰富度（多选）", type:"multi", options:[
-          {label:"幼年", value:1},
-          {label:"少年", value:1},
-          {label:"成年", value:1},
-          {label:"中年", value:1},
-          {label:"老年", value:1}
-        ], special:"single_zero_cap4", note:"各占1分；若仅勾选一项则记 0 分；最高封顶 +4。" },
-        { id:"F-F2", section:"女性角色刻画", title:"女角色外形设定（服弱役/性化/幼化等）（-2~+2）", type:"scale", min:-2, max:2, step:1 },
-        { id:"F-F3", section:"女性角色刻画", title:"女角色形象设置丰富度（程度 0~+2）", type:"scale", min:0, max:2, step:1 },
-        { id:"F-F4", section:"女性角色刻画", title:"女角色有完整成长线/丰富剧情（0~+4）", type:"scale", min:0, max:4, step:1 },
-        { id:"F-F5", section:"女性角色刻画", title:"女角色参与核心剧情", type:"single", options:[
-          {label:"是", value:1},
-          {label:"否", value:-1}
-        ]},
-        { id:"F-F6", section:"女性角色刻画", title:"女女关系多样化（不包括女同）（0~+3）", type:"scale", min:0, max:3, step:1 },
-        { id:"F-F7", section:"女性角色刻画", title:"存在性缘关系时，性缘叙事占比（-2~0）", type:"scale", min:-2, max:0, step:1 },
-        { id:"F-F8", section:"女性角色刻画", title:"存在领导者角色时，性别数量对比", type:"single", options:[
-          {label:"全女", value:2},
-          {label:"女比男多", value:1},
-          {label:"女男相等", value:0},
-          {label:"男比女多", value:-1},
-          {label:"全男", value:-2}
-        ]},
-        { id:"F-F9", section:"女性角色刻画", title:"含有女性传承的情节", type:"single", options:[
-          {label:"是", value:2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F10", section:"女性角色刻画", title:"母对主角影响", type:"single", options:[
-          {label:"较正面（尊重主角独立人格）", value:1},
-          {label:"少量文字/过场描述", value:0},
-          {label:"母内容少或有矮化弱化倾向/着重描写父女情", value:-2}
-        ]},
-        { id:"F-F11", section:"女性角色刻画", title:"女角色篇幅多于男角色", type:"single", options:[
-          {label:"没有男角色", value:2},
-          {label:"是", value:0},
-          {label:"否", value:-2}
-        ]},
-        { id:"F-F12", section:"女性角色刻画", title:"女角色高光时刻多于男角色", type:"single", options:[
-          {label:"没有男角色", value:2},
-          {label:"是", value:0},
-          {label:"否", value:-2}
-        ]},
-        { id:"F-F13", section:"女性角色刻画", title:"含有驴竞情节", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F14", section:"女性角色刻画", title:"主要女角色结阍", type:"single", options:[
-          {label:"结了不离（离了再结）", value:-2},
-          {label:"离了不结", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F15", section:"女性角色刻画", title:"（除主要女角色的母亲外）主要女角色生育后代", type:"single", options:[
-          {label:"男性后代", value:-2},
-          {label:"女性后代", value:0}
-        ]},
-        { id:"F-F16", section:"女性角色刻画", title:"提及女性争取权力的历史", type:"single", options:[
-          {label:"是", value:3},
-          {label:"无", value:0}
-        ]},
-        { id:"F-F17", section:"女性角色刻画", title:"主要女角色是否拥有自己的事业", type:"single", options:[
-          {label:"是", value:2},
-          {label:"无", value:0}
-        ]},
-        { id:"F-F18", section:"女性角色刻画", title:"鼓吹女性外貌红利、身材焦虑等", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F19", section:"女性角色刻画", title:"鼓吹性自由/荡妇羞辱", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F20", section:"女性角色刻画", title:"女角色软色情、擦边内容", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F21", section:"女性角色刻画", title:"女角色魅男/爱男/利男行为", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F22", section:"女性角色刻画", title:"女角色寻父/救父/缅怀父/替父报仇", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F23", section:"女性角色刻画", title:"含有物化女性的情节", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F24", section:"女性角色刻画", title:"美化女性苦难", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F25", section:"女性角色刻画", title:"含有虐女情节（包括性犯罪、着重描绘女人受苦）", type:"scale", min:-5, max:-3, step:1 },
-        { id:"F-F26", section:"女性角色刻画", title:"女角色存在男性支持（妹兄、姐弟、师生等）", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F27", section:"女性角色刻画", title:"女角色死亡/牺牲/奉献情节", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F28", section:"女性角色刻画", title:"与男相关的‘弱女叙事’（哭丧/悲剧/徒劳等）", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-F29", section:"女性角色刻画", title:"对女性生理周期（月经/更年期等）描写", type:"single", options:[
-          {label:"有非负面描写", value:2},
-          {label:"无描写", value:0},
-          {label:"有负面描写", value:-2}
-        ]},
-        { id:"F-F30", section:"女性角色刻画", title:"涉及女性争取权利的情节", type:"single", options:[
-          {label:"有正面描写", value:3},
-          {label:"无描写", value:0},
-          {label:"有负面描写", value:-3}
-        ]},
-        { id:"F-F31", section:"女性角色刻画", title:"对女性生理疾病（如乳腺结节/乳腺癌等）描写", type:"single", options:[
-          {label:"非负面描写", value:1},
-          {label:"无描写", value:0},
-          {label:"负面描写", value:-1}
-        ]},
-        { id:"F-F32", section:"女性角色刻画", title:"对女性怀孕相关生理行为（生产/堕胎等）描写", type:"single", options:[
-          {label:"无描写", value:0},
-          {label:"美化描写", value:-2}
-        ]},
+        // 女性角色刻画
+        yesNo("F-F1","女性角色刻画","女角色参与核心剧情", 1, -1),
+        {
+          id:"F-F2", section:"女性角色刻画", title:"女角色剧情篇幅占比多于男角色", type:"single",
+          options:[opt("没有男角色", 1), opt("是", 0), opt("否", -1)]
+        },
+        {
+          id:"F-F3", section:"女性角色刻画", title:"存在领导者角色时，性别数量对比", type:"single",
+          options:[opt("全女", 2), opt("女比男多", 1), opt("女男相等", 0), opt("男比女多", -1), opt("全男", -2)]
+        },
+        multi(
+          "F-F4","女性角色刻画","女性角色年龄段丰富度（幼年/少年/成年/中年/老年；各占1分，若仅有一项则为0）",
+          [opt("幼年",1), opt("少年",1), opt("成年",1), opt("中年",1), opt("老年",1)],
+          null,
+          "single_zero_cap4"
+        ),
+        scale("F-F5","女性角色刻画","女角色形象设置丰富度（包括体型、发型、肤色、职业等）", 0, 2),
+        scale("F-F6","女性角色刻画","主要女性角色个人能力（如武力、智慧、敏锐等）", 0, 2),
+        scale("F-F7","女性角色刻画","女角色外形设定（服弱役/性化/幼化等）（程度）", -2, 2),
+        scale("F-F8","女性角色刻画","女女关系多样化（女性友谊/互动/对抗；不包括女同）", 0, 3),
+        {
+          id:"F-F9", section:"女性角色刻画", title:"女角色高光时刻多于男角色", type:"single",
+          options:[opt("没有男角色", 2), opt("是", 0), opt("否", -2)]
+        },
+        yesNo("F-F10","女性角色刻画","主要女角色拥有自己的事业", 2, 0),
+        scale("F-F11","女性角色刻画","存在女同关系时对其刻画（程度）", -2, 0),
+        {
+          id:"F-F12", section:"女性角色刻画", title:"含有女角色母亲描写", type:"single",
+          options:[
+            opt("较正面（尊重主角独立人格）", 1),
+            opt("少量文字或过场描述", 0),
+            opt("母内容少或有矮化弱化倾向/着重父女情", -1)
+          ]
+        },
+        yesNo("F-F13","女性角色刻画","女角色存在男性支持，妹兄、姐弟、师生等", -2, 0),
+        yesNo("F-F14","女性角色刻画","含有女角色寻/缅怀父、替父报仇的情节", -1, 0),
+        yesNo("F-F15","女性角色刻画","含有驴竞行为（例如除了女主角外的女性形象刻板，以此突出女主角特殊）", -1, 0),
+        yesNo("F-F16","女性角色刻画","含有制度性剥削女性的情节（闝倡、代孕、同妻、买卖婚姻、强迫婚育等）", -2, 0),
+        yesNo("F-F17","女性角色刻画","含有描写女性从外貌中得利、身材焦虑等内容", -1, 0),
+        yesNo("F-F18","女性角色刻画","含有描写性自由/荡妇羞辱的内容", -1, 0),
+        yesNo("F-F19","女性角色刻画","含有女角色软色情、擦边内容", -1, 0),
+        scale("F-F20","女性角色刻画","含有虐女情节（包括性犯罪、着重描绘女人受苦惨状）", -5, -3),
+        yesNo("F-F21","女性角色刻画","性别认知障碍（女扮男、自称哥、对女喊兄弟/buddy/guy等）", -1, 0),
+        scale("F-F22","女性角色刻画","含有女角色魅男、爱男、利男行为的情节（程度）", -5, -2),
+        scale("F-F23","女性角色刻画","含有与男相关的“弱女叙事”（哭丧、悲剧、徒劳等）（程度）", -2, 0),
+        {
+          id:"F-F24", section:"女性角色刻画", title:"含有女性反抗/觉醒情节（拒绝昏育规训、拒绝服弱役、拒绝男性控制、经济自立等）", type:"single",
+          options:[
+            opt("成功反抗/觉醒为主线", 3),
+            opt("有明确成功反抗行为或觉醒观点", 2),
+            opt("无", 0),
+            opt("有反抗但苦楚/雄堕描写占比较大", -1),
+            opt("过度渲染苦难且反抗篇幅很少", -2),
+            opt("反抗失败", -3)
+          ]
+        },
+        tri("F-F25","女性角色刻画","含有女性争权夺利的情节", "有正面描写", 3, "无描写", 0, "有负面描写", -3),
+        yesNo("F-F26","女性角色刻画","女主角无民族、国家、地域荣誉感", 2, 0),
+        multi(
+          "F-F27","女性角色刻画","含有女角色死亡情节（多选）",
+          [opt("被虐杀", -4), opt("被女杀", -1), opt("被男杀", -2), opt("为女牺牲", -1), opt("为男牺牲", -2), opt("意外死亡", -1), opt("自然死亡", 0)]
+        ),
+        yesNo("F-F28","女性角色刻画","忽视女性困境（美化伎女处境、美化拐卖、美化强暴等）", -2, 0),
+        yesNo("F-F29","女性角色刻画","女角色有其她选择，却选择堕落（进入伎女/被性剥削行业、在明显不具备养育条件时坚持生育、回到暴力关系等）", -1, 0),
+        {
+          id:"F-F30", section:"女性角色刻画", title:"对女性生理周期（月经、更年期等）有描写", type:"single",
+          options:[opt("有非负面描写", 1), opt("无描写", 0), opt("有负面描写", -1)]
+        },
+        {
+          id:"F-F31", section:"女性角色刻画", title:"对女性生理疾病（乳腺结节/乳腺癌等）有描写", type:"single",
+          options:[opt("非负面描写", 1), opt("无描写", 0), opt("负面描写", -1)]
+        },
+        {
+          id:"F-F32", section:"女性角色刻画", title:"对女性怀孕相关生理行为（生产、堕胎等）呈现代价、风险、痛苦", type:"single",
+          options:[opt("清晰呈现代价、风险、痛苦", 1), opt("无描写", 0), opt("美化/神圣化描写", -1)]
+        },
 
-        // ===== 男性角色刻画 =====
-        { id:"F-M1", section:"男性角色刻画", title:"男性角色年龄段丰富度（多选）", type:"multi", options:[
-          {label:"幼年", value:-1},
-          {label:"少年", value:-1},
-          {label:"成年", value:-1},
-          {label:"中年", value:-1},
-          {label:"老年", value:-1}
-        ], note:"按你规则：若仅有一项则为 -1（这里按正常叠加即可）。" },
-        { id:"F-M2", section:"男性角色刻画", title:"男角色形象设置丰富度（程度 -2~0）", type:"scale", min:-2, max:0, step:1 },
-        { id:"F-M3", section:"男性角色刻画", title:"男男关系多样化（程度 -2~0）", type:"scale", min:-2, max:0, step:1 },
-        { id:"F-M4", section:"男性角色刻画", title:"男角色有完整成长线、丰富剧情", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-M5", section:"男性角色刻画", title:"男角色参与核心剧情", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-M6", section:"男性角色刻画", title:"含有污辱女性的言论或行为", type:"single", options:[
-          {label:"是且非用于批判", value:-5},
-          {label:"是但用于批判", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"F-M7", section:"男性角色刻画", title:"美化或淡化男性对女性的猥亵、黄段子", type:"single", options:[
-          {label:"是", value:-5},
-          {label:"否", value:0}
-        ]},
-        { id:"F-M8", section:"男性角色刻画", title:"含有臆女童情节", type:"single", options:[
-          {label:"是且非用于批判", value:-5},
-          {label:"是但用于批判", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"F-M9", section:"男性角色刻画", title:"含闝倡、代孕等情节", type:"single", options:[
-          {label:"是且非用于批判", value:-5},
-          {label:"是但用于批判", value:-1},
-          {label:"否", value:0}
-        ]},
-        { id:"F-M10", section:"男性角色刻画", title:"含有男性生殖崇拜", type:"single", options:[
-          {label:"是", value:-5},
-          {label:"否", value:0}
-        ]},
-        { id:"F-M11", section:"男性角色刻画", title:"含有父系传承的情节", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-M12", section:"男性角色刻画", title:"含有夸大男性苦难的情节", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]},
-        { id:"F-M13", section:"男性角色刻画", title:"男角色获得比女角色更好待遇、结局等", type:"single", options:[
-          {label:"是", value:-2},
-          {label:"否", value:0}
-        ]}
+        // 男性角色刻画
+        yesNo("F-M1","男性角色刻画","男角色参与核心剧情", -1, 0),
+        multi(
+          "F-M2","男性角色刻画","男性角色年龄段丰富度（幼年/少年/成年/中年/老年；若仅有一项则为0；两项为-2；每多一项-1；最高-5）",
+          [opt("幼年",-1), opt("少年",-1), opt("成年",-1), opt("中年",-1), opt("老年",-1)],
+          null,
+          "single_zero_cap-5"
+        ),
+        scale("F-M3","男性角色刻画","男角色形象设置丰富度（程度）", -2, 0),
+        scale("F-M4","男性角色刻画","主要男性角色个人能力（如武力、智慧、敏锐等）（程度）", -2, 0),
+        scale("F-M5","男性角色刻画","男性角色有完整的成长线或高光或立体的塑造（程度）", -2, 0),
+        scale("F-M6","男性角色刻画","男男关系多样化（程度）", -3, 0),
+        yesNo("F-M7","男性角色刻画","美化男性（母父对比、男性友情、男性深情等）", -1, 0),
+        yesNo("F-M8","男性角色刻画","含有男性生殖崇拜", -5, 0),
+        yesNo("F-M9","男性角色刻画","含有父系传承的情节", -2, 0),
+        yesNo("F-M10","男性角色刻画","含有夸大男性苦难的情节", -2, 0),
+        yesNo("F-M11","男性角色刻画","男角色获得比女角色更好待遇、结局等", -1, 0),
+        yesNo("F-M12","男性角色刻画","男性掠夺女性生育能力或成果（男性生育/产翁等）", -2, 0),
+        {
+          id:"F-M13", section:"男性角色刻画", title:"含有污辱女性的言论或行为", type:"single",
+          options:[opt("是且并非用于批判", -5), opt("是但用于批判讽刺", -1), opt("否", 0)]
+        },
+        yesNo("F-M14","男性角色刻画","存在男性对女性的猥亵、黄段子", -5, 0),
+        multi(
+          "F-M15","男性角色刻画","含有男角色死亡情节（多选）",
+          [opt("被虐杀", 2), opt("被女杀", 2), opt("被男杀", 1), opt("意外死亡", 1), opt("自然死亡", 0)]
+        ),
+
+        // 其她
+        multi(
+          "F-O1","其她","镜头语言（多选）",
+          [
+            opt("男凝镜头描画女性", -2),
+            opt("镜头对准女性受害者", -2),
+            opt("交配展示镜头", -2),
+            opt("无意义展示天残器官", -2),
+            opt("美化虐女镜头", -2),
+            opt("其她不适的厌女镜头", -2)
+          ],
+          "可自行补充。"
+        ),
+        scale("F-O2","其她","主观感受（程度）", -2, 2),
+        yesNo("F-O3","其她","批判男性，但主要围绕性缘、男儿描写", -1, 0),
+        yesNo("F-O4","其她","对非女（包括男性VGBTQ等退步人）持有擦亮眼态度", -1, 0),
+        yesNo("F-O5","其她","对VGBTQ友好", -1, 0),
+        yesNo("F-O6","其她","鼓吹女凝男自由", -1, 0),
+        yesNo("F-O7","其她","女权男", -1, 0),
+        yesNo("F-O8","其她","污名化女权（使用人权/女男平等代替女权等）", -2, 0),
+        yesNo("F-O9","其她","认为政治倾向/阶级等大于性别", -2, 0),
       ]
     }
   };
 
-  // Choose set
-  const setId = (window.PAGE_CONFIG && window.PAGE_CONFIG.questionSet) ? window.PAGE_CONFIG.questionSet : "narrative";
-  const set = BANK[setId] || BANK.narrative;
-
-  // Expose for rating.js
-  window.QUESTIONS = set.questions;
-  window.SECTION_ORDER = set.sectionOrder;
-  window.SECTION_NOTES = set.sectionNotes || {};
-
-  // Optional: expose all sets for debugging
+  // expose
   window.QUESTION_BANK = BANK;
 })();

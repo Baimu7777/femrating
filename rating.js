@@ -89,13 +89,15 @@
         const opt = (q.options||[]).find(o=>o.label===label);
         if (opt) sum += Number(opt.value);
       }
-      if (q.special === "single_zero_cap4"){
-        if (selected.length === 1) sum = 0;
-        if (sum > 4) sum = 4;
-      }
-      if (q.special === "single_zero_cap-4"){
-        if (selected.length === 1) sum = 0;
-        if (sum < -4) sum = -4;
+      // special: single selection => 0, then cap to N (or -N)
+      if (typeof q.special === "string" && q.special.startsWith("single_zero_cap")) {
+        const capStr = q.special.slice("single_zero_cap".length);
+        const cap = Number(capStr);
+        if (Number.isFinite(cap)) {
+          if (selected.length === 1) sum = 0;
+          if (cap > 0 && sum > cap) sum = cap;
+          if (cap < 0 && sum < cap) sum = cap;
+        }
       }
       return sum;
     }
