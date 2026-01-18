@@ -546,11 +546,21 @@
     }
   
     // ---- remarks toggle ----
+    function isVisible(el){
+      return !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
+    }
     function remarkToggleChecked() {
-      if (toggleRemarksTop) return !!toggleRemarksTop.checked;
+      // ✅ desktop: prefer the sidebar toggle
+      if (toggleRemarks && isVisible(toggleRemarks)) return !!toggleRemarks.checked;
+      // ✅ mobile: prefer the top toggle
+      if (toggleRemarksTop && isVisible(toggleRemarksTop)) return !!toggleRemarksTop.checked;
+    
+      // fallback (in case one is hidden by CSS)
       if (toggleRemarks) return !!toggleRemarks.checked;
+      if (toggleRemarksTop) return !!toggleRemarksTop.checked;
       return true;
     }
+    
     function setRemarkToggleChecked(checked) {
       if (toggleRemarks) toggleRemarks.checked = checked;
       if (toggleRemarksTop) toggleRemarksTop.checked = checked;
