@@ -378,9 +378,15 @@
   
               b.addEventListener("click", () => {
                 const cur = getAnswer(q.id);
-                const next = Number(cur.value) === Number(opt.value) ? null : opt.value;
+                const already =
+                  cur.value !== null &&
+                  cur.value !== undefined &&
+                  Number(cur.value) === Number(opt.value);
+              
+                const next = already ? null : opt.value;
                 setAnswer(q.id, { value: next });
               });
+              
   
               btnGroup.appendChild(b);
             }
@@ -425,9 +431,15 @@
   
               b.addEventListener("click", () => {
                 const cur = getAnswer(q.id);
-                const next = Number(cur.value) === v ? null : v;
+                const already =
+                  cur.value !== null &&
+                  cur.value !== undefined &&
+                  Number(cur.value) === v;
+              
+                const next = already ? null : v;
                 setAnswer(q.id, { value: next });
               });
+              
   
               btnGroup.appendChild(b);
             }
