@@ -570,21 +570,28 @@
         const qid = b.dataset.qid;
         const kind = b.dataset.kind;
         const ans = getAnswer(qid);
-  
+    
         let on = false;
+    
         if (kind === "single") {
           const v = Number(b.dataset.value);
+          // ✅ 允许 0 被选中：只要 ans.value 不是 null/undefined，并且数值相等就高亮
           on = ans.value !== null && ans.value !== undefined && Number(ans.value) === v;
+    
+        } else if (kind === "multi") {
+          const label = b.dataset.label;
+          on = !!(ans.multi && ans.multi[label]);
+    
         } else if (kind === "scale") {
           const v = Number(b.dataset.value);
+          // ✅ 允许 0 被选中：同 single
           on = ans.value !== null && ans.value !== undefined && Number(ans.value) === v;
-        } else if (kind === "scale") {
-          const v = Number(b.dataset.value);
-          on = Number(ans.value) === v;
         }
+    
         b.classList.toggle("active", on);
       }
     }
+    
   
     // ---- remarks toggle ----
     function isVisible(el){
