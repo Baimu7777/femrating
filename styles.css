@@ -106,7 +106,7 @@ textarea::placeholder,input::placeholder{ font-family:inherit; }
 .side{
   height:auto;
   overflow:visible;
-  padding: 22px 18px;
+  padding: 14px 14px;
   border-left:1px solid var(--line);
   background:#fff;
 }
