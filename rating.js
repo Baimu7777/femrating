@@ -372,7 +372,9 @@
               b.dataset.kind = "single";
               b.dataset.value = String(opt.value);
   
-              if (Number(a.value) === Number(opt.value)) b.classList.add("active");
+              if (a.value !== null && a.value !== undefined && Number(a.value) === Number(opt.value)) {
+                b.classList.add("active");
+              }
   
               b.addEventListener("click", () => {
                 const cur = getAnswer(q.id);
@@ -417,7 +419,9 @@
               b.dataset.kind = "scale";
               b.dataset.value = String(v);
   
-              if (Number(a.value) === v) b.classList.add("active");
+              if (a.value !== null && a.value !== undefined && Number(a.value) === v) {
+                b.classList.add("active");
+              }
   
               b.addEventListener("click", () => {
                 const cur = getAnswer(q.id);
@@ -570,10 +574,10 @@
         let on = false;
         if (kind === "single") {
           const v = Number(b.dataset.value);
-          on = Number(ans.value) === v;
-        } else if (kind === "multi") {
-          const label = b.dataset.label;
-          on = !!(ans.multi && ans.multi[label]);
+          on = ans.value !== null && ans.value !== undefined && Number(ans.value) === v;
+        } else if (kind === "scale") {
+          const v = Number(b.dataset.value);
+          on = ans.value !== null && ans.value !== undefined && Number(ans.value) === v;
         } else if (kind === "scale") {
           const v = Number(b.dataset.value);
           on = Number(ans.value) === v;
@@ -652,9 +656,11 @@
     function optionText(q) {
       const a = getAnswer(q.id);
       if (q.type === "single") {
+        if (a.value === null || a.value === undefined || a.value === "") return "—";
         const opt = (q.options || []).find((o) => Number(o.value) === Number(a.value));
         return opt ? opt.label : "—";
       }
+      
       if (q.type === "multi") {
         const selected = Object.entries(a.multi || {})
           .filter(([_, v]) => !!v)
