@@ -13,6 +13,17 @@
       // Preferred structure:
       // window.QUESTION_SETS = { narrative:{QUESTIONS,SECTION_ORDER,NOTES,SECTION_NOTES}, socsci:{...}, film:{...} }
       if (window.QUESTION_SETS && window.QUESTION_SETS[TYPE]) return window.QUESTION_SETS[TYPE];
+      // ✅ Support questions.js (QUESTION_BANK structure)
+      // questions.js exports: QUESTION_BANK[type] = { sectionOrder:[], questions:[] }
+      if (window.QUESTION_BANK && window.QUESTION_BANK[TYPE]) {
+        const b = window.QUESTION_BANK[TYPE] || {};
+        return {
+          QUESTIONS: Array.isArray(b.questions) ? b.questions : [],
+          SECTION_ORDER: Array.isArray(b.sectionOrder) ? b.sectionOrder : [],
+          NOTES: b.NOTES || b.notes || {},
+          SECTION_NOTES: b.SECTION_NOTES || b.sectionNotes || {}
+        };
+      }
   
       // Fallbacks (try common names)
       const map = {
