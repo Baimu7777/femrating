@@ -260,7 +260,7 @@ h2.section-title{
   overflow:hidden;
 }
 .card table{ width:100%; border-collapse:collapse; font-size:14px; }
-.card td{ padding:10px 12px; border-bottom:1px solid var(--line); }
+.card td{ padding:8px 10px; border-bottom:1px solid var(--line); }
 .card tr:last-child td{ border-bottom:none; }
 .card td:first-child{ color:#111827; font-weight:800; }
 .card td:last-child{ text-align:right; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; font-weight:900; }
@@ -275,7 +275,7 @@ h2.section-title{
   line-height:1.35;
 }
 
-.entity-card{ padding:14px 14px 12px; margin-bottom:12px; }
+.entity-card{ padding:10px 12px 10px; margin-bottom:8px; }
 .entity-card .label{ font-size:13px; color:var(--muted); font-weight:900; margin: 0 0 8px; }
 .entity-card input{
   width:100%;
@@ -303,7 +303,7 @@ h2.section-title{
   gap:8px;
   font-size:13px;
   color:var(--muted);
-  margin:12px 0 14px;
+  margin:8px 0 10px;
 }
 .toggle input{ width:16px; height:16px; accent-color: var(--blue); }
 
@@ -311,7 +311,7 @@ h2.section-title{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  margin:10px 0 14px;
+  margin:6px 0 10px;
 }
 .side-actions button{
   border:1px solid var(--line);
