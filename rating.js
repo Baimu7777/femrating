@@ -10,6 +10,19 @@
   
     // ---- Pick question set by page type (NO mixing) ----
     function pickQuestionSet() {
+      // Newest structure used by questions.js in this project:
+      // window.QUESTION_BANK = { narrative:{sectionOrder,questions}, socsci:{...}, film:{...} }
+      const bankKey = (CFG.questionSet || TYPE || "narrative").toString().toLowerCase();
+      if (window.QUESTION_BANK && window.QUESTION_BANK[bankKey]) {
+        const b = window.QUESTION_BANK[bankKey] || {};
+        return {
+          QUESTIONS: Array.isArray(b.questions) ? b.questions : [],
+          SECTION_ORDER: Array.isArray(b.sectionOrder) ? b.sectionOrder : [],
+          NOTES: b.notes || {},
+          SECTION_NOTES: b.sectionNotes || {},
+        };
+      }
+
       // Preferred structure:
       // window.QUESTION_SETS = { narrative:{QUESTIONS,SECTION_ORDER,NOTES,SECTION_NOTES}, socsci:{...}, film:{...} }
       if (window.QUESTION_SETS && window.QUESTION_SETS[TYPE]) return window.QUESTION_SETS[TYPE];
@@ -48,6 +61,13 @@
     const SECTION_ORDER = Array.isArray(SET.SECTION_ORDER) ? SET.SECTION_ORDER : [];
     const NOTES = SET.NOTES || {};
     const SECTION_NOTES = SET.SECTION_NOTES || {};
+
+    // Per-question notes map (empty by default; you can fill later)
+    // window.QUESTION_NOTES_MAP = { narrative:{Q1:"..."}, socsci:{...}, film:{...} }
+    function getQuestionNote(q){
+      const map = (window.QUESTION_NOTES_MAP && window.QUESTION_NOTES_MAP[TYPE]) ? window.QUESTION_NOTES_MAP[TYPE] : {};
+      return (q && (q.note || map[q.id])) ? String(q.note || map[q.id]) : "";
+    }
   
     // ---- storage keys ----
     const STORAGE_KEY = CFG.storageKey || `rating_state_${TYPE}_v1`;
@@ -60,6 +80,7 @@
     const qGrid = $("#qGrid");
     const mainScroll = $("#mainScroll") || document.querySelector(".main");
     const sideScroll = $("#sideScroll") || document.querySelector(".side");
+    const sourceNoteEl = document.querySelector(".source-note");
   
     const nameInput = $("#entityName");
     const linkInput = $("#entityLink");
@@ -90,6 +111,7 @@
     }
     setText(topTitle, CFG.pageTitle || "评分表");
     setText(topSubtitle, CFG.pageSubtitle || "（占位内容）");
+    if (sourceNoteEl) setText(sourceNoteEl, CFG.exportSource || "");
   
     // ---- ensure sidebar Q area does NOT inherit `.grid` 8-col layout ----
     function injectEnhanceCss() {
@@ -128,68 +150,74 @@
           white-space:nowrap;
         }
   
-        /* export stage (like your example) */
+        /* export stage (match your example image layout) */
         .export-stage{
           position: fixed;
           left: -10000px;
           top: 0;
           width: 1200px;
-          padding: 28px 28px 32px;
+          padding: 26px 28px 30px;
           background: #fff;
           color: var(--text);
           font-family: inherit;
         }
-        .export-head{
+        .export-top{
           display:flex;
           justify-content:space-between;
           align-items:flex-start;
-          gap:18px;
-          margin-bottom: 14px;
+          gap: 14px;
         }
-        .export-title{
-          font-size: 22px;
+        .export-top-left{
+          font-size: 14px;
+          color:#111827;
           font-weight: 900;
-          margin: 0;
+          letter-spacing: .2px;
         }
-        .export-meta{
-          margin-top: 6px;
-          font-size: 13px;
-          color: #4b5563;
-          line-height: 1.4;
-          word-break: break-word;
-        }
-        .export-total{
-          font-size: 34px;
-          font-weight: 900;
-          margin: 0;
+        .export-top-right{
           text-align:right;
-          line-height: 1.1;
-        }
-        .export-subtotal{
           font-size: 12px;
           color:#6b7280;
-          text-align:right;
-          margin-top: 6px;
+          line-height: 1.4;
+          white-space: nowrap;
+        }
+        .export-name{
+          margin: 10px 0 0;
+          text-align:center;
+          font-size: 44px;
+          font-weight: 900;
+          letter-spacing: .5px;
+        }
+        .export-total-line{
+          margin: 8px 0 18px;
+          text-align:center;
+          font-size: 18px;
+          font-weight: 900;
+          color:#111827;
         }
         .export-table{
           width:100%;
           border-collapse:collapse;
           font-size: 13px;
-          margin-top: 14px;
         }
         .export-table th, .export-table td{
           border: 1px solid #e5e7eb;
-          padding: 8px 8px;
+          padding: 9px 10px;
           vertical-align: top;
         }
         .export-table th{
-          background:#f7f7f9;
-          text-align:left;
-          font-weight:900;
+          background: #f6f0dc;
+          text-align:center;
+          font-weight: 900;
         }
-        .export-sec{
-          background:#fafafa;
-          font-weight:900;
+        .export-sec-row td{
+          background: #e7f0ff;
+          font-weight: 900;
+          text-align:left;
+        }
+        .export-score{
+          text-align:center;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+          font-weight: 900;
         }
         .export-muted{ color:#6b7280; font-size: 12px; line-height: 1.35; margin-top:4px;}
       `;
@@ -197,26 +225,12 @@
     }
     injectEnhanceCss();
   
-    // ---- query param prefill ----
-    try {
-      const url = new URL(location.href);
-      const pn = (url.searchParams.get("name") || "").trim();
-      const pl = (url.searchParams.get("link") || "").trim();
-      if (pn && nameInput && !nameInput.value) nameInput.value = pn;
-      if (pl && linkInput && !linkInput.value) linkInput.value = pl;
-    } catch {}
-  
-    // ---- local storage for name/link ----
-    if (nameInput) {
-      nameInput.value = nameInput.value || (localStorage.getItem(NAME_KEY) || "");
-      nameInput.addEventListener("input", () => localStorage.setItem(NAME_KEY, nameInput.value));
-    }
-    if (linkInput) {
-      linkInput.value = linkInput.value || (localStorage.getItem(LINK_KEY) || "");
-      linkInput.addEventListener("input", () => localStorage.setItem(LINK_KEY, linkInput.value));
-    }
-    const getName = () => (nameInput ? nameInput.value : (localStorage.getItem(NAME_KEY) || "")).trim();
-    const getLink = () => (linkInput ? linkInput.value : (localStorage.getItem(LINK_KEY) || "")).trim();
+    // ---- IMPORTANT: entity name/link should NOT be prefilled ----
+    // (No URL params prefill; no localStorage persist)
+    if (nameInput) nameInput.value = "";
+    if (linkInput) linkInput.value = "";
+    const getName = () => (nameInput ? nameInput.value : "").trim();
+    const getLink = () => (linkInput ? linkInput.value : "").trim();
   
     // ---- state ----
     let state = loadState();
@@ -326,7 +340,27 @@
           const title = document.createElement("div");
           title.className = "qtitle";
           title.textContent = q.title;
-          block.appendChild(title);
+
+          // optional per-question note ("说明")
+          const noteText = getQuestionNote(q);
+          if (noteText) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "note-btn";
+            btn.textContent = "说明";
+            btn.addEventListener("click", () => {
+              box.classList.toggle("open");
+            });
+            title.appendChild(btn);
+
+            const box = document.createElement("div");
+            box.className = "note-box";
+            box.textContent = noteText;
+            block.appendChild(title);
+            block.appendChild(box);
+          } else {
+            block.appendChild(title);
+          }
   
           const row = document.createElement("div");
           row.className = "qrow";
@@ -396,11 +430,12 @@
           row.appendChild(remark);
           block.appendChild(row);
   
-          if (q.note) {
-            const spec = document.createElement("div");
-            spec.className = "spec";
-            spec.textContent = "说明：" + q.note;
-            block.appendChild(spec);
+          // show scoring range (optional)
+          if (q.spec) {
+            const range = document.createElement("div");
+            range.className = "spec";
+            range.textContent = q.spec;
+            block.appendChild(range);
           }
           sec.appendChild(block);
         }
@@ -618,86 +653,89 @@
   
       const { total, bySection } = computeTotals();
       const name = getName() || (TYPE === "film" ? "未命名影视" : "未命名书籍");
-      const link = getLink();
-  
-      const head = document.createElement("div");
-      head.className = "export-head";
-  
-      const left = document.createElement("div");
-      const title = document.createElement("h1");
-      title.className = "export-title";
-      title.textContent = (CFG.pageTitle || "评分") + " · 3.0";
-      left.appendChild(title);
-  
-      const meta = document.createElement("div");
-      meta.className = "export-meta";
-      meta.innerHTML = `<div><b>名称：</b>${escapeHtml(name)}</div>` + (link ? `<div><b>链接：</b>${escapeHtml(link)}</div>` : "");
-      left.appendChild(meta);
-  
-      const right = document.createElement("div");
-      const big = document.createElement("div");
-      big.className = "export-total";
-      big.textContent = String(total);
-      right.appendChild(big);
-  
-      const sub = document.createElement("div");
-      sub.className = "export-subtotal";
-      sub.textContent = "分区小计： " + SECTION_ORDER.map((s) => `${s} ${bySection[s] ?? 0}`).join(" / ");
-      right.appendChild(sub);
-  
-      head.appendChild(left);
-      head.appendChild(right);
-      stage.appendChild(head);
-  
+
+      // top row
+      const top = document.createElement("div");
+      top.className = "export-top";
+
+      const tl = document.createElement("div");
+      tl.className = "export-top-left";
+      tl.textContent = (CFG.exportBrand || CFG.pageTitle || "评分表") + " · 3.0";
+
+      const tr = document.createElement("div");
+      tr.className = "export-top-right";
+      const now = new Date();
+      const dt = (() => {
+        try {
+          return now.toLocaleString("zh-CN", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", hour12:false });
+        } catch {
+          const p = (n) => String(n).padStart(2,"0");
+          return `${now.getFullYear()}/${p(now.getMonth()+1)}/${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}`;
+        }
+      })();
+      const source = CFG.exportSource || "";
+      tr.innerHTML = `${escapeHtml(dt)}${source ? `<br>${escapeHtml(source)}` : ""}`;
+
+      top.appendChild(tl);
+      top.appendChild(tr);
+      stage.appendChild(top);
+
+      const nm = document.createElement("div");
+      nm.className = "export-name";
+      nm.textContent = name;
+      stage.appendChild(nm);
+
+      const totalLine = document.createElement("div");
+      totalLine.className = "export-total-line";
+      totalLine.textContent = `总分：${total}`;
+      stage.appendChild(totalLine);
+
       const table = document.createElement("table");
       table.className = "export-table";
       table.innerHTML = `
         <thead>
           <tr>
-            <th style="width:140px;">分区</th>
-            <th style="width:70px;">题号</th>
-            <th>题目</th>
-            <th style="width:220px;">选择</th>
-            <th style="width:60px;">分值</th>
-            <th style="width:240px;">说明/补充</th>
+            <th style="width: 420px;">具体条目</th>
+            <th>打分范围</th>
+            <th style="width: 80px;">得分</th>
+            <th style="width: 320px;">评定说明或补充</th>
           </tr>
         </thead>
         <tbody></tbody>
       `;
       const tb = table.querySelector("tbody");
-  
+
       for (const section of SECTION_ORDER) {
         const secQs = QUESTIONS.filter((q) => q.section === section);
         if (!secQs.length) continue;
-  
+
         const trSec = document.createElement("tr");
-        trSec.className = "export-sec";
+        trSec.className = "export-sec-row";
         const td = document.createElement("td");
-        td.colSpan = 6;
-        td.textContent = section;
+        td.colSpan = 4;
+        td.textContent = `${section}（得分：${bySection[section] ?? 0}）`;
         trSec.appendChild(td);
         tb.appendChild(trSec);
-  
-        secQs.forEach((q, idx) => {
-          const tr = document.createElement("tr");
-          const score = computeQuestionScore(q);
+
+        secQs.forEach((q) => {
           const a = getAnswer(q.id);
-  
-          tr.innerHTML = `
-            <td>${escapeHtml(section)}</td>
-            <td>Q${idx + 1}</td>
+          const score = computeQuestionScore(q);
+          const noteText = getQuestionNote(q);
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
             <td>
               <div>${escapeHtml(q.title || "")}</div>
-              ${q.note ? `<div class="export-muted">说明：${escapeHtml(q.note)}</div>` : ""}
+              ${noteText ? `<div class="export-muted">说明：${escapeHtml(noteText)}</div>` : ""}
             </td>
-            <td>${escapeHtml(optionText(q))}</td>
-            <td>${typeof score === "number" ? score : 0}</td>
+            <td>${escapeHtml(q.spec || "")}</td>
+            <td class="export-score">${typeof score === "number" ? score : 0}</td>
             <td>${escapeHtml((a.remark || "").trim())}</td>
           `;
-          tb.appendChild(tr);
+          tb.appendChild(row);
         });
       }
-  
+
       stage.appendChild(table);
       document.body.appendChild(stage);
       return stage;
@@ -823,5 +861,19 @@
       mainScroll.addEventListener("scroll", () => window.requestAnimationFrame(updateActiveChipByScroll));
     }
     window.addEventListener("resize", () => window.requestAnimationFrame(updateActiveChipByScroll));
+
+    // Make sidebar fixed/non-scrollable by redirecting wheel to the left panel
+    if (sideScroll && mainScroll) {
+      sideScroll.addEventListener(
+        "wheel",
+        (e) => {
+          // Only handle vertical scrolling
+          if (Math.abs(e.deltaY) < 0.5) return;
+          e.preventDefault();
+          mainScroll.scrollTop += e.deltaY;
+        },
+        { passive: false }
+      );
+    }
   })();
   

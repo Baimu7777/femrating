@@ -4,87 +4,93 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>社科书籍评分 · 3.0</title>
-  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📋</text></svg>">
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📘</text></svg>">
+  <link rel="stylesheet" href="../styles.css" />
+
+  <!-- html2canvas for JPG export -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
   <script>
-    // Page config (no build tools)
     window.PAGE_CONFIG = {
       type: "socsci",
       questionSet: "socsci",
       pageTitle: "社科书籍评分 · 3.0",
-      pageSubtitle: "（自然科普/人文社科/非叙事类）",
+      pageSubtitle: "（自然科普 / 人文社科）",
       entityLabel: "书名",
-      storageKey: "rating_socsci_book_state_v1",
-      nameKey: "rating_socsci_book_name_v1",
-      linkKey: "rating_socsci_book_link_v1"
+      storageKey: "rating_state_socsci_v1",
+      nameKey: "rating_name_socsci_v1",
+      linkKey: "rating_link_socsci_v1",
+      exportBrand: "女性友好度打分",
+      exportSource: "打分表格来源：豆瓣小组 · 魔女游机队"
     };
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script defer src="/questions.js"></script>
-  <script defer src="/rating.js"></script>
 </head>
-
-<body>
-  <div id="exportCapture">
+<body class="rating-page">
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
         <div class="title" id="topTitle">社科书籍评分 · 3.0</div>
-        <div class="subtitle" id="topSubtitle">（自然科普/人文社科/非叙事类）</div>
+        <div class="subtitle" id="topSubtitle">（自然科普 / 人文社科）</div>
       </div>
-      <nav class="navtabs" aria-label="页面切换">
-        <a class="" href="/">叙事书籍</a>
-        <a class="active" href="/socsci/">社科书籍</a>
-        <a class="" href="/film/">影视评分</a>
-        <a class="" href="/db/">数据库</a>
+      <nav class="navtabs">
+        <a href="../">叙事书籍</a>
+        <a class="active" href="./">社科书籍</a>
+        <a href="../film/">影视</a>
+        <a href="../db/">打分库</a>
       </nav>
     </div>
   </header>
 
-  <div id="mobileEntityHost" class="mobile-entity-host" aria-label="书名（移动端）"></div>
-
-  <div class="mobile-top-toggle" role="region" aria-label="评定说明或补充开关">
+  <div class="mobile-top-toggle">
     <div class="mobile-toggle-inner">
       <div class="mobile-toggle-left">
         <input id="toggleRemarksTop" type="checkbox" checked />
-        <label for="toggleRemarksTop">评定说明或补充</label>
+        <label for="toggleRemarksTop">显示评定说明</label>
       </div>
-      <button id="btnResetTop" class="mobile-reset" type="button" title="清空所有得分与备注">清空</button>
+      <button class="mobile-reset" id="btnResetTop" type="button">清空</button>
     </div>
   </div>
 
+  <div class="mobile-entity-host" id="mobileEntityHost"></div>
+
   <div class="app">
-    <div class="main" id="mainScroll">
+    <main class="main" id="mainScroll">
       <div id="content"></div>
-    </div>
+    </main>
 
     <aside class="side" id="sideScroll">
       <div class="source-note"></div>
 
-      <div class="card entity-card" aria-label="书名（可选）">
+      <div class="card" style="margin-bottom:12px;">
+        <table>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card entity-card">
         <div class="label">书名</div>
-        <input id="entityName" type="text" placeholder="可选填" />
-        <div class="hint">链接（可选）：</div>
-        <input id="entityLink" type="text" placeholder="可选填（如豆瓣/Goodreads等）" />
+        <input id="entityName" type="text" placeholder="不预填，手动填写" />
+        <div class="label" style="margin-top:10px;">链接（可选）</div>
+        <input id="entityLink" type="text" placeholder="不预填，手动填写" />
+        <div class="hint">名称与链接不会自动预填写。</div>
       </div>
 
-      <div class="card">
-        <table><tbody id="summaryBody"></tbody></table>
-      </div>
-
-      <div class="toggle" title="勾选可隐藏/显示所有评定说明或补充框">
+      <div class="toggle">
         <input id="toggleRemarks" type="checkbox" checked />
-        <label for="toggleRemarks">评定说明或补充</label>
+        <label for="toggleRemarks">显示评定说明</label>
       </div>
 
       <div class="side-actions">
-        <button id="btnExportJpg" type="button">导出 JPG</button>
         <button id="btnReset" type="button">清空</button>
+        <button id="btnExportJpg" type="button">导出JPG</button>
+        <button id="btnExportJpgMulti" type="button">分4张导出</button>
       </div>
 
-      <div class="grid" id="qGrid"></div>
+      <div id="qGrid" class="grid"></div>
     </aside>
   </div>
-  </div>
+
+  <script src="../questions.js"></script>
+  <script src="../rating.js"></script>
 </body>
 </html>

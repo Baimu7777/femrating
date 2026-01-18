@@ -51,10 +51,10 @@
 
   function buildOpenRatingUrl(item){
     const t = normType(item.type);
-    const base = (t === "film") ? "/film/" : (t === "socsci" ? "/socsci/" : "/");
-    const url = new URL(base, location.origin);
-    if (item.title) url.searchParams.set("name", item.title);
-    if (item.link) url.searchParams.set("link", item.link);
+    // Use relative paths so it works both on Vercel and when opened locally
+    const base = (t === "film") ? "../film/" : (t === "socsci" ? "../socsci/" : "../");
+    const url = new URL(base, location.href);
+    // Do NOT prefill name/link on the rating pages
     return url.toString();
   }
 
@@ -141,7 +141,7 @@
 
   async function load(){
     try{
-      const res = await fetch("/ratings.json", { cache: "no-store" });
+      const res = await fetch("../ratings.json", { cache: "no-store" });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("ratings.json 不是数组");

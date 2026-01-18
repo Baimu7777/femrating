@@ -91,7 +91,7 @@ textarea::placeholder,input::placeholder{ font-family:inherit; }
 }
 
 .app{
-  /* Let the whole page scroll (so the browser scrollbar is always present). */
+  /* Default: let the whole page scroll (DB pages, mobile, etc.) */
   min-height: calc(100vh - 52px); /* topbar height approx */
   height: auto;
   display:grid;
@@ -109,6 +109,27 @@ textarea::placeholder,input::placeholder{ font-family:inherit; }
   padding: 22px 18px;
   border-left:1px solid var(--line);
   background:#fff;
+}
+
+/* Desktop rating pages: only the LEFT panel scrolls, right sidebar stays fixed */
+@media (min-width: 1101px){
+  body.rating-page{ overflow: hidden; }
+  body.rating-page .app{
+    height: calc(100vh - 52px);
+    min-height: calc(100vh - 52px);
+    overflow: hidden;
+  }
+  body.rating-page .main{
+    height: 100%;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  body.rating-page .side{
+    position: sticky;
+    top: 52px;
+    height: calc(100vh - 52px);
+    overflow: hidden;
+  }
 }
 
 /* sections */
@@ -147,6 +168,31 @@ h2.section-title{
   font-weight:800;
   margin:0 0 10px;
 }
+
+.note-btn{
+  margin-left: 10px;
+  border: 1px solid rgba(124,58,237,.35);
+  background: rgba(243,232,255,.55);
+  color: #4b5563;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.note-box{
+  display:none;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(124,58,237,.18);
+  background: rgba(243,232,255,.35);
+  border-radius: 10px;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.note-box.open{ display:block; }
+
 .qrow{
   display:grid;
   grid-template-columns: minmax(0,1fr) 56px minmax(220px,320px);
