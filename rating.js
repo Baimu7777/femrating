@@ -4,12 +4,28 @@
 (function(){
   const $ = (sel, root=document) => root.querySelector(sel);
 
-  const QUESTIONS = window.QUESTIONS || [];
+  const CFG = window.PAGE_CONFIG || {};
+
+  // ---- Question bank selection ----
+  // questions.js provides window.QUESTION_BANK = { narrative, socsci, film }.
+  // Older pages used window.QUESTIONS / window.SECTION_ORDER.
+  // If rating.js keeps reading the legacy globals, every page will fall back to
+  // the narrative set (because questions.js sets legacy globals to narrative).
+  const BANK = window.QUESTION_BANK || {};
+
+  let bankKey = (CFG.questionSet || "").trim();
+  if (!bankKey){
+    if (CFG.type === "film") bankKey = "film";
+    else if (CFG.type === "socsci") bankKey = "socsci";
+    else bankKey = "narrative"; // default: narrative books
+  }
+
+  const picked = BANK[bankKey] || null;
+  const QUESTIONS = (picked && Array.isArray(picked.questions)) ? picked.questions : (window.QUESTIONS || []);
+  const SECTION_ORDER = (picked && Array.isArray(picked.sectionOrder)) ? picked.sectionOrder : (window.SECTION_ORDER || []);
+
   const NOTES = window.NOTES || {};
   const SECTION_NOTES = window.SECTION_NOTES || {};
-  const SECTION_ORDER = window.SECTION_ORDER || [];
-
-  const CFG = window.PAGE_CONFIG || {};
   const STORAGE_KEY = CFG.storageKey || "rating_state_v1";
   const NAME_KEY = CFG.nameKey || "rating_name_v1";
   const LINK_KEY = CFG.linkKey || "rating_link_v1";
