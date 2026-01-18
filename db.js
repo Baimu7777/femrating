@@ -48,8 +48,10 @@
 
   function buildOpenRatingUrl(item){
     const t = item.type;
-    const base = (t === "film") ? "film.html" : (t === "socsci" ? "socsci.html" : "index.html");
-    const url = new URL(base, location.href);
+  
+    const base = (t === "film") ? "/film/" : (t === "socsci" ? "/socsci/" : "/");
+  
+    const url = new URL(base, location.origin); 
     if (item.title) url.searchParams.set("name", item.title);
     if (item.link) url.searchParams.set("link", item.link);
     return url.toString();
