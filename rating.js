@@ -621,7 +621,7 @@
       const a = getAnswer(q.id);
       if (q.type === "single") {
         const opt = (q.options || []).find((o) => Number(o.value) === Number(a.value));
-        return opt ? opt.label : "—";
+        return opt ? opt.label : " ";
       }
       if (q.type === "multi") {
         const selected = Object.entries(a.multi || {})
@@ -711,7 +711,7 @@
               ${q.note ? `<div class="export-muted">说明：${escapeHtml(q.note)}</div>` : ""}
             </td>
             <td>${escapeHtml(optionText(q))}</td>
-            <td>${typeof score === "number" ? score : 0}</td>
+            <td>${typeof score === "number" ? score : ""}</td>
             <td>${escapeHtml((a.remark || "").trim())}</td>
           `;
           tb.appendChild(tr);
