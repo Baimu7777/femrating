@@ -641,6 +641,8 @@
       if (!confirm("确定清空本页所有选项与说明？")) return;
       state = {};
       saveState();
+      render(); // ✅ 重新生成按钮DOM，避免残留active
+      setRemarkToggleChecked(remarkToggleChecked());
       updateAll();
     }
     if (btnReset) btnReset.addEventListener("click", doReset);
