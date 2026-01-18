@@ -61,8 +61,7 @@
     const mainScroll = $("#mainScroll") || document.querySelector(".main");
     const sideScroll = $("#sideScroll") || document.querySelector(".side");
   
-    const nameInput = $("#sideScroll #entityName") || $("#entityNameMobile");
-
+    const nameInput = $("#entityName");
     const linkInput = $("#entityLink");
 
     // --- remove "source" line everywhere (page + JPG export)
