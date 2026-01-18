@@ -13,6 +13,7 @@
       // Preferred structure:
       // window.QUESTION_SETS = { narrative:{QUESTIONS,SECTION_ORDER,NOTES,SECTION_NOTES}, socsci:{...}, film:{...} }
       if (window.QUESTION_SETS && window.QUESTION_SETS[TYPE]) return window.QUESTION_SETS[TYPE];
+  
       // ✅ Support questions.js (QUESTION_BANK structure)
       // questions.js exports: QUESTION_BANK[type] = { sectionOrder:[], questions:[] }
       if (window.QUESTION_BANK && window.QUESTION_BANK[TYPE]) {
@@ -28,24 +29,20 @@
       // Fallbacks (try common names)
       const map = {
         narrative: {
-          QUESTIONS:
-            window.QUESTIONS_NARRATIVE || window.NARRATIVE_QUESTIONS || window.QUESTIONS || [],
-          SECTION_ORDER:
-            window.SECTION_ORDER_NARRATIVE || window.NARRATIVE_SECTION_ORDER || window.SECTION_ORDER || [],
+          QUESTIONS: window.QUESTIONS_NARRATIVE || window.NARRATIVE_QUESTIONS || window.QUESTIONS || [],
+          SECTION_ORDER: window.SECTION_ORDER_NARRATIVE || window.NARRATIVE_SECTION_ORDER || window.SECTION_ORDER || [],
           NOTES: window.NOTES_NARRATIVE || window.NOTES || {},
           SECTION_NOTES: window.SECTION_NOTES_NARRATIVE || window.SECTION_NOTES || {},
         },
         socsci: {
-          QUESTIONS:
-            window.QUESTIONS_SOCCSCI || window.SOCCSCI_QUESTIONS || window.SOCCSCI_QUESTIONS || [],
-          SECTION_ORDER:
-            window.SECTION_ORDER_SOCCSCI || window.SOCCSCI_SECTION_ORDER || [],
+          QUESTIONS: window.QUESTIONS_SOCCSCI || window.SOCCSCI_QUESTIONS || window.QUESTIONS || [],
+          SECTION_ORDER: window.SECTION_ORDER_SOCCSCI || window.SOCCSCI_SECTION_ORDER || window.SECTION_ORDER || [],
           NOTES: window.NOTES_SOCCSCI || window.NOTES || {},
           SECTION_NOTES: window.SECTION_NOTES_SOCCSCI || window.SECTION_NOTES || {},
         },
         film: {
-          QUESTIONS: window.QUESTIONS_FILM || window.FILM_QUESTIONS || [],
-          SECTION_ORDER: window.SECTION_ORDER_FILM || window.FILM_SECTION_ORDER || [],
+          QUESTIONS: window.QUESTIONS_FILM || window.FILM_QUESTIONS || window.QUESTIONS || [],
+          SECTION_ORDER: window.SECTION_ORDER_FILM || window.FILM_SECTION_ORDER || window.SECTION_ORDER || [],
           NOTES: window.NOTES_FILM || window.NOTES || {},
           SECTION_NOTES: window.SECTION_NOTES_FILM || window.SECTION_NOTES || {},
         },
@@ -62,8 +59,8 @@
   
     // ---- storage keys ----
     const STORAGE_KEY = CFG.storageKey || `rating_state_${TYPE}_v1`;
-    const NAME_KEY = CFG.nameKey || `rating_name_${TYPE}_v1`;
-    const LINK_KEY = CFG.linkKey || `rating_link_${TYPE}_v1`;
+    const NAME_KEY = CFG.nameKey || `rating_name_${TYPE}_v1`; // kept for backward compat, but not used to prefill
+    const LINK_KEY = CFG.linkKey || `rating_link_${TYPE}_v1`; // kept for backward compat, but not used to prefill
   
     // ---- DOM ----
     const contentEl = $("#content");
@@ -74,17 +71,19 @@
   
     const nameInput = $("#entityName");
     const linkInput = $("#entityLink");
-
+  
     // --- remove "source" line everywhere (page + JPG export)
-    // Some pages hardcode text into .source-note; we remove the node entirely.
     const sourceNoteEl = document.querySelector(".source-note");
     if (sourceNoteEl) sourceNoteEl.remove();
-
-
-    // --- do not prefill book name (keep blank on load)
+  
+    // --- do not prefill name/link (keep blank on load)
     if (nameInput) {
       nameInput.value = "";
       nameInput.setAttribute("autocomplete", "off");
+    }
+    if (linkInput) {
+      linkInput.value = "";
+      linkInput.setAttribute("autocomplete", "off");
     }
   
     const topTitle = $("#topTitle");
@@ -150,13 +149,12 @@
           justify-content:center;
           white-space:nowrap;
         }
-
+  
         /* Keep right sidebar usable: cards at top, qGrid gets the remaining height and scrolls */
         #sideScroll, .side{ display:flex; flex-direction:column; gap:10px; }
-        /* prevent cards from being squashed (was causing "book name / total" to clip) */
         #sideScroll .card, #sideScroll .toggle, #sideScroll .side-actions{ flex: 0 0 auto; }
         #qGrid{ flex:1 1 auto; overflow:auto; padding-bottom:10px; min-height:0; }
-
+  
         /* Desktop: only LEFT scrolls; right stays fixed, with qGrid scrolling inside */
         @media (min-width: 980px){
           html,body{ height:100%; overflow:hidden; }
@@ -233,14 +231,13 @@
       document.head.appendChild(style);
     }
     injectEnhanceCss();
-
-    // ---- entity name: do NOT auto-prefill (no URL prefill, no localStorage restore)
-    if (nameInput) nameInput.value = "";
+  
     const getName = () => (nameInput ? nameInput.value : "").trim();
-    const getLink = () => "";
+    const getLink = () => (linkInput ? linkInput.value : "").trim();
   
     // ---- state ----
     let state = loadState();
+  
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -266,6 +263,7 @@
     // ---- scoring ----
     function computeQuestionScore(q) {
       const a = getAnswer(q.id);
+  
       if (q.type === "multi") {
         const selected = Object.entries(a.multi || {})
           .filter(([_, v]) => !!v)
@@ -289,6 +287,13 @@
         return sum;
       }
   
+      if (q.type === "scale") {
+        if (a.value === null || a.value === undefined) return null;
+        const n = Number(a.value);
+        return Number.isFinite(n) ? n : null;
+      }
+  
+      // single (default)
       if (a.value === null || a.value === undefined) return null;
       const n = Number(a.value);
       return Number.isFinite(n) ? n : null;
@@ -366,12 +371,15 @@
               b.dataset.qid = q.id;
               b.dataset.kind = "single";
               b.dataset.value = String(opt.value);
-              if (a.value === opt.value) b.classList.add("active");
+  
+              if (Number(a.value) === Number(opt.value)) b.classList.add("active");
+  
               b.addEventListener("click", () => {
                 const cur = getAnswer(q.id);
-                const next = cur.value === opt.value ? null : opt.value;
+                const next = Number(cur.value) === Number(opt.value) ? null : opt.value;
                 setAnswer(q.id, { value: next });
               });
+  
               btnGroup.appendChild(b);
             }
           } else if (q.type === "multi") {
@@ -383,13 +391,40 @@
               b.dataset.qid = q.id;
               b.dataset.kind = "multi";
               b.dataset.label = opt.label;
+  
               if (a.multi && a.multi[opt.label]) b.classList.add("active");
+  
               b.addEventListener("click", () => {
                 const cur = getAnswer(q.id);
                 const multi = { ...(cur.multi || {}) };
                 multi[opt.label] = !multi[opt.label];
                 setAnswer(q.id, { multi });
               });
+  
+              btnGroup.appendChild(b);
+            }
+          } else if (q.type === "scale") {
+            const min = Number(q.min);
+            const max = Number(q.max);
+            const step = Number(q.step || 1);
+  
+            for (let v = min; v <= max; v += step) {
+              const b = document.createElement("button");
+              b.type = "button";
+              b.className = "opt-btn";
+              b.textContent = v > 0 ? `+${v}` : String(v);
+              b.dataset.qid = q.id;
+              b.dataset.kind = "scale";
+              b.dataset.value = String(v);
+  
+              if (Number(a.value) === v) b.classList.add("active");
+  
+              b.addEventListener("click", () => {
+                const cur = getAnswer(q.id);
+                const next = Number(cur.value) === v ? null : v;
+                setAnswer(q.id, { value: next });
+              });
+  
               btnGroup.appendChild(b);
             }
           }
@@ -423,6 +458,7 @@
             spec.textContent = "说明：" + q.note;
             block.appendChild(spec);
           }
+  
           sec.appendChild(block);
         }
   
@@ -437,12 +473,10 @@
     function renderQNav() {
       if (!qGrid) return;
   
-      // IMPORTANT: remove old grid class so it won't force 8-col grid on the whole container
       qGrid.classList.remove("grid");
       qGrid.innerHTML = "";
       qidToLabel = {};
   
-      // Do NOT show the tiny "当前：Qx" line (user request)
       const oldActiveLabel = document.getElementById("activeQLabel");
       if (oldActiveLabel) oldActiveLabel.remove();
   
@@ -516,7 +550,7 @@
       for (const q of QUESTIONS) {
         const v = computeQuestionScore(q);
         const el = document.querySelector(`[data-score-for="${q.id}"]`);
-        if (el) el.textContent = typeof v === "number" ? String(v) : "0";
+        if (el) el.textContent = typeof v === "number" ? String(v) : "";
       }
       for (const chip of document.querySelectorAll(".chip[data-qid]")) {
         const qid = chip.dataset.qid;
@@ -536,10 +570,13 @@
         let on = false;
         if (kind === "single") {
           const v = Number(b.dataset.value);
-          on = ans.value === v;
+          on = Number(ans.value) === v;
         } else if (kind === "multi") {
           const label = b.dataset.label;
           on = !!(ans.multi && ans.multi[label]);
+        } else if (kind === "scale") {
+          const v = Number(b.dataset.value);
+          on = Number(ans.value) === v;
         }
         b.classList.toggle("active", on);
       }
@@ -550,17 +587,13 @@
       return !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
     }
     function remarkToggleChecked() {
-      // ✅ desktop: prefer the sidebar toggle
       if (toggleRemarks && isVisible(toggleRemarks)) return !!toggleRemarks.checked;
-      // ✅ mobile: prefer the top toggle
       if (toggleRemarksTop && isVisible(toggleRemarksTop)) return !!toggleRemarksTop.checked;
-    
-      // fallback (in case one is hidden by CSS)
       if (toggleRemarks) return !!toggleRemarks.checked;
       if (toggleRemarksTop) return !!toggleRemarksTop.checked;
       return true;
     }
-    
+  
     function setRemarkToggleChecked(checked) {
       if (toggleRemarks) toggleRemarks.checked = checked;
       if (toggleRemarksTop) toggleRemarksTop.checked = checked;
@@ -574,37 +607,34 @@
     if (toggleRemarks) toggleRemarks.addEventListener("change", () => setRemarkToggleChecked(remarkToggleChecked()));
     if (toggleRemarksTop) toggleRemarksTop.addEventListener("change", () => setRemarkToggleChecked(remarkToggleChecked()));
   
-    // ---- active Q by scroll (show 当前：Qxx) ----
+    // ---- active Q by scroll (right sidebar highlight) ----
     function updateActiveChipByScroll() {
       const blocks = document.querySelectorAll(".qblock");
       if (!blocks.length) return;
-    
+  
       const container = mainScroll || document.documentElement;
       const baseTop = container === document.documentElement ? 0 : container.getBoundingClientRect().top;
-    
+  
       let best = null;
       let bestDist = Infinity;
-    
+  
       blocks.forEach((b) => {
         const r = b.getBoundingClientRect();
         const dist = Math.abs((r.top - baseTop) - 12);
-        // 只考虑还在视窗里的块
         if (r.bottom > baseTop + 20 && dist < bestDist) {
           bestDist = dist;
           best = b;
         }
       });
-    
+  
       if (!best) return;
-    
+  
       const qid = best.id;
-    
-      // 给右侧对应题号加 active 外圈
+  
       for (const chip of document.querySelectorAll(".chip[data-qid]")) {
         chip.classList.toggle("active", chip.dataset.qid === qid);
       }
     }
-    
   
     // ---- reset ----
     function doReset() {
@@ -616,18 +646,24 @@
     if (btnReset) btnReset.addEventListener("click", doReset);
     if (btnResetTop) btnResetTop.addEventListener("click", doReset);
   
-    // ---- EXPORT (learn your example): build offscreen export stage ----
+    // ---- EXPORT: build offscreen export stage ----
     function optionText(q) {
       const a = getAnswer(q.id);
       if (q.type === "single") {
         const opt = (q.options || []).find((o) => Number(o.value) === Number(a.value));
-        return opt ? opt.label : " ";
+        return opt ? opt.label : "—";
       }
       if (q.type === "multi") {
         const selected = Object.entries(a.multi || {})
           .filter(([_, v]) => !!v)
           .map(([k]) => k);
         return selected.length ? selected.join("、") : "—";
+      }
+      if (q.type === "scale") {
+        if (a.value === null || a.value === undefined || a.value === "") return "—";
+        const n = Number(a.value);
+        if (!Number.isFinite(n)) return "—";
+        return n > 0 ? `+${n}` : String(n);
       }
       return "—";
     }
@@ -700,7 +736,7 @@
         trSec.appendChild(td);
         tb.appendChild(trSec);
   
-        secQs.forEach((q, idx) => {
+        secQs.forEach((q) => {
           const tr = document.createElement("tr");
           const score = computeQuestionScore(q);
           const a = getAnswer(q.id);
@@ -785,13 +821,13 @@
         .replace(/\s+/g, "_")
         .slice(0, 30) || "section";
     }
-    
+  
     async function captureSectionCanvas(sectionName){
       if (typeof html2canvas !== "function") {
         alert("导出失败：缺少 html2canvas。请检查网络或脚本是否加载成功。");
         return null;
       }
-      const stage = buildExportStage(sectionName); // ✅ 只导出这一节
+      const stage = buildExportStage(sectionName);
       try {
         const canvas = await html2canvas(stage, {
           backgroundColor: "#ffffff",
@@ -809,39 +845,36 @@
         stage.remove();
       }
     }
-    
+  
     async function exportJpgBySection() {
-      // ✅ 只导出“有题目”的分区
       const sections = SECTION_ORDER.filter((s) => QUESTIONS.some((q) => q.section === s));
       if (!sections.length) {
         alert("没有可导出的分区（题库为空）。");
         return;
       }
-    
+  
       const { safe, stamp } = makeSafeName();
       const base = `${TYPE}_${safe}_${stamp}`;
-    
+  
       for (let i = 0; i < sections.length; i++) {
         const sectionName = sections[i];
         const canvas = await captureSectionCanvas(sectionName);
         if (!canvas) return;
-    
+  
         const blob = await canvasToBlob(canvas);
         if (!blob) {
           alert(`导出失败：分区「${sectionName}」无法生成图片。`);
           return;
         }
-    
+  
         const idx = String(i + 1).padStart(2, "0");
         const secSlug = safeSlug(sectionName);
         triggerDownloadBlob(blob, `${base}_sec${idx}_${secSlug}.jpg`);
-    
-        // 给浏览器一点时间，避免连续下载被拦截
+  
         await new Promise((r) => setTimeout(r, 250));
       }
     }
-    
-
+  
     async function exportJpgSingle() {
       const canvas = await captureExportCanvas();
       if (!canvas) return;
@@ -853,38 +886,6 @@
         return;
       }
       triggerDownloadBlob(blob, filename);
-    }
-  
-    async function exportJpgSplit(parts = 4) {
-      const canvas = await captureExportCanvas();
-      if (!canvas) return;
-  
-      const { safe, stamp } = makeSafeName();
-      const base = `${TYPE}_${safe}_${stamp}`;
-  
-      const w = canvas.width;
-      const h = canvas.height;
-      const partH = Math.ceil(h / parts);
-  
-      for (let i = 0; i < parts; i++) {
-        const sy = i * partH;
-        const sh = Math.min(partH, h - sy);
-        if (sh <= 0) break;
-  
-        const piece = document.createElement("canvas");
-        piece.width = w;
-        piece.height = sh;
-        const ctx = piece.getContext("2d");
-        ctx.drawImage(canvas, 0, sy, w, sh, 0, 0, w, sh);
-  
-        const blob = await canvasToBlob(piece);
-        if (!blob) {
-          alert(`导出失败：第 ${i + 1} 张无法生成图片。`);
-          return;
-        }
-        triggerDownloadBlob(blob, `${base}_p${i + 1}of${parts}.jpg`);
-        await new Promise((r) => setTimeout(r, 250));
-      }
     }
   
     if (btnExportJpg) btnExportJpg.addEventListener("click", exportJpgSingle);
@@ -908,4 +909,3 @@
     }
     window.addEventListener("resize", () => window.requestAnimationFrame(updateActiveChipByScroll));
   })();
-  
