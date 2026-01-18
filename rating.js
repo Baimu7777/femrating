@@ -650,7 +650,7 @@
       const left = document.createElement("div");
       const title = document.createElement("h1");
       title.className = "export-title";
-      title.textContent = (CFG.pageTitle || "评分") + " · 3.0";
+      title.textContent = (CFG.pageTitle || "评分");
       left.appendChild(title);
   
       const meta = document.createElement("div");
