@@ -303,7 +303,7 @@ h2.section-title{
   gap:8px;
   font-size:13px;
   color:var(--muted);
-  margin:8px 0 10px;
+  margin:6px 0 6px;
 }
 .toggle input{ width:16px; height:16px; accent-color: var(--blue); }
 
@@ -311,7 +311,7 @@ h2.section-title{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  margin:6px 0 10px;
+  margin:6px 0 6px;
 }
 .side-actions button{
   border:1px solid var(--line);
