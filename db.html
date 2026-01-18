@@ -3,24 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>评分数据库（搜索）</title>
+  <title>数据库</title>
   <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🔎</text></svg>">
-  <link rel="stylesheet" href="./styles.css" />
-  <script defer src="./db.js"></script>
+
+  <!-- IMPORTANT: absolute paths so /db/ works -->
+  <link rel="stylesheet" href="/styles.css" />
+  <script defer src="/db.js"></script>
 </head>
 
 <body>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <div class="title" id="topTitle">评分数据库</div>
-        <div class="subtitle" id="topSubtitle">搜索你手动收录的书籍/影视评分</div>
+        <div class="title" id="topTitle">数据库</div>
+        <div class="subtitle" id="topSubtitle">搜索你手动收录的评分记录</div>
       </div>
       <nav class="navtabs" aria-label="页面切换">
-        <a href="./index.html">叙事书籍</a>
-        <a href="./socsci.html">社科书籍</a>
-        <a href="./film.html">影视评分</a>
-        <a class="active" href="./db.html">数据库</a>
+        <a href="/">叙事书籍</a>
+        <a href="/socsci/">社科书籍</a>
+        <a href="/film/">影视评分</a>
+        <a class="active" href="/db/">数据库</a>
       </nav>
     </div>
   </header>
@@ -38,11 +40,11 @@
       </div>
 
       <div style="margin-top:10px; color: var(--muted); font-size: 13px;">
-        共 <span id="count">0</span> 条记录（数据来自 <code>./ratings.json</code>）
+        共 <span id="count">0</span> 条记录（数据来自 <code>/ratings.json</code>）
       </div>
 
       <div id="loadError" style="display:none; margin-top:10px; color:#b42318; font-size:13px;">
-        没能加载 <code>./ratings.json</code>：请确认文件存在且是合法 JSON 数组（Vercel/本地均可直接作为静态文件读取）。
+        没能加载 <code>/ratings.json</code>：请确认文件存在且是合法 JSON 数组（Vercel/本地均可直接作为静态文件读取）。
       </div>
 
       <div id="empty" style="display:none; margin-top:14px; color: var(--muted); font-size: 13px;">
@@ -50,10 +52,6 @@
       </div>
 
       <section class="db-results" id="results" aria-label="搜索结果"></section>
-
-      <hr style="border:none; border-top:1px solid var(--line); margin:14px 0 10px;" />
-
-
     </div>
   </main>
 </body>

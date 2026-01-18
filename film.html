@@ -3,23 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>叙事书籍评分 · 3.0</title>
-  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📚</text></svg>">
+  <title>影视评分 · 3.0</title>
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🎬</text></svg>">
 
-  <!-- IMPORTANT: use absolute paths so /socsci/ /film/ /db/ won't break asset loading -->
+  <!-- IMPORTANT: absolute paths so /film/ works -->
   <link rel="stylesheet" href="/styles.css" />
 
   <script>
-    // Page config (no build tools)
     window.PAGE_CONFIG = {
-      type: "narrative",
-      questionSet: "narrative",
-      pageTitle: "叙事书籍评分 · 3.0",
-      pageSubtitle: "（叙事/纪实叙事作品）",
-      entityLabel: "书名",
-      storageKey: "rating_narrative_book_state_v1",
-      nameKey: "rating_narrative_book_name_v1",
-      linkKey: "rating_narrative_book_link_v1"
+      type: "film",
+      questionSet: "film",
+      pageTitle: "影视评分 · 3.0",
+      pageSubtitle: "（电影 / 剧集 / 纪录片等）",
+      entityLabel: "片名 / 剧名",
+      storageKey: "rating_film_state_v1",
+      nameKey: "rating_film_name_v1",
+      linkKey: "rating_film_link_v1"
     };
   </script>
 
@@ -33,19 +32,19 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div class="brand">
-          <div class="title" id="topTitle">叙事书籍评分 · 3.0</div>
-          <div class="subtitle" id="topSubtitle">（叙事/纪实叙事作品）</div>
+          <div class="title" id="topTitle">影视评分 · 3.0</div>
+          <div class="subtitle" id="topSubtitle">（电影 / 剧集 / 纪录片等）</div>
         </div>
         <nav class="navtabs" aria-label="页面切换">
-          <a class="active" href="/">叙事书籍</a>
+          <a href="/">叙事书籍</a>
           <a href="/socsci/">社科书籍</a>
-          <a href="/film/">影视评分</a>
+          <a class="active" href="/film/">影视评分</a>
           <a href="/db/">数据库</a>
         </nav>
       </div>
     </header>
 
-    <div id="mobileEntityHost" class="mobile-entity-host" aria-label="书名（移动端）"></div>
+    <div id="mobileEntityHost" class="mobile-entity-host" aria-label="片名 / 剧名（移动端）"></div>
 
     <div class="mobile-top-toggle" role="region" aria-label="评定说明或补充开关">
       <div class="mobile-toggle-inner">
@@ -65,11 +64,11 @@
       <aside class="side" id="sideScroll">
         <div class="source-note"></div>
 
-        <div class="card entity-card" aria-label="书名（可选）">
-          <div class="label">书名</div>
+        <div class="card entity-card" aria-label="片名 / 剧名（可选）">
+          <div class="label">片名 / 剧名</div>
           <input id="entityName" type="text" placeholder="可选填" />
           <div class="hint">链接（可选）：</div>
-          <input id="entityLink" type="text" placeholder="可选填（如豆瓣/Goodreads等）" />
+          <input id="entityLink" type="text" placeholder="可选填（如豆瓣/IMDb等）" />
         </div>
 
         <div class="card">

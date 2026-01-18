@@ -4,20 +4,12 @@
 (function(){
   const $ = (sel, root=document) => root.querySelector(sel);
 
-  const CFG = window.PAGE_CONFIG || {};
-
-  // Prefer unified QUESTION_BANK (provided by questions.js)
-  // Fallback to legacy globals (window.QUESTIONS / window.SECTION_ORDER).
-  const BANK = window.QUESTION_BANK || {};
-  const pickedKey = (CFG.questionSet || CFG.type || "").trim();
-  const picked = pickedKey && BANK[pickedKey] ? BANK[pickedKey] : null;
-
-  const QUESTIONS = (picked && Array.isArray(picked.questions)) ? picked.questions : (window.QUESTIONS || []);
-  const SECTION_ORDER = (picked && Array.isArray(picked.sectionOrder)) ? picked.sectionOrder : (window.SECTION_ORDER || []);
-
-  // Legacy notes (safe to keep; most questions now embed note as q.note)
+  const QUESTIONS = window.QUESTIONS || [];
   const NOTES = window.NOTES || {};
   const SECTION_NOTES = window.SECTION_NOTES || {};
+  const SECTION_ORDER = window.SECTION_ORDER || [];
+
+  const CFG = window.PAGE_CONFIG || {};
   const STORAGE_KEY = CFG.storageKey || "rating_state_v1";
   const NAME_KEY = CFG.nameKey || "rating_name_v1";
   const LINK_KEY = CFG.linkKey || "rating_link_v1";
@@ -46,25 +38,6 @@
 
   setText(topTitle, CFG.pageTitle || "评分表");
   setText(topSubtitle, CFG.pageSubtitle || "（占位内容，稍后可改题库）");
-
-  // If question bank failed to load, keep the shell UI but show a clear error.
-  if (!Array.isArray(QUESTIONS) || !QUESTIONS.length || !Array.isArray(SECTION_ORDER) || !SECTION_ORDER.length){
-    if (contentEl){
-      contentEl.innerHTML = `
-        <div class="card" style="max-width:720px; margin:16px auto;">
-          <div class="label" style="font-weight:700; margin-bottom:8px;">题库未加载，页面因此是空白的</div>
-          <div class="hint" style="color:#667085; line-height:1.6;">
-            请检查：<br/>
-            1) <code>questions.js</code> 是否在此页先于 <code>rating.js</code> 加载；<br/>
-            2) 本页 <code>PAGE_CONFIG.questionSet</code> 是否为 <code>narrative / socsci / film</code> 之一；<br/>
-            3) 控制台是否有脚本报错。
-          </div>
-        </div>
-      `;
-    }
-    console.error("Question bank not loaded.", { pickedKey, picked, hasBank: !!window.QUESTION_BANK });
-    return;
-  }
 
   // Load query params (optional prefill)
   try{
@@ -116,15 +89,13 @@
         const opt = (q.options||[]).find(o=>o.label===label);
         if (opt) sum += Number(opt.value);
       }
-      // special: single selection => 0, then cap to N (or -N)
-      if (typeof q.special === "string" && q.special.startsWith("single_zero_cap")) {
-        const capStr = q.special.slice("single_zero_cap".length);
-        const cap = Number(capStr);
-        if (Number.isFinite(cap)) {
-          if (selected.length === 1) sum = 0;
-          if (cap > 0 && sum > cap) sum = cap;
-          if (cap < 0 && sum < cap) sum = cap;
-        }
+      if (q.special === "single_zero_cap4"){
+        if (selected.length === 1) sum = 0;
+        if (sum > 4) sum = 4;
+      }
+      if (q.special === "single_zero_cap-4"){
+        if (selected.length === 1) sum = 0;
+        if (sum < -4) sum = -4;
       }
       return sum;
     }
@@ -287,40 +258,18 @@
       contentEl.appendChild(sec);
     }
 
-    // chips (快捷跳转)
-    // 需求：不要显示内部编号（如 N-F1），统一显示 Q1/Q2...；
-    // 并把分区分成 4 组分行显示（若分区超过 4，则后面的合并到第 4 行）。
-    function buildChipGroups(){
-      // One row per section; numbering restarts at Q1 for each row.
-      const groups = SECTION_ORDER.map(s => ({
-        secList: [s],
-        qs: QUESTIONS.filter(q => q.section === s)
-      })).filter(g => g.qs.length);
-      return groups;
-    }
-
+    // chips
     qGrid.innerHTML = "";
-    qGrid.classList.add("qgrid-groups");
-
-    const groups = buildChipGroups();
-    for (const g of groups){
-      const row = document.createElement("div");
-      row.className = "grid chip-row";
-
-      let i = 1;
-      for (const q of g.qs){
-        const chip = document.createElement("div");
-        chip.className = "chip";
-        chip.textContent = "Q" + i;
-        chip.dataset.qid = q.id;
-        chip.addEventListener("click", () => {
-          const el = document.getElementById(q.id);
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-        row.appendChild(chip);
-        i += 1;
-      }
-      qGrid.appendChild(row);
+    for (const q of QUESTIONS){
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.textContent = q.id;
+      chip.dataset.qid = q.id;
+      chip.addEventListener("click", () => {
+        const el = document.getElementById(q.id);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      qGrid.appendChild(chip);
     }
   }
 
