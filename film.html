@@ -3,15 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>影视友好度评分 · 3.0（占位）</title>
+  <title>影视评分 · 3.0</title>
   <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📋</text></svg>">
   <link rel="stylesheet" href="./styles.css" />
   <script>
     // Page config (no build tools)
     window.PAGE_CONFIG = {
       type: "film",
-      pageTitle: "影视友好度评分 · 3.0（占位）",
-      pageSubtitle: "暂用游戏 3.0 题库，后续你改成影视版即可",
+      questionSet: "film",
+      pageTitle: "影视评分 · 3.0",
+      pageSubtitle: "（电影/剧集/纪录片）",
       entityLabel: "片名 / 剧名",
       storageKey: "rating_film_state_v1",
       nameKey: "rating_film_name_v1",
@@ -28,11 +29,12 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <div class="title" id="topTitle">影视友好度评分 · 3.0（占位）</div>
-        <div class="subtitle" id="topSubtitle">暂用游戏 3.0 题库，后续你改成影视版即可</div>
+        <div class="title" id="topTitle">影视评分 · 3.0</div>
+        <div class="subtitle" id="topSubtitle">（电影/剧集/纪录片）</div>
       </div>
       <nav class="navtabs" aria-label="页面切换">
-        <a class="" href="./index.html">书籍评分</a>
+        <a class="" href="./index.html">叙事书籍</a>
+        <a class="" href="./socsci.html">社科书籍</a>
         <a class="active" href="./film.html">影视评分</a>
         <a class="" href="./db.html">数据库</a>
       </nav>

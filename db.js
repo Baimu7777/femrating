@@ -1,4 +1,4 @@
-/* Database search page — reads ./data/ratings.json (manually curated). */
+/* Database search page — reads ./ratings.json (manually curated). */
 (function(){
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -9,7 +9,7 @@
   const emptyEl = $("#empty");
 
   let all = [];
-  let filterType = "all"; // all|book|film
+  let filterType = "all"; // all|narrative|socsci|film
 
   function norm(s){
     return (s || "")
@@ -19,7 +19,12 @@
   }
 
   function prettyType(t){
-    return t === "book" ? "书籍" : (t === "film" ? "影视" : t);
+    if (t === "narrative") return "叙事书籍";
+    if (t === "socsci") return "社科书籍";
+    if (t === "film") return "影视";
+    // backward compat
+    if (t === "book") return "书籍";
+    return t;
   }
 
   function safeText(s){
@@ -42,7 +47,8 @@
   }
 
   function buildOpenRatingUrl(item){
-    const base = item.type === "film" ? "film.html" : "index.html";
+    const t = item.type;
+    const base = (t === "film") ? "film.html" : (t === "socsci" ? "socsci.html" : "index.html");
     const url = new URL(base, location.href);
     if (item.title) url.searchParams.set("name", item.title);
     if (item.link) url.searchParams.set("link", item.link);
@@ -132,7 +138,7 @@
 
   async function load(){
     try{
-      const res = await fetch("./data/ratings.json", { cache: "no-store" });
+      const res = await fetch("./ratings.json", { cache: "no-store" });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("ratings.json 不是数组");
