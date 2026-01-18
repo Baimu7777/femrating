@@ -24,8 +24,7 @@ html,body{
   font-family:"XiqueJuzhen",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;
   color:var(--text);
   background:var(--bg);
-  /* allow normal document scrolling (DB page needs it); rating pages still use internal scroll containers */
-  overflow:auto;
+  overflow:hidden;
 }
 button,input,select,textarea{ font-family:inherit; font-size:inherit; }
 textarea::placeholder,input::placeholder{ font-family:inherit; }
@@ -277,6 +276,16 @@ h2.section-title{
   display:grid;
   grid-template-columns: repeat(8, 1fr);
   gap:8px;
+}
+
+/* 题目快捷跳转分组：按分区分行显示 */
+#qGrid.qgrid-groups{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.chip-row{
+  /* uses .grid layout; keep only spacing tweaks here */
 }
 .chip{
   display:inline-flex;

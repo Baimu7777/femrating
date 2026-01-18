@@ -1,32 +1,18 @@
 [
   {
-    "id": "narrative_demo_001",
-    "type": "narrative",
-    "title": "（示例）某本叙事书",
-    "link": "https://example.com/narrative-book",
+    "id": "book_demo_001",
+    "type": "book",
+    "title": "（示例）某本书",
+    "link": "https://example.com/book",
     "totalScore": 0,
     "sectionScores": {
-      "作者": 0,
-      "基础世界观": 0,
+      "基础设定": 0,
       "女性角色刻画": 0,
       "男性角色刻画": 0,
       "其她": 0
     },
     "answers": {},
-    "updatedAt": "2026-01-17T00:00:00.000Z"
-  },
-  {
-    "id": "socsci_demo_001",
-    "type": "socsci",
-    "title": "（示例）某本社科书",
-    "link": "https://example.com/socsci-book",
-    "totalScore": 0,
-    "sectionScores": {
-      "作者": 0,
-      "作品": 0
-    },
-    "answers": {},
-    "updatedAt": "2026-01-17T00:00:00.000Z"
+    "updatedAt": "2026-01-11T00:00:00.000Z"
   },
   {
     "id": "film_demo_001",
@@ -35,12 +21,12 @@
     "link": "https://example.com/film",
     "totalScore": 0,
     "sectionScores": {
-      "导演/编剧": 0,
-      "作品": 0,
+      "基础设定": 0,
       "女性角色刻画": 0,
-      "男性角色刻画": 0
+      "男性角色刻画": 0,
+      "其她": 0
     },
     "answers": {},
-    "updatedAt": "2026-01-17T00:00:00.000Z"
+    "updatedAt": "2026-01-11T00:00:00.000Z"
   }
 ]

@@ -5,6 +5,7 @@
   const $ = (sel, root=document) => root.querySelector(sel);
 
   const QUESTIONS = window.QUESTIONS || [];
+  const NOTES = window.NOTES || {};
   const SECTION_NOTES = window.SECTION_NOTES || {};
   const SECTION_ORDER = window.SECTION_ORDER || [];
 
@@ -88,16 +89,13 @@
         const opt = (q.options||[]).find(o=>o.label===label);
         if (opt) sum += Number(opt.value);
       }
-      // special: single option => 0, and apply cap (positive or negative)
-      // supports: "single_zero_cap4", "single_zero_cap-5", "single_zero_cap:4"
-      if (typeof q.special === "string" && q.special.startsWith("single_zero_cap")){
-        const m = q.special.match(/single_zero_cap[:]?(-?\d+)/);
-        const cap = m ? Number(m[1]) : null;
+      if (q.special === "single_zero_cap4"){
         if (selected.length === 1) sum = 0;
-        if (typeof cap === "number" && Number.isFinite(cap)){
-          if (cap >= 0 && sum > cap) sum = cap;
-          if (cap < 0 && sum < cap) sum = cap;
-        }
+        if (sum > 4) sum = 4;
+      }
+      if (q.special === "single_zero_cap-4"){
+        if (selected.length === 1) sum = 0;
+        if (sum < -4) sum = -4;
       }
       return sum;
     }
@@ -128,12 +126,6 @@
   function render(){
     contentEl.innerHTML = "";
 
-    function getSectionNotes(section){
-      const raw = SECTION_NOTES[section] || [];
-      const notesMap = window.NOTES || {};
-      return raw.map(x => (typeof x === "number" ? notesMap[x] : x)).filter(Boolean);
-    }
-
     for (const section of SECTION_ORDER){
       const qs = QUESTIONS.filter(q => q.section === section);
       if (!qs.length) continue;
@@ -147,7 +139,7 @@
       h2.textContent = section;
       sec.appendChild(h2);
 
-      const sn = getSectionNotes(section);
+      const sn = (SECTION_NOTES[section] || []).map(n => NOTES[n]).filter(Boolean);
       if (sn.length){
         const p = document.createElement("div");
         p.className = "section-note";
@@ -266,18 +258,54 @@
       contentEl.appendChild(sec);
     }
 
-    // chips
+    // chips (快捷跳转)
+    // 需求：不要显示内部编号（如 N-F1），统一显示 Q1/Q2...；
+    // 并把分区分成 4 组分行显示（若分区超过 4，则后面的合并到第 4 行）。
+    function buildChipGroups(){
+      const sections = [...SECTION_ORDER];
+      const groups = [];
+
+      if (sections.length <= 4){
+        for (const s of sections) groups.push([s]);
+      } else {
+        // 前 3 个分区单独一行，其余分区合并到第 4 行
+        groups.push([sections[0]]);
+        groups.push([sections[1]]);
+        groups.push([sections[2]]);
+        groups.push(sections.slice(3));
+      }
+
+      // 保持题目原始顺序
+      return groups
+        .map(secList => ({
+          secList,
+          qs: QUESTIONS.filter(q => secList.includes(q.section))
+        }))
+        .filter(g => g.qs.length);
+    }
+
     qGrid.innerHTML = "";
-    for (const q of QUESTIONS){
-      const chip = document.createElement("div");
-      chip.className = "chip";
-      chip.textContent = q.id;
-      chip.dataset.qid = q.id;
-      chip.addEventListener("click", () => {
-        const el = document.getElementById(q.id);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-      qGrid.appendChild(chip);
+    qGrid.classList.add("qgrid-groups");
+
+    const groups = buildChipGroups();
+    for (const g of groups){
+      const row = document.createElement("div");
+      row.className = "grid chip-row";
+
+      let i = 1;
+      for (const q of g.qs){
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = "Q" + i;
+        chip.dataset.qid = q.id;
+        chip.addEventListener("click", () => {
+          const el = document.getElementById(q.id);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        row.appendChild(chip);
+        i += 1;
+      }
+      qGrid.appendChild(row);
     }
   }
 
