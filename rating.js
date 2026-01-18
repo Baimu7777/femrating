@@ -678,8 +678,6 @@
       table.innerHTML = `
         <thead>
           <tr>
-            <th style="width:140px;">分区</th>
-            <th style="width:70px;">题号</th>
             <th>题目</th>
             <th style="width:220px;">选择</th>
             <th style="width:60px;">分值</th>
@@ -697,7 +695,7 @@
         const trSec = document.createElement("tr");
         trSec.className = "export-sec";
         const td = document.createElement("td");
-        td.colSpan = 6;
+        td.colSpan = 4;
         td.textContent = section;
         trSec.appendChild(td);
         tb.appendChild(trSec);
@@ -708,8 +706,6 @@
           const a = getAnswer(q.id);
   
           tr.innerHTML = `
-            <td>${escapeHtml(section)}</td>
-            <td>Q${idx + 1}</td>
             <td>
               <div>${escapeHtml(q.title || "")}</div>
               ${q.note ? `<div class="export-muted">说明：${escapeHtml(q.note)}</div>` : ""}
