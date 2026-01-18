@@ -220,17 +220,64 @@
           font-weight: 900;
         }
         .export-muted{ color:#6b7280; font-size: 12px; line-height: 1.35; margin-top:4px;}
+      
+
+        /* sidebar: keep fixed, but allow the question list to scroll so nothing gets cut off */
+        body.rating-page .side{ display:flex; flex-direction:column; gap:10px; }
+        body.rating-page #qGrid{ flex:1 1 auto; min-height:0; overflow:auto; padding-right:4px; }
+        body.rating-page .active-q-label{ display:none !important; }
+
       `;
       document.head.appendChild(style);
     }
     injectEnhanceCss();
+
+    function normalizeSidebarUi(){
+      // 1) remove link field blocks (both desktop + mobile)
+      for (const inp of document.querySelectorAll('#entityLink')){
+        const label = inp.previousElementSibling;
+        if (label && label.classList && label.classList.contains('label') && /链接/.test(label.textContent||'')) {
+          label.remove();
+        }
+        inp.remove();
+        const card = inp.closest && inp.closest('.entity-card');
+        const hint = card ? card.querySelector('.hint') : null;
+        if (hint && /链接/.test(hint.textContent||'')) hint.textContent = '名称不会自动预填写。';
+      }
+
+      // 2) sidebar: move the name card ABOVE the score summary card
+      if (sideScroll && summaryBody){
+        const summaryCard = summaryBody.closest('.card');
+        const entityCard = sideScroll.querySelector('.card.entity-card');
+        if (summaryCard && entityCard && summaryCard.previousElementSibling !== entityCard){
+          sideScroll.insertBefore(entityCard, summaryCard);
+        }
+      }
+
+      // 3) make qGrid occupy remaining height and scroll (prevents bottom chips being cut)
+      if (sideScroll && qGrid){
+        sideScroll.style.display = 'flex';
+        sideScroll.style.flexDirection = 'column';
+        sideScroll.style.gap = '10px';
+        qGrid.style.flex = '1 1 auto';
+        qGrid.style.minHeight = '0';
+        qGrid.style.overflow = 'auto';
+        qGrid.style.paddingRight = '4px';
+      }
+
+      // 4) remove the tiny active label line if it exists
+      const activeLabel = document.getElementById('activeQLabel');
+      if (activeLabel) activeLabel.remove();
+    }
+    normalizeSidebarUi();
+
   
     // ---- IMPORTANT: entity name/link should NOT be prefilled ----
     // (No URL params prefill; no localStorage persist)
     if (nameInput) nameInput.value = "";
     if (linkInput) linkInput.value = "";
     const getName = () => (nameInput ? nameInput.value : "").trim();
-    const getLink = () => (linkInput ? linkInput.value : "").trim();
+    const getLink = () => "";
   
     // ---- state ----
     let state = loadState();
@@ -456,15 +503,6 @@
       qGrid.innerHTML = "";
       qidToLabel = {};
   
-      let activeLabel = document.getElementById("activeQLabel");
-      if (!activeLabel) {
-        activeLabel = document.createElement("div");
-        activeLabel.id = "activeQLabel";
-        activeLabel.className = "active-q-label";
-        activeLabel.textContent = "当前：—";
-        qGrid.parentElement && qGrid.parentElement.insertBefore(activeLabel, qGrid);
-      }
-  
       for (const section of SECTION_ORDER) {
         const list = QUESTIONS.filter((q) => q.section === section);
         if (!list.length) continue;
@@ -583,10 +621,10 @@
     if (toggleRemarks) toggleRemarks.addEventListener("change", () => setRemarkToggleChecked(remarkToggleChecked()));
     if (toggleRemarksTop) toggleRemarksTop.addEventListener("change", () => setRemarkToggleChecked(remarkToggleChecked()));
   
-    // ---- active Q by scroll (show 当前：Qxx) ----
+    // ---- active Q by scroll (highlight active chip) ----
     function updateActiveChipByScroll() {
       const labelEl = document.getElementById("activeQLabel");
-      if (!labelEl) return;
+      if (labelEl) labelEl.remove();
   
       const blocks = document.querySelectorAll(".qblock");
       if (!blocks.length) return;
@@ -605,12 +643,8 @@
           best = b;
         }
       });
-  
       if (!best) return;
       const qid = best.id;
-      const show = qidToLabel[qid] || qid;
-  
-      labelEl.textContent = `当前：${show}`;
   
       for (const chip of document.querySelectorAll(".chip[data-qid]")) {
         chip.classList.toggle("active", chip.dataset.qid === qid);
