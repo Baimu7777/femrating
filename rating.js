@@ -576,37 +576,35 @@
   
     // ---- active Q by scroll (show 当前：Qxx) ----
     function updateActiveChipByScroll() {
-      const labelEl = document.getElementById("activeQLabel");
-      if (!labelEl) return;
-  
       const blocks = document.querySelectorAll(".qblock");
       if (!blocks.length) return;
-  
+    
       const container = mainScroll || document.documentElement;
       const baseTop = container === document.documentElement ? 0 : container.getBoundingClientRect().top;
-  
+    
       let best = null;
       let bestDist = Infinity;
-  
+    
       blocks.forEach((b) => {
         const r = b.getBoundingClientRect();
         const dist = Math.abs((r.top - baseTop) - 12);
+        // 只考虑还在视窗里的块
         if (r.bottom > baseTop + 20 && dist < bestDist) {
           bestDist = dist;
           best = b;
         }
       });
-  
+    
       if (!best) return;
+    
       const qid = best.id;
-      const show = qidToLabel[qid] || qid;
-  
-      labelEl.textContent = `当前：${show}`;
-  
+    
+      // 给右侧对应题号加 active 外圈
       for (const chip of document.querySelectorAll(".chip[data-qid]")) {
         chip.classList.toggle("active", chip.dataset.qid === qid);
       }
     }
+    
   
     // ---- reset ----
     function doReset() {
