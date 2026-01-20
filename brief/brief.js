@@ -2,6 +2,22 @@
   const $ = (id) => document.getElementById(id);
 
   const KEY = "brief_bailai_v1";
+  const TAG_KEY = "brief_custom_tags_v1";
+
+function loadCustomTags(){
+  try{
+    const raw = localStorage.getItem(TAG_KEY);
+    const arr = JSON.parse(raw || "[]");
+    return Array.isArray(arr) ? arr : [];
+  }catch{
+    return [];
+  }
+}
+
+function saveCustomTags(tags){
+  localStorage.setItem(TAG_KEY, JSON.stringify(tags));
+}
+
 
   // 你给的 tag 示例 + 留几个常用槽位（你随时改这个数组）
   const DEFAULT_TAGS = [
@@ -29,6 +45,7 @@
   const btnWipe = $("btnWipe");
 
   let selectedTags = new Set();
+  let customTags = loadCustomTags();
   let data = load();
 
   function load() {
@@ -52,15 +69,21 @@
 
   function renderTags() {
     elTagBar.innerHTML = "";
-    for (const t of DEFAULT_TAGS) {
+  
+    // ✅ 默认tag + 自定义tag（去重）
+    const all = [...DEFAULT_TAGS, ...customTags].filter((t, i, arr) => arr.indexOf(t) === i);
+  
+    for (const t of all) {
       const chip = document.createElement("div");
       chip.className = "tag-chip" + (selectedTags.has(t) ? " active" : "");
       chip.textContent = t;
+  
       chip.addEventListener("click", () => {
         if (selectedTags.has(t)) selectedTags.delete(t);
         else selectedTags.add(t);
         renderTags();
       });
+  
       elTagBar.appendChild(chip);
     }
   }
@@ -166,10 +189,22 @@
   function addCustomTag() {
     const t = (elCustomTag.value || "").trim();
     if (!t) return;
+  
+    // ✅ 如果不是默认tag，也不在自定义tag里，就加入自定义tag列表
+    const isDefault = DEFAULT_TAGS.includes(t);
+    const isCustom = customTags.includes(t);
+    if (!isDefault && !isCustom) {
+      customTags.push(t);
+      saveCustomTags(customTags);
+    }
+  
+    // ✅ 自动选中
     selectedTags.add(t);
+  
     elCustomTag.value = "";
     renderTags();
   }
+  
 
   btnAddTag.addEventListener("click", addCustomTag);
   elCustomTag.addEventListener("keydown", (e) => {
