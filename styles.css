@@ -566,3 +566,193 @@ h2.section-title{
 
 /* Export helper: keep capture stable */
 .is-exporting *{ transition: none !important; }
+
+/* ===== Brief page ===== */
+.brief-panel{ padding: 18px; }
+
+.brief-form{
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  background: #fff;
+}
+
+.brief-row{
+  display:grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+.brief-label{
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 900;
+  padding-top: 10px;
+}
+.brief-row input, .brief-row select, .brief-row textarea{
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  outline: none;
+  background: #fff;
+}
+.brief-row input:focus, .brief-row select:focus, .brief-row textarea:focus{
+  border-color: rgba(124,58,237,.45);
+  box-shadow: 0 0 0 4px rgba(124,58,237,.12);
+}
+.brief-row textarea{ min-height: 92px; resize: vertical; }
+
+.brief-tags{ display:flex; flex-direction:column; gap:10px; }
+
+.brief-presets{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.brief-tagbtn{
+  border: 1.5px solid var(--blue);
+  background:#fff;
+  color: var(--blue);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.brief-tagbtn:hover{ background: rgba(243,232,255,.55); }
+
+.brief-custom{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.brief-custom button{
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.brief-selected{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.brief-tagchip{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(124,58,237,.25);
+  background: rgba(243,232,255,.45);
+  font-weight: 900;
+  color: #4b5563;
+  font-size: 12px;
+}
+.brief-tagx{
+  border:none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: #6b7280;
+  padding: 0 2px;
+}
+
+.brief-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top: 6px;
+}
+.brief-actions button{
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 900;
+}
+.brief-actions button.primary{
+  border-color: rgba(124,58,237,.35);
+  background: rgba(243,232,255,.55);
+}
+.brief-actions button.danger{
+  margin-left: auto;
+  color: #ef4444;
+  border-color: rgba(239,68,68,.35);
+  background: rgba(254,242,242,.8);
+}
+
+.brief-list{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.brief-empty{
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  background:#fff;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.brief-card{
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  background: #fff;
+  padding: 12px 12px 10px;
+}
+.brief-head{
+  display:flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.brief-title{
+  font-size: 16px;
+  font-weight: 900;
+}
+.brief-meta{
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 900;
+}
+.brief-badges{
+  margin-top: 8px;
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.brief-text{
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.brief-actions-row{
+  margin-top: 10px;
+  display:flex;
+  justify-content:flex-end;
+}
+.brief-del{
+  border: 1px solid rgba(239,68,68,.35);
+  background: rgba(254,242,242,.8);
+  color: #ef4444;
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor:pointer;
+  font-weight: 900;
+}
+
+@media (max-width: 680px){
+  .brief-row{ grid-template-columns: 1fr; }
+  .brief-label{ padding-top: 0; }
+  .brief-actions button.danger{ margin-left: 0; width: 100%; }
+}

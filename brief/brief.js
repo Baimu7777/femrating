@@ -1,225 +1,90 @@
 (() => {
-  const $ = (id) => document.getElementById(id);
+  const $ = (sel, root = document) => root.querySelector(sel);
 
-  const KEY = "brief_bailai_v1";
-  const TAG_KEY = "brief_custom_tags_v1";
+  const KEY = "brief_entries_v1";
 
-function loadCustomTags(){
-  try{
-    const raw = localStorage.getItem(TAG_KEY);
-    const arr = JSON.parse(raw || "[]");
-    return Array.isArray(arr) ? arr : [];
-  }catch{
-    return [];
-  }
-}
+  const elName = $("#briefName");
+  const elType = $("#briefType");
+  const elCustom = $("#briefCustomTag");
+  const elSelected = $("#briefSelected");
+  const elText = $("#briefText");
 
-function saveCustomTags(tags){
-  localStorage.setItem(TAG_KEY, JSON.stringify(tags));
-}
+  const btnAddCustom = $("#btnAddCustomTag");
+  const btnSave = $("#btnSaveBrief");
+  const btnClearInput = $("#btnClearInput");
+  const btnClearPageData = $("#btnClearPageData");
 
+  const elSearch = $("#briefSearch");
+  const elList = $("#briefList");
+  const elPresets = $("#briefPresets");
 
-  // 你给的 tag 示例 + 留几个常用槽位（你随时改这个数组）
-  const DEFAULT_TAGS = [
-    "VGBTQ友好",
-    "支持身体剥削",
-    "情色合法化等",
-    "男凝严重",
-    "美化虐女",
-    "强制阍育叙事",
-    "雌竞/荡妇羞辱",
-    "其她（自定义）"
-  ];
-
-  const elName = $("name");
-  const elType = $("type");
-  const elNote = $("note");
-  const elTagBar = $("tagBar");
-  const elCustomTag = $("customTag");
-  const elSearch = $("search");
-  const elList = $("list");
-
-  const btnSave = $("btnSave");
-  const btnClear = $("btnClear");
-  const btnAddTag = $("btnAddTag");
-  const btnWipe = $("btnWipe");
-
-  let selectedTags = new Set();
-  let customTags = loadCustomTags();
-  let data = load();
+  // ---- state ----
+  let selectedTags = [];
+  let entries = load();
 
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (!raw) return [];
-      const arr = JSON.parse(raw);
+      const arr = raw ? JSON.parse(raw) : [];
       return Array.isArray(arr) ? arr : [];
     } catch {
       return [];
     }
   }
 
-  function save() {
-    localStorage.setItem(KEY, JSON.stringify(data));
+  function persist() {
+    localStorage.setItem(KEY, JSON.stringify(entries));
   }
 
-  function uid() {
-    return "b_" + Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
+  function norm(s) {
+    return String(s || "").trim();
   }
 
-  function renderTags() {
-    elTagBar.innerHTML = "";
-  
-    // ✅ 默认tag + 自定义tag（去重）
-    const all = [...DEFAULT_TAGS, ...customTags].filter((t, i, arr) => arr.indexOf(t) === i);
-  
-    for (const t of all) {
-      const chip = document.createElement("div");
-      chip.className = "tag-chip" + (selectedTags.has(t) ? " active" : "");
+  function addTag(tag) {
+    const t = norm(tag);
+    if (!t) return;
+    if (!selectedTags.includes(t)) selectedTags.push(t);
+    renderSelectedTags();
+  }
+
+  function removeTag(tag) {
+    selectedTags = selectedTags.filter((x) => x !== tag);
+    renderSelectedTags();
+  }
+
+  function renderSelectedTags() {
+    elSelected.innerHTML = "";
+    if (!selectedTags.length) return;
+
+    for (const t of selectedTags) {
+      const chip = document.createElement("span");
+      chip.className = "brief-tagchip";
       chip.textContent = t;
-  
-      chip.addEventListener("click", () => {
-        if (selectedTags.has(t)) selectedTags.delete(t);
-        else selectedTags.add(t);
-        renderTags();
-      });
-  
-      elTagBar.appendChild(chip);
+
+      const x = document.createElement("button");
+      x.type = "button";
+      x.className = "brief-tagx";
+      x.textContent = "×";
+      x.addEventListener("click", () => removeTag(t));
+
+      chip.appendChild(x);
+      elSelected.appendChild(chip);
     }
   }
 
   function clearInput() {
-    elName.value = "";
-    elType.value = "narrative";
-    elNote.value = "";
-    elCustomTag.value = "";
-    selectedTags = new Set();
-    renderTags();
+    if (elName) elName.value = "";
+    if (elType) elType.value = "叙事书籍";
+    if (elCustom) elCustom.value = "";
+    if (elText) elText.value = "";
+    selectedTags = [];
+    renderSelectedTags();
   }
 
-  function typeLabel(v) {
-    return v === "film" ? "电影" : (v === "socsci" ? "社科书籍" : "叙事书籍");
-  }
-
-  function matchQuery(item, q) {
-    if (!q) return true;
-    const hay = [
-      item.name || "",
-      typeLabel(item.type),
-      (item.tags || []).join(" "),
-      item.note || ""
-    ].join(" ").toLowerCase();
-    return hay.includes(q.toLowerCase());
-  }
-
-  function renderList() {
-    const q = (elSearch.value || "").trim();
-    const list = data
-      .slice()
-      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-      .filter((x) => matchQuery(x, q));
-
-    elList.innerHTML = "";
-    if (!list.length) {
-      const empty = document.createElement("div");
-      empty.className = "item";
-      empty.textContent = "暂无记录。";
-      elList.appendChild(empty);
-      return;
-    }
-
-    for (const it of list) {
-      const card = document.createElement("div");
-      card.className = "item";
-
-      const top = document.createElement("div");
-      top.className = "item-top";
-
-      const left = document.createElement("div");
-      const title = document.createElement("div");
-      title.className = "item-title";
-      title.textContent = it.name || "（未命名）";
-      const meta = document.createElement("div");
-      meta.className = "item-meta";
-      const dt = it.createdAt ? new Date(it.createdAt) : null;
-      meta.textContent = `${typeLabel(it.type)} · ${dt ? dt.toLocaleString() : ""}`;
-      left.appendChild(title);
-      left.appendChild(meta);
-
-      top.appendChild(left);
-      card.appendChild(top);
-
-      if (it.tags && it.tags.length) {
-        const tags = document.createElement("div");
-        tags.className = "item-tags";
-        it.tags.forEach((t) => {
-          const s = document.createElement("span");
-          s.textContent = t;
-          tags.appendChild(s);
-        });
-        card.appendChild(tags);
-      }
-
-      const note = document.createElement("div");
-      note.className = "item-note";
-      note.textContent = it.note || "";
-      card.appendChild(note);
-
-      const actions = document.createElement("div");
-      actions.className = "item-actions";
-
-      const del = document.createElement("button");
-      del.className = "btn danger";
-      del.type = "button";
-      del.textContent = "删除";
-      del.addEventListener("click", () => {
-        if (!confirm("确定删除这条简评？")) return;
-        data = data.filter((x) => x.id !== it.id);
-        save();
-        renderList();
-      });
-
-      actions.appendChild(del);
-      card.appendChild(actions);
-
-      elList.appendChild(card);
-    }
-  }
-
-  function addCustomTag() {
-    const t = (elCustomTag.value || "").trim();
-    if (!t) return;
-  
-    // ✅ 如果不是默认tag，也不在自定义tag里，就加入自定义tag列表
-    const isDefault = DEFAULT_TAGS.includes(t);
-    const isCustom = customTags.includes(t);
-    if (!isDefault && !isCustom) {
-      customTags.push(t);
-      saveCustomTags(customTags);
-    }
-  
-    // ✅ 自动选中
-    selectedTags.add(t);
-  
-    elCustomTag.value = "";
-    renderTags();
-  }
-  
-
-  btnAddTag.addEventListener("click", addCustomTag);
-  elCustomTag.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addCustomTag();
-    }
-  });
-
-  btnClear.addEventListener("click", clearInput);
-
-  btnSave.addEventListener("click", () => {
-    const name = (elName.value || "").trim();
-    const note = (elNote.value || "").trim();
-    const type = elType.value;
+  function saveEntry() {
+    const name = norm(elName?.value);
+    const type = norm(elType?.value);
+    const text = norm(elText?.value);
 
     if (!name) {
       alert("请先填写名称。");
@@ -227,30 +92,136 @@ function saveCustomTags(tags){
     }
 
     const item = {
-      id: uid(),
+      id: String(Date.now()),
       name,
       type,
-      tags: Array.from(selectedTags),
-      note,
-      createdAt: Date.now()
+      tags: [...selectedTags],
+      text,
+      createdAt: new Date().toISOString(),
     };
 
-    data.push(item);
-    save();
-    renderList();
+    entries.unshift(item);
+    persist();
     clearInput();
+    renderList();
+  }
+
+  function matches(item, q) {
+    if (!q) return true;
+    const hay = [
+      item.name,
+      item.type,
+      (item.tags || []).join(" "),
+      item.text,
+    ].join(" ").toLowerCase();
+    return hay.includes(q.toLowerCase());
+  }
+
+  function renderList() {
+    const q = norm(elSearch?.value);
+    const list = entries.filter((it) => matches(it, q));
+
+    elList.innerHTML = "";
+
+    if (!list.length) {
+      const empty = document.createElement("div");
+      empty.className = "brief-empty";
+      empty.textContent = "暂无记录。";
+      elList.appendChild(empty);
+      return;
+    }
+
+    for (const it of list) {
+      const card = document.createElement("div");
+      card.className = "brief-card";
+
+      const head = document.createElement("div");
+      head.className = "brief-head";
+
+      const title = document.createElement("div");
+      title.className = "brief-title";
+      title.textContent = it.name;
+
+      const meta = document.createElement("div");
+      meta.className = "brief-meta";
+      meta.textContent = it.type;
+
+      head.appendChild(title);
+      head.appendChild(meta);
+
+      const tags = document.createElement("div");
+      tags.className = "brief-badges";
+      for (const t of it.tags || []) {
+        const b = document.createElement("span");
+        b.className = "badge";
+        b.textContent = t;
+        tags.appendChild(b);
+      }
+
+      const text = document.createElement("div");
+      text.className = "brief-text";
+      text.textContent = it.text || "";
+
+      const actions = document.createElement("div");
+      actions.className = "brief-actions-row";
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "brief-del";
+      del.textContent = "删除";
+      del.addEventListener("click", () => {
+        if (!confirm("确定删除这条记录？")) return;
+        entries = entries.filter((x) => x.id !== it.id);
+        persist();
+        renderList();
+      });
+
+      actions.appendChild(del);
+
+      card.appendChild(head);
+      if ((it.tags || []).length) card.appendChild(tags);
+      if (it.text) card.appendChild(text);
+      card.appendChild(actions);
+
+      elList.appendChild(card);
+    }
+  }
+
+  // ---- events ----
+  elPresets?.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-tag]");
+    if (!btn) return;
+    addTag(btn.dataset.tag);
   });
 
-  elSearch.addEventListener("input", renderList);
+  function handleAddCustomTag() {
+    addTag(elCustom?.value);
+    if (elCustom) elCustom.value = "";
+    elCustom?.focus();
+  }
 
-  btnWipe.addEventListener("click", () => {
-    if (!confirm("确定清空本页所有记录？")) return;
-    data = [];
-    save();
+  btnAddCustom?.addEventListener("click", handleAddCustomTag);
+
+  elCustom?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddCustomTag();
+    }
+  });
+
+  btnSave?.addEventListener("click", saveEntry);
+  btnClearInput?.addEventListener("click", clearInput);
+
+  btnClearPageData?.addEventListener("click", () => {
+    if (!confirm("确定清空本页所有数据？（不可恢复）")) return;
+    entries = [];
+    persist();
     renderList();
   });
+
+  elSearch?.addEventListener("input", renderList);
 
   // boot
-  renderTags();
+  renderSelectedTags();
   renderList();
 })();

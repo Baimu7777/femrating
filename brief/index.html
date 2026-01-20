@@ -5,135 +5,90 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>简评避雷</title>
   <link rel="stylesheet" href="../styles.css" />
-  <style>
-    /* 只给这个页面补一点点排版，不影响全站 */
-    .brief-wrap{ max-width: 980px; margin: 0 auto; padding: 18px 16px 40px; }
-    .brief-head{ display:flex; align-items:baseline; gap:10px; margin: 8px 0 18px; }
-    .brief-head h1{ font-size: 22px; margin: 0; }
-    .brief-head .muted{ color: var(--muted); font-size: 12px; }
-    .form-card{ background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
-    .row{ display:grid; grid-template-columns: 120px 1fr; gap:10px; align-items:center; margin: 10px 0; }
-    .row label{ color: var(--muted); font-size: 13px; }
-    input[type="text"], select, textarea{
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-family: inherit;
-      font-size: 14px;
-      background: #fff;
-      color: var(--text);
-      outline: none;
-    }
-    textarea{ min-height: 90px; resize: vertical; }
-    .tagbar{ display:flex; flex-wrap:wrap; gap:8px; }
-    .tag-chip{
-      display:inline-flex; align-items:center; gap:6px;
-      border:1px solid var(--line); border-radius:999px;
-      padding: 6px 10px; background:#fff; cursor:pointer;
-      user-select:none; font-size: 13px;
-    }
-    .tag-chip.active{ border-color: var(--accent); box-shadow: 0 6px 18px rgba(99,102,241,.18); }
-    .tag-custom{ display:flex; gap:8px; margin-top: 10px; }
-    .actions{ display:flex; gap:10px; margin-top: 12px; }
-    .btn{
-      border: 1px solid var(--line);
-      background: #fff;
-      border-radius: 12px;
-      padding: 10px 12px;
-      cursor: pointer;
-      font-weight: 800;
-    }
-    .btn.primary{ border-color: var(--accent); background: var(--accent); color: #fff; }
-    .list{ margin-top: 16px; display:flex; flex-direction:column; gap:10px; }
-    .item{
-      background:#fff; border:1px solid var(--line); border-radius:14px;
-      padding: 12px 12px 10px;
-    }
-    .item-top{ display:flex; justify-content:space-between; gap:10px; }
-    .item-title{ font-weight: 900; }
-    .item-meta{ color: var(--muted); font-size: 12px; margin-top: 4px; }
-    .item-tags{ display:flex; flex-wrap:wrap; gap:6px; margin-top: 8px; }
-    .item-tags span{ font-size: 12px; color: var(--muted); border:1px solid var(--line); padding: 4px 8px; border-radius:999px; }
-    .item-note{ margin-top: 8px; white-space: pre-wrap; line-height: 1.5; }
-    .item-actions{ display:flex; gap:8px; margin-top: 10px; }
-    .danger{ border-color:#ef4444; color:#ef4444; }
-    .topbar{
-      display:flex; justify-content:space-between; align-items:center;
-      gap: 10px; margin-bottom: 10px;
-    }
-    .search{ flex: 1 1 auto; }
-    @media (max-width:640px){
-      .row{ grid-template-columns: 1fr; }
-    }
-  </style>
 </head>
+
 <body>
-  <!-- 顶部导航：和其它页面一致 -->
-<div class="top-nav">
-  <div class="top-nav-left">
-    <div class="top-nav-title">简评避雷</div>
-    <div class="top-nav-sub">本页数据只保存在本机浏览器（localStorage）</div>
-  </div>
-
-  <div class="top-nav-tabs">
-    <a class="tab" href="../index.html">叙事书籍</a>
-    <a class="tab" href="../socsci/index.html">社科书籍</a>
-    <a class="tab" href="../film/index.html">影视</a>
-    <a class="tab active" href="./index.html">简评避雷</a>
-    <a class="tab" href="../db/index.html">打分库</a>
-  </div>
-</div>
-
-  <div class="brief-wrap">
-    <div class="brief-head">
-      <h1>简评避雷</h1>
-      <div class="muted">本页数据只保存在本机浏览器（localStorage）</div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="title">简评避雷</div>
+        <div class="subtitle">本页数据仅保存在本机浏览器（localStorage）</div>
+      </div>
+      <nav class="navtabs">
+        <a href="../">叙事书籍</a>
+        <a href="../socsci/">社科书籍</a>
+        <a href="../film/">影视</a>
+        <a class="active" href="./">简评避雷</a>
+        <a href="../db/">打分库</a>
+      </nav>
     </div>
+  </header>
 
-    <div class="form-card">
-      <div class="row">
-        <label>名称：</label>
-        <input id="name" type="text" placeholder="书名/电影名" autocomplete="off" />
-      </div>
+  <div class="db-wrap">
+    <div class="db-panel brief-panel">
 
-      <div class="row">
-        <label>类型：</label>
-        <select id="type">
-          <option value="narrative">叙事书籍</option>
-          <option value="socsci">社科书籍</option>
-          <option value="film">电影</option>
-        </select>
-      </div>
+      <!-- 表单区 -->
+      <div class="brief-form">
 
-      <div class="row">
-        <label>tag：</label>
-        <div>
-          <div class="tagbar" id="tagBar"></div>
-          <div class="tag-custom">
-            <input id="customTag" type="text" placeholder="自定义 tag（回车或点添加）" autocomplete="off" />
-            <button class="btn" id="btnAddTag" type="button">添加</button>
+        <div class="brief-row">
+          <label class="brief-label">名称：</label>
+          <input id="briefName" type="text" placeholder="书名/电影名" />
+        </div>
+
+        <div class="brief-row">
+          <label class="brief-label">类型：</label>
+          <select id="briefType">
+            <option value="叙事书籍">叙事书籍</option>
+            <option value="社科书籍">社科书籍</option>
+            <option value="电影">电影</option>
+          </select>
+        </div>
+
+        <div class="brief-row">
+          <label class="brief-label">tag：</label>
+          <div class="brief-tags">
+            <div class="brief-presets" id="briefPresets">
+              <button type="button" class="brief-tagbtn" data-tag="VGBTQ友好">VGBTQ友好</button>
+              <button type="button" class="brief-tagbtn" data-tag="支持身体剥削">支持身体剥削</button>
+              <button type="button" class="brief-tagbtn" data-tag="情色合法化等">情色合法化等</button>
+              <button type="button" class="brief-tagbtn" data-tag="男凝严重">男凝严重</button>
+              <button type="button" class="brief-tagbtn" data-tag="美化虐女">美化虐女</button>
+              <button type="button" class="brief-tagbtn" data-tag="强制阉育叙事">强制阉育叙事</button>
+              <button type="button" class="brief-tagbtn" data-tag="雌竞/荡妇羞辱">雌竞/荡妇羞辱</button>
+            </div>
+
+            <div class="brief-custom">
+              <input id="briefCustomTag" type="text" placeholder="自定义 tag（回车或点添加）" />
+              <button id="btnAddCustomTag" type="button">添加</button>
+            </div>
+
+            <div class="brief-selected" id="briefSelected"></div>
           </div>
         </div>
+
+        <div class="brief-row">
+          <label class="brief-label">简评：</label>
+          <textarea id="briefText" placeholder="写简短避雷/简评即可"></textarea>
+        </div>
+
+        <div class="brief-actions">
+          <button id="btnSaveBrief" type="button" class="primary">保存</button>
+          <button id="btnClearInput" type="button">清空输入</button>
+          <button id="btnClearPageData" type="button" class="danger">清空本页数据</button>
+        </div>
+
       </div>
 
-      <div class="row">
-        <label>简评：</label>
-        <textarea id="note" placeholder="写简短避雷/简评即可"></textarea>
+      <!-- 搜索 + 列表 -->
+      <div class="db-controls" style="margin-top:12px;">
+        <input id="briefSearch" type="search" placeholder="搜索（名称 / tag / 简评）" />
       </div>
 
-      <div class="actions">
-        <button class="btn primary" id="btnSave" type="button">保存</button>
-        <button class="btn" id="btnClear" type="button">清空输入</button>
+      <div id="briefList" class="brief-list" style="margin-top:12px;">
+        <div class="brief-empty">暂无记录。</div>
       </div>
+
     </div>
-
-    <div class="topbar">
-      <input id="search" class="search" type="text" placeholder="搜索（名称 / tag / 简评）" autocomplete="off" />
-      <button class="btn danger" id="btnWipe" type="button">清空本页数据</button>
-    </div>
-
-    <div class="list" id="list"></div>
   </div>
 
   <script src="./brief.js"></script>
