@@ -756,3 +756,90 @@ h2.section-title{
   .brief-label{ padding-top: 0; }
   .brief-actions button.danger{ margin-left: 0; width: 100%; }
 }
+
+/* ===== 自绘下拉 dropdown（用于简评避雷页） ===== */
+.dd{
+  position: relative;
+  width: 100%;
+  max-width: 520px; /* 你想更宽就改 */
+}
+
+.dd-btn{
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(124,58,237,.35);
+  background: #fff;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  transition: box-shadow .15s ease, border-color .15s ease, transform .02s ease;
+}
+
+.dd-btn:active{ transform: translateY(1px); }
+
+.dd-btn:focus{
+  outline: none;
+  border-color: rgba(124,58,237,.55);
+  box-shadow: 0 0 0 4px rgba(124,58,237,.12);
+}
+
+.dd-text{
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dd-caret{
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid rgba(124,58,237,.85);
+  transition: transform .15s ease;
+}
+
+.dd.open .dd-caret{ transform: rotate(180deg); }
+
+.dd-panel{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.10);
+  padding: 8px;
+  z-index: 50;
+  display: none;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.dd.open .dd-panel{ display: block; }
+
+.dd-item{
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+.dd-item:hover{
+  background: rgba(124,58,237,.10);
+}
+
+.dd-item:focus{
+  box-shadow: 0 0 0 3px rgba(124,58,237,.16);
+}
+
+.dd-item.is-active{
+  background: rgba(124,58,237,.14);
+  border: 1px solid rgba(124,58,237,.20);
+}

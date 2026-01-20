@@ -12,7 +12,7 @@
     <div class="topbar-inner">
       <div class="brand">
         <div class="title">简评避雷</div>
-        <div class="subtitle">本页数据仅保存在本机浏览器（localStorage）</div>
+        <div class="subtitle"></div>
       </div>
       <nav class="navtabs">
         <a href="../">叙事书籍</a>
@@ -37,12 +37,25 @@
 
         <div class="brief-row">
           <label class="brief-label">类型：</label>
-          <select id="briefType">
-            <option value="叙事书籍">叙事书籍</option>
-            <option value="社科书籍">社科书籍</option>
-            <option value="电影">电影</option>
-          </select>
+        
+          <!-- 自绘下拉：用隐藏 input 存值，外观用 button + list -->
+          <input id="briefType" type="hidden" value="叙事书籍" />
+        
+          <div class="dd" id="briefTypeDD">
+            <button type="button" class="dd-btn" id="briefTypeBtn" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dd-text" id="briefTypeText">叙事书籍</span>
+              <span class="dd-caret" aria-hidden="true"></span>
+            </button>
+        
+            <div class="dd-panel" id="briefTypePanel" role="listbox" tabindex="-1">
+              <div class="dd-item is-active" role="option" tabindex="0" data-value="叙事书籍">叙事书籍</div>
+              <div class="dd-item" role="option" tabindex="-1" data-value="社科书籍">社科书籍</div>
+              <div class="dd-item" role="option" tabindex="-1" data-value="影视">影视</div>
+            </div>
+          </div>
         </div>
+        
+
 
         <div class="brief-row">
           <label class="brief-label">tag：</label>
@@ -68,7 +81,7 @@
 
         <div class="brief-row">
           <label class="brief-label">简评：</label>
-          <textarea id="briefText" placeholder="写简短避雷/简评即可"></textarea>
+          <textarea id="briefText" placeholder="简评避雷即可"></textarea>
         </div>
 
         <div class="brief-actions">

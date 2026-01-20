@@ -4,7 +4,7 @@
   const KEY = "brief_entries_v1";
 
   const elName = $("#briefName");
-  const elType = $("#briefType");
+  const elType = $("#briefType"); // ✅ 现在是 hidden input
   const elCustom = $("#briefCustomTag");
   const elSelected = $("#briefSelected");
   const elText = $("#briefText");
@@ -17,6 +17,103 @@
   const elSearch = $("#briefSearch");
   const elList = $("#briefList");
   const elPresets = $("#briefPresets");
+
+  // =========================
+  // ✅ 自绘下拉：类型 dropdown
+  // =========================
+  const dd = $("#briefTypeDD");
+  const ddBtn = $("#briefTypeBtn");
+  const ddText = $("#briefTypeText");
+  const ddPanel = $("#briefTypePanel");
+  const ddItems = ddPanel ? Array.from(ddPanel.querySelectorAll(".dd-item")) : [];
+
+  function ddOpen() {
+    if (!dd) return;
+    dd.classList.add("open");
+    ddBtn?.setAttribute("aria-expanded", "true");
+
+    // focus 到当前 active 项
+    const active = ddPanel?.querySelector(".dd-item.is-active") || ddItems[0];
+    active && active.focus();
+  }
+
+  function ddClose() {
+    if (!dd) return;
+    dd.classList.remove("open");
+    ddBtn?.setAttribute("aria-expanded", "false");
+  }
+
+  function ddSetValue(val) {
+    const v = norm(val) || "叙事书籍";
+
+    // 写入 hidden input（保存时从这里读）
+    if (elType) elType.value = v;
+
+    // 更新按钮显示
+    if (ddText) ddText.textContent = v;
+
+    // 更新选中态
+    ddItems.forEach((it) => {
+      const on = it.dataset.value === v;
+      it.classList.toggle("is-active", on);
+      it.setAttribute("aria-selected", on ? "true" : "false");
+      it.tabIndex = on ? 0 : -1;
+    });
+  }
+
+  // 绑定 dropdown 事件
+  if (ddBtn && dd) {
+    ddBtn.addEventListener("click", () => {
+      if (dd.classList.contains("open")) ddClose();
+      else ddOpen();
+    });
+  }
+
+  ddItems.forEach((it) => {
+    it.addEventListener("click", () => {
+      ddSetValue(it.dataset.value);
+      ddClose();
+      ddBtn?.focus();
+    });
+
+    it.addEventListener("keydown", (e) => {
+      const idx = ddItems.indexOf(it);
+
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        ddSetValue(it.dataset.value);
+        ddClose();
+        ddBtn?.focus();
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const next = ddItems[Math.min(ddItems.length - 1, idx + 1)];
+        next && next.focus();
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const prev = ddItems[Math.max(0, idx - 1)];
+        prev && prev.focus();
+        return;
+      }
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        ddClose();
+        ddBtn?.focus();
+      }
+    });
+  });
+
+  // 点击外部关闭
+  document.addEventListener("click", (e) => {
+    if (!dd) return;
+    if (!dd.contains(e.target)) ddClose();
+  });
 
   // ---- state ----
   let selectedTags = [];
@@ -74,7 +171,10 @@
 
   function clearInput() {
     if (elName) elName.value = "";
-    if (elType) elType.value = "叙事书籍";
+
+    // ✅ 清空时同步重置 dropdown + hidden input
+    ddSetValue("叙事书籍");
+
     if (elCustom) elCustom.value = "";
     if (elText) elText.value = "";
     selectedTags = [];
@@ -83,7 +183,7 @@
 
   function saveEntry() {
     const name = norm(elName?.value);
-    const type = norm(elType?.value);
+    const type = norm(elType?.value); // ✅ 从 hidden input 读
     const text = norm(elText?.value);
 
     if (!name) {
@@ -113,7 +213,9 @@
       item.type,
       (item.tags || []).join(" "),
       item.text,
-    ].join(" ").toLowerCase();
+    ]
+      .join(" ")
+      .toLowerCase();
     return hay.includes(q.toLowerCase());
   }
 
@@ -222,6 +324,7 @@
   elSearch?.addEventListener("input", renderList);
 
   // boot
+  ddSetValue(elType?.value || "叙事书籍"); // ✅ 初始化 dropdown 显示
   renderSelectedTags();
   renderList();
 })();
