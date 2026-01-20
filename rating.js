@@ -571,14 +571,10 @@
             stepper.appendChild(inp);
             stepper.appendChild(btnPlus);
 
-            const note = document.createElement("div");
-            note.className = "mul-note";
             
-            note.textContent = q.note ? `说明：${q.note}` : "说明：可按人数叠加";
-
             wrap.appendChild(label);
             wrap.appendChild(stepper);
-            wrap.appendChild(note);
+
 
             block.appendChild(wrap);
 
