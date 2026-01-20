@@ -564,12 +564,24 @@
               setAnswer(q.id, { count: next });
             });
 
+            const stepper = document.createElement("div");
+            stepper.className = "mul-stepper";
+
+            stepper.appendChild(btnMinus);
+            stepper.appendChild(inp);
+            stepper.appendChild(btnPlus);
+
+            const note = document.createElement("div");
+            note.className = "mul-note";
+            
+            note.textContent = q.note ? `说明：${q.note}` : "说明：可按人数叠加";
+
             wrap.appendChild(label);
-            wrap.appendChild(btnMinus);
-            wrap.appendChild(inp);
-            wrap.appendChild(btnPlus);
+            wrap.appendChild(stepper);
+            wrap.appendChild(note);
 
             block.appendChild(wrap);
+
           }
 
   
