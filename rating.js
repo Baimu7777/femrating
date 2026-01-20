@@ -252,8 +252,19 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
     function getAnswer(qid) {
-      return state[qid] || { value: null, multi: {}, remark: "" };
+      const base = { value: null, multi: {}, remark: "", count: 1 };
+      const cur = state[qid];
+      if (!cur || typeof cur !== "object") return base;
+    
+      const merged = { ...base, ...cur };
+    
+      // normalize count
+      const c = Number(merged.count);
+      merged.count = Number.isFinite(c) && c >= 1 ? Math.floor(c) : 1;
+    
+      return merged;
     }
+    
     function setAnswer(qid, patch) {
       state[qid] = { ...getAnswer(qid), ...patch };
       saveState();
@@ -295,8 +306,19 @@
   
       // single (default)
       if (a.value === null || a.value === undefined) return null;
+
       const n = Number(a.value);
-      return Number.isFinite(n) ? n : null;
+      if (!Number.isFinite(n)) return null;
+
+      // multiplier support (e.g., -2 * 人数)
+      if (q.multiplier) {
+        const c = Number(a.count ?? 1);
+        const count = Number.isFinite(c) && c >= 1 ? Math.floor(c) : 1;
+        return n * count;
+      }
+
+      return n;
+
     }
   
     function computeTotals() {
@@ -383,8 +405,23 @@
                   cur.value !== undefined &&
                   Number(cur.value) === Number(opt.value);
               
-                const next = already ? null : opt.value;
-                setAnswer(q.id, { value: next });
+                  const next = already ? null : opt.value;
+
+                  // 如果这题支持 multiplier：
+                  // - 取消选择（next=null）或选择到 0 分，则人数重置为 1
+                  if (q.multiplier) {
+                    const nextNum = next === null ? null : Number(next);
+                    if (next === null || (Number.isFinite(nextNum) && nextNum === 0)) {
+                      setAnswer(q.id, { value: next, count: 1 });
+                    } else {
+                      // 保留原人数（没有就默认 1）
+                      const keep = Number(cur.count ?? 1);
+                      setAnswer(q.id, { value: next, count: Number.isFinite(keep) && keep >= 1 ? Math.floor(keep) : 1 });
+                    }
+                  } else {
+                    setAnswer(q.id, { value: next });
+                  }
+                  
               });
               
   
@@ -467,6 +504,74 @@
           row.appendChild(score);
           row.appendChild(remark);
           block.appendChild(row);
+          // ---- multiplier UI (only for single + has q.multiplier) ----
+          if (q.type === "single" && q.multiplier) {
+            const a2 = getAnswer(q.id);
+
+            const wrap = document.createElement("div");
+            wrap.className = "mul-wrap";
+            wrap.dataset.mulFor = q.id;
+            wrap.dataset.mulMin = String(q.multiplier.min ?? 1);
+            wrap.dataset.mulMax = String(q.multiplier.max ?? 20);
+            wrap.style.display = "none"; // will be toggled by updateMultiplierControls()
+
+            const label = document.createElement("span");
+            label.className = "mul-label";
+            label.textContent = (q.multiplier.label || "人数") + "：";
+
+            const btnMinus = document.createElement("button");
+            btnMinus.type = "button";
+            btnMinus.className = "mul-btn";
+            btnMinus.textContent = "−";
+
+            const inp = document.createElement("input");
+            inp.className = "mul-input";
+            inp.type = "number";
+            inp.inputMode = "numeric";
+            inp.min = String(q.multiplier.min ?? 1);
+            inp.max = String(q.multiplier.max ?? 20);
+            inp.value = String(a2.count ?? 1);
+            inp.dataset.mulInputFor = q.id;
+
+            const btnPlus = document.createElement("button");
+            btnPlus.type = "button";
+            btnPlus.className = "mul-btn";
+            btnPlus.textContent = "+";
+
+            const clamp = (v) => {
+              const min = Number(inp.min || 1);
+              const max = Number(inp.max || 20);
+              const n = Number(v);
+              if (!Number.isFinite(n)) return min;
+              return Math.max(min, Math.min(max, Math.floor(n)));
+            };
+
+            btnMinus.addEventListener("click", () => {
+              const cur = getAnswer(q.id);
+              const next = clamp((cur.count ?? 1) - 1);
+              setAnswer(q.id, { count: next });
+            });
+
+            btnPlus.addEventListener("click", () => {
+              const cur = getAnswer(q.id);
+              const next = clamp((cur.count ?? 1) + 1);
+              setAnswer(q.id, { count: next });
+            });
+
+            inp.addEventListener("input", () => {
+              const next = clamp(inp.value);
+              inp.value = String(next);
+              setAnswer(q.id, { count: next });
+            });
+
+            wrap.appendChild(label);
+            wrap.appendChild(btnMinus);
+            wrap.appendChild(inp);
+            wrap.appendChild(btnPlus);
+
+            block.appendChild(wrap);
+          }
+
   
           if (q.note) {
             const spec = document.createElement("div");
@@ -604,7 +709,27 @@
       }
     }
     
-  
+    function updateMultiplierControls() {
+      for (const q of QUESTIONS) {
+        if (!(q.type === "single" && q.multiplier)) continue;
+    
+        const a = getAnswer(q.id);
+        const wrap = document.querySelector(`[data-mul-for="${q.id}"]`);
+        if (!wrap) continue;
+    
+        // 只在“选择了一个非 0 分的选项”时显示
+        const chosen = a.value !== null && a.value !== undefined && a.value !== "";
+        const base = chosen ? Number(a.value) : null;
+        const show = chosen && Number.isFinite(base) && base !== 0;
+    
+        wrap.style.display = show ? "flex" : "none";
+    
+        // sync input
+        const inp = wrap.querySelector(`input[data-mul-input-for="${q.id}"]`);
+        if (inp) inp.value = String(a.count ?? 1);
+      }
+    }
+    
     // ---- remarks toggle ----
     function isVisible(el){
       return !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
@@ -677,7 +802,14 @@
       if (q.type === "single") {
         if (a.value === null || a.value === undefined || a.value === "") return "—";
         const opt = (q.options || []).find((o) => Number(o.value) === Number(a.value));
-        return opt ? opt.label : "—";
+        if (!opt) return "—";
+        const a2 = getAnswer(q.id);
+        if (q.multiplier) {
+          const c = Number(a2.count ?? 1);
+          const count = Number.isFinite(c) && c >= 1 ? Math.floor(c) : 1;
+          return count > 1 ? `${opt.label} ×${count}` : opt.label;
+        }
+        return opt.label;
       }
       
       if (q.type === "multi") {
@@ -921,6 +1053,7 @@
     // ---- update all ----
     function updateAll() {
       updateButtonStates();
+      updateMultiplierControls();
       updateScoresAndChips();
       updateSummary();
       updateActiveChipByScroll();

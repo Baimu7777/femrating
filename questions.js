@@ -57,6 +57,8 @@
         "section": "作者/译者/出版社",
         "title": "作者曾发表厌女言论、反对女权言论",
         "type": "single",
+        "multiplier": {"label": "人数", "min": 1, "max": 20, "default": 1},
+        "note": "可按人数叠加（每人-2）",
         "options": [
           {
             "label": "是",
@@ -73,6 +75,8 @@
         "section": "作者/译者/出版社",
         "title": "译者曾发表厌女言论、反对女权言论",
         "type": "single",
+        "multiplier": {"label": "人数", "min": 1, "max": 20, "default": 1},
+        "note": "可按人数叠加（每人-2）",
         "options": [
           {
             "label": "是",
@@ -2005,6 +2009,8 @@
         "section": "导演/编剧",
         "title": "导演曾发表厌女言论、反对女权言论",
         "type": "single",
+        "multiplier": {"label": "人数", "min": 1, "max": 20, "default": 1},
+        "note": "可按人数叠加（每人-2）",
         "options": [
           {
             "label": "是",
@@ -2021,6 +2027,8 @@
         "section": "导演/编剧",
         "title": "编剧曾发表厌女言论、反对女权言论",
         "type": "single",
+        "multiplier": {"label": "人数", "min": 1, "max": 20, "default": 1},
+        "note": "可按人数叠加（每人-2）",
         "options": [
           {
             "label": "是",
@@ -2037,6 +2045,8 @@
         "section": "导演/编剧",
         "title": "演员曾发表厌女言论、反对女权言论",
         "type": "single",
+        "multiplier": {"label": "人数", "min": 1, "max": 20, "default": 1},
+        "note": "可按人数叠加（每人-2）",
         "options": [
           {
             "label": "是",
@@ -2053,6 +2063,8 @@
         "section": "导演/编剧",
         "title": "导演、编剧、演员曾陷入性骚扰、家暴等丑闻",
         "type": "single",
+        "multiplier": {"label": "人数", "min": 1, "max": 20, "default": 1},
+        "note": "可按人数叠加（每人-2）",
         "options": [
           {
             "label": "是",
@@ -2067,10 +2079,40 @@
       {
         "id": "Q7",
         "section": "导演/编剧",
-        "title": "导演或编剧曾经作品中有非批判性VGBTQ内容",
+        "title": "导演、编剧或演员曾经作品中有非批判性VGBTQ内容",
         "type": "single",
-        "options": []
+        "multiplier": {"label": "人数", "min": 1, "max": 20, "default": 1},
+        "note": "可按人数叠加（每人-1）",
+        "options": [
+          {
+            "label": "是",
+            "value": -1
+          },
+          {
+            "label": "否",
+            "value": 0
+          }
+        ]
       },
+      {
+        "id": "Q7A",
+        "section": "导演/编剧",
+        "title": "导演、编剧、演员存在跨性别",
+        "type": "single",
+        "multiplier": {"label": "人数", "min": 1, "max": 20, "default": 1},
+        "note": "可按人数叠加（每人-2）",
+        "options": [
+          {
+            "label": "是",
+            "value": -2
+          },
+          {
+            "label": "否",
+            "value": 0
+          }
+        ]
+      },
+
       {
         "id": "Q8",
         "section": "作品",
