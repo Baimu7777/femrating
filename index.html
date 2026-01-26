@@ -394,7 +394,7 @@
     gap: 8px;
     font-size: 13px;
     color: var(--muted);
-    margin: 12px 0 14px;
+        margin: 0;
   }
   .toggle input { width: 16px; height: 16px; accent-color: var(--blue); }
 
@@ -402,7 +402,7 @@
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
-    margin: 10px 0 14px;
+        margin: 0;
   }
   .side-actions button {
     border: 1px solid var(--line);
@@ -508,8 +508,8 @@
   /* mobile tightening + remove outer “cards”, use dividers */
   @media (max-width: 680px) {
     /* mobile: top sticky should be section title, not the remarks/reset bar */
-    .mobile-top-toggle{ display:none; }
-    .side .toggle{ display:flex; }
+    .mobile-top-toggle{ display:block; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 999; margin-bottom: 10px; }
+    .side .toggle{ display:none; }
 
     .mobile-game-host{ display:flex; flex-direction: column; gap: 12px; padding: 12px 14px 12px; }
     .card.game-card{
@@ -533,7 +533,7 @@
 
     h2.section-title {
       position: sticky;
-      top: env(safe-area-inset-top, 0px); 
+      top: calc(env(safe-area-inset-top, 0px) + 54px); 
       font-size: 22px;
       margin: 0 0 8px;
       padding: 10px 0 12px;
@@ -554,10 +554,11 @@
     .side { display: flex; flex-direction: column; gap: 12px; }
     .card { order: 0; }
     .side-actions { order: 1; margin: 0; }
-    .grid { order: 2; }
+    .summary-card { order: 98; }
+    .grid { order: 99; }
 
     .side-actions button { flex: 1; }
-    .side-actions #btnReset { display: inline-flex; }
+    .side-actions #btnReset { display: none; }
   }
 
   /* 导出预览弹窗 */
@@ -880,7 +881,7 @@
     </div>
 
 
-    <div class="card">
+    <div class="card summary-card">
       <table><tbody id="summaryBody"></tbody></table>
     </div>
 
