@@ -625,6 +625,26 @@
     margin: 0 0 6px;
   }
 
+  /* mobile: export actions in footer */
+  .mobile-export-title{
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 900;
+    margin: 10px 0 6px;
+  }
+  .mobile-export-actions{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0 0 8px;
+  }
+  .mobile-export-actions .btn{ flex: 1; }
+  .mobile-export-hint{
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+
   
 
   /* ensure mobile footer visible on small screens (override default rule below) */
@@ -918,6 +938,13 @@
     <div id="mobileSectionScores" class="mobile-footer-sections"></div>
     <div class="mobile-footer-qtitle">题号</div>
     <div class="grid" id="mobileQGrid"></div>
+
+    <div class="mobile-export-title">导出</div>
+    <div class="mobile-export-actions">
+      <button id="btnExportImageFullMobile" type="button" class="btn primary small">整图导出</button>
+      <button id="btnExportImageSplitMobile" type="button" class="btn small">分节导出</button>
+    </div>
+    <div class="mobile-export-hint">若豆瓣等内置浏览器拦截“保存图片”，会弹出预览；请<strong>长按图片</strong>保存（或分享/在浏览器打开后再保存）。</div>
   </footer>
 
   </div>
@@ -977,6 +1004,23 @@
 
 </div>
 
+
+<div id="exportModal" class="export-modal" role="dialog" aria-modal="true" aria-label="导出预览">
+  <div class="export-card">
+    <header>
+      <h3>导出预览</h3>
+      <p>若豆瓣等 App 内置浏览器拦截“保存图片”，请<strong>长按下面图片</strong>保存（或分享/在系统浏览器打开后再保存）。</p>
+    </header>
+    <div class="actions">
+      <button id="btnExportTryDownload" type="button" class="primary">尝试保存</button>
+      <button id="btnExportClose" type="button" class="ghost">关闭</button>
+    </div>
+    <div class="imgwrap">
+      <img id="exportPreviewImg" alt="导出预览图片" />
+    </div>
+    <div id="exportPreviewHint" class="hint">提示：在部分 App 内置浏览器里，“保存图片/下载”会被拦截，这是 App 限制。此时长按图片即可保存。</div>
+  </div>
+</div>
 
 <div id="exportStage" class="export-stage" style="display:none;"></div>
 
@@ -1858,26 +1902,93 @@ function updateScoresAndChips(){
     URL.revokeObjectURL(url);
   }
 
+  // ---- Export preview modal (for in-app browsers / mobile) ----
+  const exportModal = $("#exportModal");
+  const exportPreviewImg = $("#exportPreviewImg");
+  const exportPreviewHint = $("#exportPreviewHint");
+  const btnExportTryDownload = $("#btnExportTryDownload");
+  const btnExportClose = $("#btnExportClose");
+
+  let LAST_EXPORT = { dataUrl: "", filename: "rating.png" };
+
+  function isLikelyInAppBrowser(){
+    const ua = String(navigator.userAgent || "");
+    return /MicroMessenger|QQ\/?|Weibo|douban|DingTalk|AlipayClient|toutiao|Bytedance|TikTok/i.test(ua);
+  }
+  function isSmallScreen(){
+    return window.matchMedia && window.matchMedia("(max-width: 680px)").matches;
+  }
+  function shouldPreferPreview(){
+    return isSmallScreen() || isLikelyInAppBrowser();
+  }
+
+  function showExportModal(dataUrl, filename){
+    if (!exportModal || !exportPreviewImg) return;
+    LAST_EXPORT = { dataUrl, filename: filename || "rating.png" };
+    exportPreviewImg.src = dataUrl;
+    exportModal.classList.add("show");
+  }
+  function hideExportModal(){
+    if (!exportModal) return;
+    exportModal.classList.remove("show");
+  }
+
+  function tryDownloadDataUrl(dataUrl, filename){
+    // Some in-app browsers ignore the download attribute; still worth trying.
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = filename || "rating.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  if (btnExportClose) btnExportClose.addEventListener("click", hideExportModal);
+  if (exportModal) exportModal.addEventListener("click", (e)=>{
+    if (e.target === exportModal) hideExportModal();
+  });
+  if (btnExportTryDownload) btnExportTryDownload.addEventListener("click", ()=>{
+    if (LAST_EXPORT && LAST_EXPORT.dataUrl){
+      tryDownloadDataUrl(LAST_EXPORT.dataUrl, LAST_EXPORT.filename);
+    }
+  });
+
   function downloadImage(canvas, filename){
     try{
+      // Always build a dataUrl for preview (long-press save) — works better in in-app browsers
+      let dataUrl = "";
+      try{
+        dataUrl = canvas.toDataURL("image/png");
+      }catch(e){
+        console.warn("toDataURL failed", e);
+      }
+
+      // On mobile / in-app: prefer preview modal (then user can long-press save)
+      if (dataUrl && shouldPreferPreview()){
+        showExportModal(dataUrl, filename);
+        // Still try automatic download once (might work in system browsers)
+        try{ tryDownloadDataUrl(dataUrl, filename); } catch(e) {}
+        return;
+      }
+
+      // Desktop / normal browsers: use blob download first
       canvas.toBlob((blob)=>{
         if (blob){
-          downloadBlob(blob, filename);
+          try{
+            downloadBlob(blob, filename);
+            return;
+          }catch(e){
+            console.warn("blob download failed, fallback to preview", e);
+          }
+        }
+        // Fallback
+        if (dataUrl){
+          tryDownloadDataUrl(dataUrl, filename);
+          // Also show preview if it looks like download was blocked
+          if (shouldPreferPreview()) showExportModal(dataUrl, filename);
           return;
         }
-        // Fallback: some browsers return null for very large canvases
-        try{
-          const dataUrl = canvas.toDataURL("image/png");
-          const a = document.createElement("a");
-          a.href = dataUrl;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        }catch(e2){
-          console.error(e2);
-          alert("导出失败：无法生成图片数据");
-        }
+        alert("导出失败：无法生成图片数据");
       }, "image/png");
     }catch(e){
       console.error(e);
@@ -2124,8 +2235,13 @@ function updateScoresAndChips(){
 
   const btnExportFull = $("#btnExportImageFull");
   const btnExportSplit = $("#btnExportImageSplit");
+  const btnExportFullMobile = $("#btnExportImageFullMobile");
+  const btnExportSplitMobile = $("#btnExportImageSplitMobile");
+
   if (btnExportFull) btnExportFull.addEventListener("click", exportFullImage);
   if (btnExportSplit) btnExportSplit.addEventListener("click", exportSplitBySections);
+  if (btnExportFullMobile) btnExportFullMobile.addEventListener("click", exportFullImage);
+  if (btnExportSplitMobile) btnExportSplitMobile.addEventListener("click", exportSplitBySections);
 
   // ---- Type switching ----
   function setPillActive(){
