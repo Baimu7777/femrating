@@ -23,16 +23,20 @@
     font-display: swap;
   }
   :root {
-    --bg: #ffffff;
+    --bg: #fbfcff;
     --text: #0b0c0f;
     --muted: #667085;
-    --line: #e5e7eb;
-    --panel: #f7f7f9;
-    /* Purple theme */
-    --blue: #7c3aed;      /* accent */
-    --blue-dark: #6d28d9; /* active */
-    --blue-2: #f3e8ff;    /* light */
-    --chip: #ececec;
+    --line: #e2e8f0;
+    --panel: #f2fbf6;
+
+    /* Soft purple + green */
+    --blue: #7b6df0;       /* accent */
+    --blue-dark: #6a5ce6;  /* active */
+    --blue-2: #f1efff;     /* light purple */
+    --green: #34d399;      /* accent green */
+    --green-2: #eafff5;    /* light green */
+
+    --chip: #eef2ff;
     --shadow: 0 8px 24px rgba(16,24,40,.08);
   }
   * { box-sizing: border-box; }
@@ -55,6 +59,59 @@
   textarea::placeholder, input::placeholder {
     font-family: inherit;
   }
+
+
+  /* 通用按钮（用于首页/Tag等） */
+  .btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--text);
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 1px 0 rgba(16,24,40,.04);
+    transition: border-color .15s ease, box-shadow .15s ease, transform .05s ease;
+  }
+  .btn:hover{
+    border-color: rgba(123,109,240,.45);
+    box-shadow: 0 6px 14px rgba(16,24,40,.06);
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn.primary{
+    border-color: rgba(123,109,240,.55);
+    background: linear-gradient(180deg, var(--blue-2), #ffffff);
+    color: var(--blue-dark);
+    font-weight: 900;
+  }
+  .btn.small{
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+
+  /* 评定说明或补充：隐藏/显示 */
+  body.hide-remarks .remark{ display: none !important; }
+  body.hide-remarks .qrow{ grid-template-columns: minmax(0,1fr) 56px; }
+
+  /* 当前题目/分区高亮 */
+  .qblock.activeQ{
+    box-shadow: 0 0 0 2px rgba(123,109,240,.45);
+    border-radius: 12px;
+  }
+  .chip.active{
+    background: var(--blue-2);
+    color: var(--blue-dark);
+    border-color: rgba(123,109,240,.55);
+    font-weight: 900;
+  }
+  #summaryBody tr.active{
+    background: var(--green-2);
+  }
+
 
 
 
@@ -164,7 +221,7 @@
     line-height: 1.25;
   }
   .export-table thead th {
-    background: #fbf3dc; 
+    background: var(--blue-2);
     font-weight: 900;
   }
   .export-table col.col-item { width: 34%; }
@@ -173,7 +230,7 @@
   .export-table col.col-remark { width: 20%; }
 
   .export-section td {
-    background: #e7f3ff; 
+    background: var(--green-2);
     font-weight: 900;
     padding: 9px 12px;
   }
@@ -195,7 +252,7 @@
     overflow: auto;
     padding: 22px 18px;
     border-left: 1px solid var(--line);
-    background: #fff;
+    background: linear-gradient(180deg, #ffffff, var(--panel));
   }
 
   .sec {
@@ -660,12 +717,17 @@
   .brief-ta{ width: 100%; resize: vertical; }
   .tag-chips{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 10px; }
   .tag-chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 999px;
     border: 1px solid var(--line);
     background: #fff;
-    border-radius: 999px;
-    padding: 6px 10px;
+    color: var(--text);
     cursor: pointer;
-    font-size: 12px;
+    user-select: none;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
   }
   .tag-chip.active{
     border-color: var(--blue);
@@ -800,6 +862,8 @@
 </div>
 
 
+<div id="exportStage" class="export-stage" style="display:none;"></div>
+
 <script src="./question.js"></script>
 <script>
   // =============================
@@ -833,6 +897,50 @@
   let QUESTIONS = [];
   let SECTION_ORDER = [];
   let state = {};
+  let activeQid = null;
+  let activeIO = null;
+
+  function setActiveQuestion(qid){
+    if (!qid || activeQid === qid) return;
+    activeQid = qid;
+
+    document.querySelectorAll(".qblock.activeQ").forEach(el=>el.classList.remove("activeQ"));
+    const blk = document.getElementById(qid);
+    if (blk) blk.classList.add("activeQ");
+
+    document.querySelectorAll(".chip.active").forEach(el=>el.classList.remove("active"));
+    const chip = document.querySelector(`.chip[data-qid="${qid}"]`);
+    if (chip) chip.classList.add("active");
+
+    document.querySelectorAll("#summaryBody tr.active").forEach(el=>el.classList.remove("active"));
+    const q = QUESTIONS.find(x=>x.id === qid);
+    if (q){
+      const row = document.querySelector(`#summaryBody tr[data-section="${q.section}"]`);
+      if (row) row.classList.add("active");
+    }
+  }
+
+  function setupActiveObserver(){
+    if (activeIO) activeIO.disconnect();
+    const root = $("#mainScroll");
+    if (!root) return;
+    const blocks = Array.from(root.querySelectorAll(".qblock"));
+
+    activeIO = new IntersectionObserver((entries)=>{
+      // pick the most visible one
+      let best = null;
+      for (const e of entries){
+        if (!e.isIntersecting) continue;
+        if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
+      }
+      if (best){
+        const id = best.target.id;
+        setActiveQuestion(id);
+      }
+    }, { root, threshold: [0.35, 0.5, 0.65] });
+
+    blocks.forEach(b=>activeIO.observe(b));
+  }
 
   // ---- Work name ----
   const nameInput = $("#gameName"); // 沿用旧 id，减少改动
@@ -946,6 +1054,15 @@
     if (q.type === "multi"){
       const selected = Object.entries(a.multi || {}).filter(([_,v])=>!!v).map(([k])=>k);
       if (!selected.length) return null;
+
+      // 年龄段丰富度（多选）：1项=0，2项=2，3项=3，4项=4，5项=5
+      if (q.section === "女性角色塑造" && String(q.title || "").includes("年龄段丰富度")){
+        const c = selected.length;
+        if (c === 1) return 0;
+        if (c === 2) return 2;
+        return Math.min(5, c);
+      }
+
       let sum = 0;
       for (const label of selected){
         const opt = (q.options||[]).find(o=>o.label===label);
@@ -967,22 +1084,18 @@
   }
 
   function computeTotals(){
-    const labels = window.SCORE_BUCKET_LABELS || {};
-    const byBucket = {};
-    for (const k of Object.keys(labels)) byBucket[k] = 0;
+    const bySection = {};
+    for (const s of SECTION_ORDER) bySection[s] = 0;
 
     let total = 0;
-    let creator = 0;
-
     for (const q of QUESTIONS){
       const v = computeQuestionScore(q);
       if (typeof v === "number"){
         total += v;
-        if (q.section === "创作者及传播环节") creator += v;
-        if (q.bucket && (q.bucket in byBucket)) byBucket[q.bucket] += v;
+        bySection[q.section] = (bySection[q.section] || 0) + v;
       }
     }
-    return { total, creator, byBucket };
+    return { total, bySection };
   }
 
   function sectionAnchorId(section){
@@ -1158,11 +1271,7 @@
         sc.className = "score-num";
         sc.dataset.scoreFor = q.id;
         sc.textContent = "0";
-        const scLabel = document.createElement("div");
-        scLabel.className = "score-label";
-        scLabel.textContent = "得分";
         score.appendChild(sc);
-        score.appendChild(scLabel);
 
         const remark = document.createElement("div");
         remark.className = "remark";
@@ -1210,37 +1319,30 @@
   }
 
   function updateSummary(){
-    const { total, creator, byBucket } = computeTotals();
+    const { total, bySection } = computeTotals();
     const body = $("#summaryBody");
     body.innerHTML = "";
 
-    function addRow(label, val, jumpSection=null){
+    function addRow(label, val, isTotal=false){
       const tr = document.createElement("tr");
-      if (jumpSection){
-        tr.classList.add("jump");
-        tr.title = "点击跳转到该分区";
-        tr.addEventListener("click", ()=>{
-          const id = sectionAnchorId(jumpSection);
-          const el = document.getElementById(id);
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      }
+      if (isTotal) tr.style.fontWeight = "900";
+      tr.dataset.section = label;
+
       const td1 = document.createElement("td");
       td1.textContent = label;
+
       const td2 = document.createElement("td");
+      td2.className = "score-cell";
       td2.textContent = String(val);
+
       tr.appendChild(td1);
       tr.appendChild(td2);
       body.appendChild(tr);
     }
 
-    addRow("总分", total);
-    addRow("创作者及传播环节", creator, "创作者及传播环节");
-
-    const labels = window.SCORE_BUCKET_LABELS || {};
-    const order = ["S1","S2","S3","S4","S5","S6","S7","S8"];
-    for (const k of order){
-      if (k in labels) addRow(labels[k], byBucket[k] ?? 0);
+    addRow("总分", total, true);
+    for (const sec of SECTION_ORDER){
+      addRow(sec, bySection[sec] || 0, false);
     }
   }
 
@@ -1346,12 +1448,18 @@
       alert("缺少 html2canvas，无法导出图片。");
       return;
     }
-    const root = document.querySelector(".app");
-    const canvas = await window.html2canvas(root, { scale: 2, backgroundColor: "#ffffff" });
-    const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "export";
-    canvas.toBlob((blob)=>{
-      if (blob) downloadBlob(blob, `${name}_${TYPE}_整图.png`);
-    }, "image/png");
+    const stage = $("#exportStage");
+    stage.style.display = "block";
+    stage.innerHTML = "";
+    stage.appendChild(buildExportContent({ mode: "full" }));
+
+    await new Promise(r=>setTimeout(r, 50));
+
+    const canvas = await window.html2canvas(stage, {backgroundColor: "#ffffff", scale: 2});
+    downloadImage(canvas, `rating_${TYPE}_full.png`);
+
+    stage.style.display = "none";
+    stage.innerHTML = "";
   }
 
   async function exportSplitBySections(){
@@ -1359,15 +1467,185 @@
       alert("缺少 html2canvas，无法导出图片。");
       return;
     }
-    const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "export";
-    for (const section of SECTION_ORDER){
-      const el = document.getElementById(sectionAnchorId(section));
-      if (!el) continue;
-      const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: "#ffffff" });
-      canvas.toBlob((blob)=>{
-        if (blob) downloadBlob(blob, `${name}_${TYPE}_${section}.png`);
-      }, "image/png");
+    const stage = $("#exportStage");
+    stage.style.display = "block";
+    stage.innerHTML = "";
+
+    const name = ($("#workName").value || "").trim() || "未命名作品";
+
+    // 简评/Tag：如有内容，单独导出一张
+    const brief = ($("#briefInput").value || "").trim();
+    const tags = getSelectedTags();
+    if (brief || tags.length){
+      stage.innerHTML = "";
+      stage.appendChild(buildExportBriefCard(name, tags, brief));
+      await new Promise(r=>setTimeout(r, 50));
+      const c1 = await window.html2canvas(stage, {backgroundColor:"#ffffff", scale: 2});
+      downloadImage(c1, `rating_${TYPE}_brief_tags.png`);
     }
+
+    // 分区导出（仅导出有填写/有补充说明的题目）
+    for (const secName of SECTION_ORDER){
+      const secQs = QUESTIONS.filter(q=>q.section === secName);
+      const picked = secQs.filter(q=>{
+        const a = getAnswer(q.id);
+        const score = computeQuestionScore(q);
+        const hasScore = typeof score === "number";
+        const hasRemark = !!String(a.remark || "").trim();
+        return hasScore || hasRemark;
+      });
+      if (!picked.length) continue;
+
+      stage.innerHTML = "";
+      stage.appendChild(buildExportContent({ mode: "section", sectionName: secName, questions: picked }));
+
+      await new Promise(r=>setTimeout(r, 50));
+      const c = await window.html2canvas(stage, {backgroundColor:"#ffffff", scale: 2});
+      downloadImage(c, `rating_${TYPE}_${secName}.png`);
+    }
+
+    stage.style.display = "none";
+    stage.innerHTML = "";
+  }
+
+  function getSelectedTags(){
+    return selectedTags.slice();
+  }
+
+  function buildExportBriefCard(name, tags, brief){
+    const wrap = document.createElement("div");
+    wrap.className = "export-wrap";
+    wrap.style.width = "980px";
+
+    const topbar = document.createElement("div");
+    topbar.className = "export-topbar";
+    topbar.innerHTML = `<div></div><div style="font-weight:900;color:var(--blue-dark);">简评 / Tag</div><div style="color:var(--muted);font-size:12px;">${escapeHtml(TYPE)}</div>`;
+    wrap.appendChild(topbar);
+
+    const banner = document.createElement("div");
+    banner.className = "export-game-banner";
+    banner.textContent = name;
+    wrap.appendChild(banner);
+
+    const meta = document.createElement("div");
+    meta.className = "export-meta";
+    meta.style.marginBottom = "10px";
+    meta.innerHTML = `
+      <div class="export-meta-line"><strong>Tag</strong>：${tags.length ? tags.map(t=>`<span class="tag-chip on" style="margin-right:6px;">${escapeHtml(t)}</span>`).join("") : "<span style='color:var(--muted)'>无</span>"}</div>
+      <div class="export-meta-line"><strong>简评</strong>：${brief ? `<div style="margin-top:6px;white-space:pre-wrap;line-height:1.6;">${escapeHtml(brief)}</div>` : "<span style='color:var(--muted)'>无</span>"}</div>
+    `;
+    wrap.appendChild(meta);
+
+    return wrap;
+  }
+
+  function buildExportContent({ mode, sectionName=null, questions=null }){
+    const name = ($("#workName").value || "").trim() || "未命名作品";
+    const url  = ($("#workUrl").value || "").trim();
+    const tags = getSelectedTags();
+    const brief = ($("#briefInput").value || "").trim();
+
+    const { total, bySection } = computeTotals();
+
+    const wrap = document.createElement("div");
+    wrap.className = "export-wrap";
+    wrap.style.width = "980px";
+
+    const topbar = document.createElement("div");
+    topbar.className = "export-topbar";
+    const mid = (mode === "section" && sectionName) ? `${sectionName}：${bySection[sectionName] || 0}` : `总分：${total}`;
+    topbar.innerHTML = `<div></div><div style="font-weight:900;color:var(--blue-dark);">${escapeHtml(mid)}</div><div style="color:var(--muted);font-size:12px;">${escapeHtml(TYPE)}</div>`;
+    wrap.appendChild(topbar);
+
+    const banner = document.createElement("div");
+    banner.className = "export-game-banner";
+    banner.textContent = name;
+    wrap.appendChild(banner);
+
+    const meta = document.createElement("div");
+    meta.className = "export-meta";
+    meta.innerHTML = `
+      <div class="export-meta-line"><strong>链接</strong>：${url ? escapeHtml(url) : "<span style='color:var(--muted)'>未填写</span>"}</div>
+      <div class="export-meta-line"><strong>Tag</strong>：${tags.length ? tags.map(t=>`<span class="tag-chip on" style="margin-right:6px;">${escapeHtml(t)}</span>`).join("") : "<span style='color:var(--muted)'>无</span>"}</div>
+      ${mode === "full" && brief ? `<div class="export-meta-line"><strong>简评</strong>：<div style="margin-top:6px;white-space:pre-wrap;line-height:1.6;">${escapeHtml(brief)}</div></div>` : ``}
+    `;
+    wrap.appendChild(meta);
+
+    const table = document.createElement("table");
+    table.className = "export-table";
+
+    const colgroup = document.createElement("colgroup");
+    colgroup.innerHTML = `
+      <col style="width:38%">
+      <col style="width:42%">
+      <col style="width:8%">
+      <col style="width:12%">
+    `;
+    table.appendChild(colgroup);
+
+    const thead = document.createElement("thead");
+    thead.innerHTML = `<tr>
+      <th class="col-title">题目</th>
+      <th class="col-range">评分标准</th>
+      <th class="col-score">分</th>
+      <th class="col-remark">补充</th>
+    </tr>`;
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+
+    const list = questions ? questions.slice() : QUESTIONS.slice();
+
+    const bySec = {};
+    for (const q of list){
+      if (!bySec[q.section]) bySec[q.section] = [];
+      bySec[q.section].push(q);
+    }
+
+    const secOrder = (mode === "section" && sectionName) ? [sectionName] : SECTION_ORDER.slice();
+    for (const sec of secOrder){
+      const qs = bySec[sec] || [];
+      if (!qs.length) continue;
+
+      const trS = document.createElement("tr");
+      trS.className = "export-section";
+      trS.innerHTML = `<td colspan="4">${escapeHtml(sec)}</td>`;
+      tbody.appendChild(trS);
+
+      for (const q of qs){
+        const a = getAnswer(q.id);
+        const score = computeQuestionScore(q);
+        const hasScore = typeof score === "number";
+        const remark = String(a.remark || "").trim();
+
+        // 导出时：若完全没写且无补充说明，则跳过
+        if (!hasScore && !remark) continue;
+
+        const tr = document.createElement("tr");
+        tr.className = "export-row";
+        tr.innerHTML = `
+          <td class="col-title">${escapeHtml(q.title || "")}</td>
+          <td class="col-range">${escapeHtml(q.spec || "")}</td>
+          <td class="col-score">${hasScore ? score : ""}</td>
+          <td class="col-remark">${remark ? escapeHtml(remark) : ""}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+
+    return wrap;
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll("\"","&quot;")
+      .replaceAll("'","&#39;");
   }
 
   const btnExportFull = $("#btnExportImageFull");
@@ -1427,6 +1705,7 @@
     setPillActive();
     render();
     updateAll();
+    setupActiveObserver();
     applyRemarksToggle(true);
   }
 
