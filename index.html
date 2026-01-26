@@ -450,19 +450,15 @@
     border-bottom: 1px solid var(--line);
     padding: 10px 14px;
   }
-  /* ===== Mobile bottom bar ===== */
-  .mobile-bottom-bar{
-    display:none;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 999;
-    background: #fff;
-    border-top: 1px solid var(--line);
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
-    box-shadow: 0 -8px 24px rgba(16,24,40,.08);
-  }
+  /* ===== Mobile bottom bar (at page end, NOT fixed) ===== */
+.mobile-bottom-bar{
+  display:none;
+  position: static;
+  background: #fff;
+  border-top: 1px solid var(--line);
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  margin-top: 18px;
+}
   .mobile-bottom-inner{
     display: flex;
     flex-direction: column;
