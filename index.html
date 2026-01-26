@@ -1653,7 +1653,7 @@
     const meta = document.createElement("div");
     meta.className = "export-meta";
     meta.innerHTML = `
-      <div class="export-meta-line"><strong>链接</strong>：${url ? escapeHtml(url) : "<span style='color:var(--muted)'>未填写</span>"}</div>
+      
       <div class="export-meta-line"><strong>Tag</strong>：${tags.length ? tags.map(t=>`<span class="tag-chip on" style="margin-right:6px;">${escapeHtml(t)}</span>`).join("") : "<span style='color:var(--muted)'>无</span>"}</div>
       ${mode === "full" && brief ? `<div class="export-meta-line"><strong>简评</strong>：<div style="margin-top:6px;white-space:pre-wrap;line-height:1.6;">${escapeHtml(brief)}</div></div>` : ``}
     `;
