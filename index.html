@@ -1215,6 +1215,20 @@
         return -Math.min(5, c);
       }
 
+      
+      // Q30 特例：多选 + 按人数叠加（每个选项的 a.multi[label] 存人数）
+      if (q.id === "Q30" && q.countable){
+        let sum = 0;
+        for (const label of selected){
+          const opt = (q.options||[]).find(o=>o.label===label);
+          const raw = (a.multi || {})[label];
+          const n = Number(raw);
+          const count = (Number.isFinite(n) && n > 0) ? n : 1;
+          if (opt) sum += Number(opt.value) * count;
+        }
+        return sum;
+      }
+
       let sum = 0;
       for (const label of selected){
         const opt = (q.options||[]).find(o=>o.label===label);
@@ -1302,6 +1316,75 @@
     wrap.appendChild(btnPlus);
     return wrap;
   }
+
+  function makeMultiCounter(q, label){
+    const wrap = document.createElement("div");
+    wrap.className = "counter";
+    wrap.dataset.mcounterFor = q.id;
+    wrap.dataset.mlabel = label;
+
+    const btnMinus = document.createElement("button");
+    btnMinus.type = "button";
+    btnMinus.className = "cnt-btn";
+    btnMinus.textContent = "−";
+
+    const num = document.createElement("input");
+    num.type = "number";
+    num.className = "cnt-num";
+    num.min = "1";
+    num.step = "1";
+
+    const btnPlus = document.createElement("button");
+    btnPlus.type = "button";
+    btnPlus.className = "cnt-btn";
+    btnPlus.textContent = "+";
+
+    function getCur(){
+      const a = getAnswer(q.id);
+      const raw = (a.multi || {})[label];
+      const n = Number(raw);
+      return (Number.isFinite(n) && n > 0) ? n : 1;
+    }
+
+    function setCount(v){
+      const n = Number(v);
+      const cur = getAnswer(q.id);
+      const nextMulti = { ...(cur.multi || {}) };
+
+      if (!Number.isFinite(n) || n <= 0){
+        // 设为 0 / 非法：视为取消该选项
+        delete nextMulti[label];
+        setAnswer(q.id, { multi: nextMulti });
+        return;
+      }
+      const count = Math.max(1, Math.floor(n));
+      nextMulti[label] = count;
+      setAnswer(q.id, { multi: nextMulti });
+    }
+
+    // init value
+    num.value = String(getCur());
+
+    btnMinus.addEventListener("click", ()=>{
+      const cur = getCur();
+      if (cur <= 1){
+        setCount(0); // 1 再减 -> 取消选项
+      } else {
+        setCount(cur - 1);
+      }
+    });
+    btnPlus.addEventListener("click", ()=>{
+      const cur = getCur();
+      setCount(cur + 1);
+    });
+    num.addEventListener("input", ()=>setCount(num.value));
+
+    wrap.appendChild(btnMinus);
+    wrap.appendChild(num);
+    wrap.appendChild(btnPlus);
+    return wrap;
+  }
+
 
 
   // ---- Q number grouping (叙事者/作品/女性/男性/其她) ----
@@ -1419,7 +1502,14 @@
           }
 
         } else if (q.type === "multi"){
+          // 仅 Q30：多选 + 按人数叠加（每个选项带一个人数计数器）
+          const multiCountable = (q.id === "Q30" && q.countable);
           for (const opt of (q.options || [])){
+            const wrapOpt = document.createElement("div");
+            wrapOpt.style.display = "inline-flex";
+            wrapOpt.style.alignItems = "center";
+            wrapOpt.style.gap = "6px";
+
             const b = document.createElement("button");
             b.type = "button";
             b.className = "opt-btn";
@@ -1435,11 +1525,22 @@
             b.addEventListener("click", ()=>{
               const cur = getAnswer(q.id);
               const nextMulti = { ...(cur.multi || {}) };
-              nextMulti[opt.label] = !nextMulti[opt.label];
+              if (multiCountable){
+                if (nextMulti[opt.label]) delete nextMulti[opt.label];
+                else nextMulti[opt.label] = 1;
+              } else {
+                nextMulti[opt.label] = !nextMulti[opt.label];
+              }
               setAnswer(q.id, { multi: nextMulti });
             });
 
-            btnGroup.appendChild(b);
+            wrapOpt.appendChild(b);
+            if (multiCountable){
+              const c = makeMultiCounter(q, opt.label);
+              c.style.display = on ? "" : "none";
+              wrapOpt.appendChild(c);
+            }
+            btnGroup.appendChild(wrapOpt);
           }
         }
 
@@ -1633,6 +1734,19 @@ function updateScoresAndChips(){
           const num = cnt.querySelector(".cnt-num");
           if (num) num.value = String(a.count || 1);
         }
+      }
+
+      if (q.id === "Q30" && q.type === "multi" && q.countable){
+        const a = getAnswer(q.id);
+        const counters = document.querySelectorAll(`[data-mcounter-for="${q.id}"]`);
+        counters.forEach(cnt=>{
+          const label = cnt.dataset.mlabel;
+          const raw = (a.multi || {})[label];
+          const on = !!raw;
+          cnt.style.display = on ? "" : "none";
+          const num = cnt.querySelector(".cnt-num");
+          if (num) num.value = String(on ? raw : 1);
+        });
       }
     }
     for (const chip of document.querySelectorAll(".chip")){
