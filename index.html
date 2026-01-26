@@ -1462,6 +1462,22 @@
     URL.revokeObjectURL(url);
   }
 
+  function downloadImage(canvas, filename){
+    try{
+      canvas.toBlob((blob)=>{
+        if (!blob){
+          alert("导出失败：无法生成图片数据");
+          return;
+        }
+        downloadBlob(blob, filename);
+      }, "image/png");
+    }catch(e){
+      console.error(e);
+      alert("导出失败：" + (e && e.message ? e.message : String(e)));
+    }
+  }
+
+
   async function exportFullImage(){
     if (!window.html2canvas){
       alert("缺少 html2canvas，无法导出图片。");
@@ -1490,10 +1506,10 @@
     stage.style.display = "block";
     stage.innerHTML = "";
 
-    const name = ($("#workName").value || "").trim() || "未命名作品";
+    const name = ($("#gameName").value || "").trim() || "未命名作品";
 
     // 简评/Tag：如有内容，单独导出一张
-    const brief = ($("#briefInput").value || "").trim();
+    const brief = ($("#briefAvoid").value || "").trim();
     const tags = getSelectedTags();
     if (brief || tags.length){
       stage.innerHTML = "";
@@ -1559,10 +1575,10 @@
   }
 
   function buildExportContent({ mode, sectionName=null, questions=null }){
-    const name = ($("#workName").value || "").trim() || "未命名作品";
-    const url  = ($("#workUrl").value || "").trim();
+    const name = ($("#gameName").value || "").trim() || "未命名作品";
+    const url  = (($("#workUrl") ? $("#workUrl").value : "") || "").trim();
     const tags = getSelectedTags();
-    const brief = ($("#briefInput").value || "").trim();
+    const brief = ($("#briefAvoid").value || "").trim();
 
     const { total, bySection } = computeTotals();
 
