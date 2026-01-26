@@ -1191,6 +1191,14 @@
         return Math.min(5, c);
       }
 
+      // 男性：同样按“数量映射”，但为扣分（1项=0，2项=-2，之后每多1项-1，最高-5）
+      if (q.section === "男性角色塑造" && String(q.title || "").includes("年龄段丰富度")){
+        const c = selected.length;
+        if (c === 1) return 0;
+        if (c === 2) return -2;
+        return -Math.min(5, c);
+      }
+
       let sum = 0;
       for (const label of selected){
         const opt = (q.options||[]).find(o=>o.label===label);
