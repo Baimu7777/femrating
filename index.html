@@ -1078,7 +1078,7 @@ function extractQuestionSetsJSON(src){
 
       if (inStr){
         if (esc){ esc = false; continue; }
-        if (ch === "\"){ esc = true; continue; }
+        if (ch === "\\"){ esc = true; continue; }
         if (ch === '"'){ inStr = false; continue; }
         continue;
       } else {
