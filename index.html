@@ -443,12 +443,13 @@
   /* 说明/补充：移动端置顶开关  */
   .mobile-top-toggle{
     display:none;
-    position: relative;
-    top: 0;
-    z-index: 50;
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 200;
     background: #fff;
     border-bottom: 1px solid var(--line);
     padding: 10px 14px;
+    box-shadow: 0 4px 14px rgba(16,24,40,.06);
   }
   .mobile-toggle-inner{
     display:flex;
@@ -532,8 +533,8 @@
     }
 
     h2.section-title {
-      position: sticky;
-      top: env(safe-area-inset-top, 0px); 
+      position: relative;
+      top: auto;
       font-size: 22px;
       margin: 0 0 8px;
       padding: 10px 0 12px;
@@ -558,6 +559,54 @@
 
     .side-actions button { flex: 1; }
     .side-actions #btnReset { display: none; }
+    /* mobile: scrollIntoView avoid being covered by top bar */
+    .qblock { scroll-margin-top: 96px; }
+
+    /* mobile: hide sidebar work-name card (moved to top) */
+    .side .card.game-card[aria-label="游戏名称（可选）"]{ display:none; }
+
+    /* mobile: bottom summary */
+    .mobile-footer{ display:block; }
+
+  }
+
+
+  /* mobile footer (default hidden on desktop) */
+  .mobile-footer{
+    display:none;
+    border-top: 1px solid var(--line);
+    background: #fff;
+    padding: 14px 14px 18px;
+  }
+  .mobile-footer-title{
+    font-size: 14px;
+    font-weight: 900;
+    margin: 0 0 8px;
+  }
+  .mobile-footer-total{
+    font-size: 16px;
+    font-weight: 900;
+    margin: 0 0 8px;
+  }
+  .mobile-footer-sections{
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 10px;
+    font-size: 13px;
+    color: var(--text);
+    margin: 0 0 12px;
+  }
+  .mobile-footer-sections .k{ color: var(--muted); font-weight: 900; }
+  .mobile-footer-sections .v{
+    text-align: right;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    font-weight: 900;
+  }
+  .mobile-footer-qtitle{
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 900;
+    margin: 0 0 6px;
   }
 
   /* 导出预览弹窗 */
@@ -893,6 +942,15 @@
 
     <div class="grid" id="qGrid"></div>
   </aside>
+
+  <footer id="mobileFooter" class="mobile-footer" aria-label="页面底部汇总（移动端）">
+    <div class="mobile-footer-title">汇总</div>
+    <div id="mobileTotalScore" class="mobile-footer-total">总分：0</div>
+    <div id="mobileSectionScores" class="mobile-footer-sections"></div>
+    <div class="mobile-footer-qtitle">题号</div>
+    <div class="grid" id="mobileQGrid"></div>
+  </footer>
+
 </div>
 
 
@@ -974,13 +1032,45 @@
 
   // ---- Work name ----
   const nameInput = $("#gameName"); // 沿用旧 id，减少改动
+
+  // ---- Mobile top work name (separate input, synced with sidebar) ----
+  const mobileNameHost = $("#mobileGameHost");
+  let mobileNameInput = null;
+
+  function ensureMobileNameInput(){
+    if (!mobileNameHost) return;
+    if (mobileNameInput) return;
+
+    const card = document.createElement("div");
+    card.className = "card game-card";
+    card.setAttribute("aria-label", "作品名称（移动端）");
+
+    card.innerHTML = `
+      <div class="game-label">作品名称</div>
+      <input id="mobileGameName" type="text" placeholder="可选填（书名/片名）" />
+    `;
+
+    mobileNameHost.innerHTML = "";
+    mobileNameHost.appendChild(card);
+
+    mobileNameInput = $("#mobileGameName", card);
+    if (mobileNameInput){
+      mobileNameInput.addEventListener("input", ()=>{
+        if (nameInput) nameInput.value = mobileNameInput.value;
+        saveWorkName();
+      });
+    }
+  }
   function loadWorkName(){
     if (!TYPE || !nameInput) return;
     nameInput.value = localStorage.getItem(getNameKey(TYPE)) || "";
+    ensureMobileNameInput();
+    if (mobileNameInput) mobileNameInput.value = nameInput.value || "";
   }
   function saveWorkName(){
     if (!TYPE || !nameInput) return;
     localStorage.setItem(getNameKey(TYPE), nameInput.value || "");
+    if (mobileNameInput) mobileNameInput.value = nameInput.value || "";
   }
   if (nameInput) nameInput.addEventListener("input", saveWorkName);
 
@@ -1352,7 +1442,10 @@
         grid.appendChild(chip);
       }
     }
-  }
+  
+    // 移动端底部题号
+    renderMobileQGrid();
+}
 
   function updateSummary(){
     const { total, byBucket } = computeTotals();
@@ -1384,7 +1477,48 @@
     }
   }
 
-  function updateScoresAndChips(){
+  
+  // ---- Mobile bottom summary (total + by section + Q grid) ----
+  function updateMobileFooter(){
+    const totalEl = $("#mobileTotalScore");
+    const secEl = $("#mobileSectionScores");
+    if (!totalEl || !secEl) return;
+
+    const { total, bySection } = computeTotals();
+    totalEl.textContent = `总分：${total}`;
+
+    secEl.innerHTML = "";
+    for (const s of (SECTION_ORDER || [])){
+      const v = (bySection && typeof bySection[s] === "number") ? bySection[s] : 0;
+      const k = document.createElement("div");
+      k.className = "k";
+      k.textContent = s;
+      const vv = document.createElement("div");
+      vv.className = "v";
+      vv.textContent = String(v);
+      secEl.appendChild(k);
+      secEl.appendChild(vv);
+    }
+  }
+
+  function renderMobileQGrid(){
+    const grid = $("#mobileQGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    for (const q of QUESTIONS){
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.textContent = q.id;
+      chip.dataset.qid = q.id;
+      chip.addEventListener("click", ()=>{
+        const el = document.getElementById(q.id);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      grid.appendChild(chip);
+    }
+  }
+
+function updateScoresAndChips(){
     for (const q of QUESTIONS){
       const v = computeQuestionScore(q);
       const el = document.querySelector(`[data-score-for="${q.id}"]`);
@@ -1430,6 +1564,7 @@
   function updateAll(){
     updateScoresAndChips();
     updateSummary();
+    updateMobileFooter();
     updateButtonStates();
   }
 
