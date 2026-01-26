@@ -702,23 +702,46 @@
   .home-actions{ display: flex; gap: 10px; flex-wrap: wrap; }
   .home-foot{ margin-top: 12px; color: var(--muted); font-size: 12px; }
 
-  /* ====== Type switch pills ====== */
-  .type-switch{ display: flex; gap: 8px; }
+    /* ====== Bucket nav (sidebar) ====== */
+  .bucket-switch{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;   /* 上下左右留白 */
+  }
+  .bucket-pill{
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 999px;
+    padding: 4px 10px;    /* 变小 */
+    font-size: 12px;      /* 字更小 */
+    cursor: pointer;
+    user-select: none;
+  }
+  .bucket-pill.active{
+    background: var(--blue-2);
+    color: var(--blue-dark);
+    border-color: rgba(123,109,240,.55);
+    font-weight: 900;
+  }
+
+  /* 兼容：如果页面仍有 type-switch pills（可忽略） */
+  .type-switch{ display: flex; gap: 8px; padding: 10px 12px; }
   .pill{
     border: 1px solid var(--line);
     background: #fff;
     border-radius: 999px;
-    padding: 8px 10px;
+    padding: 6px 10px;
+    font-size: 13px;
     cursor: pointer;
   }
   .pill.active{
-    border-color: var(--blue);
     background: var(--blue-2);
     color: var(--blue-dark);
-    font-weight: 700;
+    border-color: rgba(123,109,240,.55);
+    font-weight: 900;
   }
-
-  /* ====== Right sidebar scroll only on hover ====== */
+/* ====== Right sidebar scroll only on hover ====== */
   #sideScroll{ overflow: hidden; }
   #sideScroll.hover{ overflow: auto; }
 
@@ -847,12 +870,8 @@
 
     <div class="source-note">打分表格来源：全女评审团</div>
 
-    <div class="card" aria-label="类型切换">
-      <div class="type-switch">
-        <button id="switchNarrative" type="button" class="pill">叙事</button>
-        <button id="switchSocSci" type="button" class="pill">社科</button>
-        <button id="switchFilm" type="button" class="pill">影视</button>
-      </div>
+    <div class="card" aria-label="Bucket 导航">
+      <div class="bucket-switch" id="bucketNav"></div>
     </div>
 
     <div class="card game-card" aria-label="游戏名称（可选）">
@@ -1706,6 +1725,39 @@
     a("#switchFilm", TYPE==="film");
   }
 
+  function renderBucketNav(){
+    const host = document.getElementById("bucketNav");
+    if (!host) return;
+    host.innerHTML = "";
+
+    // 每个 bucket 的第一题，用于跳转
+    const first = {};
+    for (const q of (QUESTIONS || [])){
+      const b = q.bucket;
+      if (!b) continue;
+      if (!first[b]) first[b] = q.id;
+    }
+
+    for (const b of (BUCKET_ORDER || [])){
+      const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bucket-pill";
+      btn.textContent = label;
+      btn.dataset.bucket = b;
+
+      btn.addEventListener("click", ()=>{
+        const qid = first[b];
+        if (!qid) return;
+        const el = document.getElementById(qid);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      host.appendChild(btn);
+    }
+  }
+
+
   function initType(type){
     const qs = pickQuestionSet(type);
     if (!qs){
@@ -1749,6 +1801,7 @@
 
     setPillActive();
     render();
+    renderBucketNav();
     updateAll();
     setupActiveObserver();
     applyRemarksToggle(true);
