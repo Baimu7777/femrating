@@ -504,17 +504,7 @@
     .main, .side { height: auto; overflow: visible; }
     .qrow { grid-template-columns: 1fr; }
     .score { line-height: 24px; }
-
-    /* <=1100: 顶部固定显示（评定说明/清空），并把总分+题号放到侧栏末尾 */
-    .mobile-top-toggle{ display:block; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 999; margin-bottom: 10px; }
-    .side .toggle{ display:none; }                /* 侧栏内同名开关隐藏，避免重复 */
-    .side-actions #btnReset{ display:none; }      /* 清空只保留顶部固定按钮 */
-
-    /* 侧栏顺序：导出按钮在前，总分与题号在最后 */
-    .side-actions{ order: 10; }
-    .summary-card{ order: 98; }
-    .grid{ order: 99; }
-}
+  }
 
   /* mobile tightening + remove outer “cards”, use dividers */
   @media (max-width: 680px) {
@@ -527,7 +517,7 @@
       border-radius: 12px;
       box-shadow: var(--shadow);
       overflow: hidden;
-      margin: 0;
+      margin: 0 0 12px;
     }
 
     .main { padding: 14px 14px 26px; }
@@ -563,7 +553,7 @@
     /* mobile: sidebar stays simple (remark toggle moved to page top) */
     .side { display: flex; flex-direction: column; gap: 10px; }
     .card { order: 0; }
-    .side-actions { order: 10; margin: 0; }
+    .side-actions { order: 1; margin: 0; }
     .grid { order: 2; }
 
     .side-actions button { flex: 1; }
@@ -702,46 +692,29 @@
   .home-actions{ display: flex; gap: 10px; flex-wrap: wrap; }
   .home-foot{ margin-top: 12px; color: var(--muted); font-size: 12px; }
 
-    /* ====== Bucket nav (sidebar) ====== */
-  .bucket-switch{
+  /* ====== Type switch pills ====== */
+  .type-switch{
     display:flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 12px;   /* 上下左右留白 */
+    gap:10px;
+    padding: 8px 12px;   /* 左右缩进 + 上下留白 */
+  margin: 6px 0 6px;   
   }
-  .bucket-pill{
-    border: 1px solid var(--line);
-    background: #fff;
-    border-radius: 999px;
-    padding: 4px 10px;    /* 变小 */
-    font-size: 12px;      /* 字更小 */
-    cursor: pointer;
-    user-select: none;
-  }
-  .bucket-pill.active{
-    background: var(--blue-2);
-    color: var(--blue-dark);
-    border-color: rgba(123,109,240,.55);
-    font-weight: 900;
-  }
-
-  /* 兼容：如果页面仍有 type-switch pills（可忽略） */
-  .type-switch{ display: flex; gap: 8px; padding: 10px 12px; }
   .pill{
     border: 1px solid var(--line);
     background: #fff;
+    font-size: 14px;
     border-radius: 999px;
-    padding: 6px 10px;
-    font-size: 13px;
+    padding: 6px 8px;
     cursor: pointer;
   }
   .pill.active{
+    border-color: var(--blue);
     background: var(--blue-2);
     color: var(--blue-dark);
-    border-color: rgba(123,109,240,.55);
-    font-weight: 900;
+    font-weight: 700;
   }
-/* ====== Right sidebar scroll only on hover ====== */
+
+  /* ====== Right sidebar scroll only on hover ====== */
   #sideScroll{ overflow: hidden; }
   #sideScroll.hover{ overflow: auto; }
 
@@ -753,7 +726,7 @@
     border: 1px solid var(--line);
     border-radius: 10px;
     background: #fff;
-    font-size: 14px;
+    font-size: 8px;
     outline: none;
     line-height: 1.5;
   }
@@ -761,12 +734,14 @@
     border-color: rgba(123,109,240,.45);
     box-shadow: 0 0 0 4px rgba(123,109,240,.12);
   }
-  .tag-chips{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 10px; }
+  .tag-chips{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 10px; padding: 2px 2px; }
   .tag-chip{
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.2;
     border-radius: 999px;
     border: 1px solid var(--line);
     background: #fff;
@@ -788,7 +763,7 @@
     border: 1px solid var(--line);
     border-radius: 10px;
     background: #fff;
-    font-size: 13px;
+    font-size: 10px;
     outline: none;
   }
   .tag-add input:focus{
@@ -870,8 +845,12 @@
 
     <div class="source-note">打分表格来源：全女评审团</div>
 
-    <div class="card" aria-label="Bucket 导航">
-      <div class="bucket-switch" id="bucketNav"></div>
+    <div class="card" aria-label="类型切换">
+      <div class="type-switch">
+        <button id="switchNarrative" type="button" class="pill">叙事</button>
+        <button id="switchSocSci" type="button" class="pill">社科</button>
+        <button id="switchFilm" type="button" class="pill">影视</button>
+      </div>
     </div>
 
     <div class="card game-card" aria-label="游戏名称（可选）">
@@ -951,6 +930,9 @@
   let TYPE = null;
   let QUESTIONS = [];
   let SECTION_ORDER = [];
+  // bucket（右侧汇总/导出顺序以 bucket 为准）
+  let BUCKET_LABELS = window.SCORE_BUCKET_LABELS || {};
+  let BUCKET_ORDER = Object.keys(BUCKET_LABELS || {}).sort((a,b)=>Number(String(a).slice(1)) - Number(String(b).slice(1)));
   let state = {};
   let activeQid = null;
   let activeIO = null;
@@ -968,7 +950,7 @@
     document.querySelectorAll("#summaryBody tr.active").forEach(el=>el.classList.remove("active"));
     const q = QUESTIONS.find(x=>x.id === qid);
     if (q){
-      const row = document.querySelector(`#summaryBody tr[data-section="${q.section}"]`);
+      const row = document.querySelector(`#summaryBody tr[data-bucket="${q.bucket}"]`);
       if (row) row.classList.add("active");
     }
   }
@@ -1135,15 +1117,21 @@
     const bySection = {};
     for (const s of SECTION_ORDER) bySection[s] = 0;
 
+    const byBucket = {};
+    for (const b of (BUCKET_ORDER || [])) byBucket[b] = 0;
+
     let total = 0;
     for (const q of QUESTIONS){
       const v = computeQuestionScore(q);
       if (typeof v === "number"){
         total += v;
         bySection[q.section] = (bySection[q.section] || 0) + v;
+        if (q.bucket){
+          byBucket[q.bucket] = (byBucket[q.bucket] || 0) + v;
+        }
       }
     }
-    return { total, bySection };
+    return { total, bySection, byBucket };
   }
 
   function sectionAnchorId(section){
@@ -1367,17 +1355,17 @@
   }
 
   function updateSummary(){
-    const { total, bySection } = computeTotals();
+    const { total, byBucket } = computeTotals();
     const body = $("#summaryBody");
     body.innerHTML = "";
 
-    function addRow(label, val, isTotal=false){
+    function addRow(displayLabel, val, bucketId=null, isTotal=false){
       const tr = document.createElement("tr");
       if (isTotal) tr.style.fontWeight = "900";
-      tr.dataset.section = label;
+      if (bucketId) tr.dataset.bucket = bucketId;
 
       const td1 = document.createElement("td");
-      td1.textContent = label;
+      td1.textContent = displayLabel;
 
       const td2 = document.createElement("td");
       td2.className = "score-cell";
@@ -1388,9 +1376,11 @@
       body.appendChild(tr);
     }
 
-    addRow("总分", total, true);
-    for (const sec of SECTION_ORDER){
-      addRow(sec, bySection[sec] || 0, false);
+    addRow("总分", total, "TOTAL", true);
+
+    for (const b of (BUCKET_ORDER || [])){
+      const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
+      addRow(label, (byBucket && typeof byBucket[b] === "number") ? byBucket[b] : 0, b, false);
     }
   }
 
@@ -1494,15 +1484,52 @@
   function downloadImage(canvas, filename){
     try{
       canvas.toBlob((blob)=>{
-        if (!blob){
-          alert("导出失败：无法生成图片数据");
+        if (blob){
+          downloadBlob(blob, filename);
           return;
         }
-        downloadBlob(blob, filename);
+        // Fallback: some browsers return null for very large canvases
+        try{
+          const dataUrl = canvas.toDataURL("image/png");
+          const a = document.createElement("a");
+          a.href = dataUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }catch(e2){
+          console.error(e2);
+          alert("导出失败：无法生成图片数据");
+        }
       }, "image/png");
     }catch(e){
       console.error(e);
       alert("导出失败：" + (e && e.message ? e.message : String(e)));
+    }
+  }
+
+  function safeFilename(s){
+    return String(s).replace(/[\\/:*?"<>|]/g, "_").replace(/\s+/g, " ").trim();
+  }
+
+  async function safeHtml2Canvas(el, baseScale=2){
+    // 确保在 DOM 且可见，避免部分浏览器克隆失败
+    if (!document.body.contains(el)) document.body.appendChild(el);
+    const prev = el.style.display;
+    if (getComputedStyle(el).display === "none") el.style.display = "block";
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+
+    try{
+      const canvas = await window.html2canvas(el, {
+        backgroundColor: "#ffffff",
+        scale: baseScale,
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+      });
+      return canvas;
+    } finally {
+      el.style.display = prev;
     }
   }
 
@@ -1519,7 +1546,7 @@
 
     await new Promise(r=>setTimeout(r, 50));
 
-    const canvas = await window.html2canvas(stage, {backgroundColor: "#ffffff", scale: 2});
+    const canvas = await safeHtml2Canvas(stage, 2);
     downloadImage(canvas, `rating_${TYPE}_full.png`);
 
     stage.style.display = "none";
@@ -1544,14 +1571,14 @@
       stage.innerHTML = "";
       stage.appendChild(buildExportBriefCard(name, tags, brief));
       await new Promise(r=>setTimeout(r, 50));
-      const c1 = await window.html2canvas(stage, {backgroundColor:"#ffffff", scale: 2});
+      const c1 = await safeHtml2Canvas(stage, 2);
       downloadImage(c1, `rating_${TYPE}_brief_tags.png`);
     }
 
-    // 分区导出（仅导出有填写/有补充说明的题目）
-    for (const secName of SECTION_ORDER){
-      const secQs = QUESTIONS.filter(q=>q.section === secName);
-      const picked = secQs.filter(q=>{
+    // 按 bucket 分节导出（仅导出有填写/有补充说明的题目）
+    for (const b of (BUCKET_ORDER || [])){
+      const bucketQs = QUESTIONS.filter(q=>q.bucket === b);
+      const picked = bucketQs.filter(q=>{
         const a = getAnswer(q.id);
         const score = computeQuestionScore(q);
         const hasScore = typeof score === "number";
@@ -1560,12 +1587,15 @@
       });
       if (!picked.length) continue;
 
+      const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
+      const fname = safeFilename(`${b}_${label}`);
+
       stage.innerHTML = "";
-      stage.appendChild(buildExportContent({ mode: "section", sectionName: secName, questions: picked }));
+      stage.appendChild(buildExportContent({ mode: "bucket", bucketId: b, bucketLabel: label, questions: picked }));
 
       await new Promise(r=>setTimeout(r, 50));
-      const c = await window.html2canvas(stage, {backgroundColor:"#ffffff", scale: 2});
-      downloadImage(c, `rating_${TYPE}_${secName}.png`);
+      const c = await safeHtml2Canvas(stage, 2);
+      downloadImage(c, `rating_${TYPE}_${fname}.png`);
     }
 
     stage.style.display = "none";
@@ -1573,7 +1603,7 @@
   }
 
   function getSelectedTags(){
-    return selectedTags.slice();
+    return getTags();
   }
 
   function buildExportBriefCard(name, tags, brief){
@@ -1603,13 +1633,13 @@
     return wrap;
   }
 
-  function buildExportContent({ mode, sectionName=null, questions=null }){
+  function buildExportContent({ mode, bucketId=null, bucketLabel=null, questions=null }){
     const name = ($("#gameName").value || "").trim() || "未命名作品";
     const url  = (($("#workUrl") ? $("#workUrl").value : "") || "").trim();
     const tags = getSelectedTags();
     const brief = ($("#briefAvoid").value || "").trim();
 
-    const { total, bySection } = computeTotals();
+    const { total, byBucket } = computeTotals();
 
     const wrap = document.createElement("div");
     wrap.className = "export-wrap";
@@ -1617,7 +1647,7 @@
 
     const topbar = document.createElement("div");
     topbar.className = "export-topbar";
-    const mid = (mode === "section" && sectionName) ? `${sectionName}：${bySection[sectionName] || 0}` : `总分：${total}`;
+    const mid = (mode === "bucket" && bucketId) ? `${bucketLabel || bucketId}：${(byBucket && typeof byBucket[bucketId] === "number") ? byBucket[bucketId] : 0}` : `总分：${total}`;
     topbar.innerHTML = `<div></div><div style="font-weight:900;color:var(--blue-dark);">${escapeHtml(mid)}</div><div style="color:var(--muted);font-size:12px;">${escapeHtml(TYPE)}</div>`;
     wrap.appendChild(topbar);
 
@@ -1629,7 +1659,7 @@
     const meta = document.createElement("div");
     meta.className = "export-meta";
     meta.innerHTML = `
-      <div class="export-meta-line"><strong>链接</strong>：${url ? escapeHtml(url) : "<span style='color:var(--muted)'>未填写</span>"}</div>
+      
       <div class="export-meta-line"><strong>Tag</strong>：${tags.length ? tags.map(t=>`<span class="tag-chip on" style="margin-right:6px;">${escapeHtml(t)}</span>`).join("") : "<span style='color:var(--muted)'>无</span>"}</div>
       ${mode === "full" && brief ? `<div class="export-meta-line"><strong>简评</strong>：<div style="margin-top:6px;white-space:pre-wrap;line-height:1.6;">${escapeHtml(brief)}</div></div>` : ``}
     `;
@@ -1660,20 +1690,23 @@
 
     const list = questions ? questions.slice() : QUESTIONS.slice();
 
-    const bySec = {};
+    const byB = {};
     for (const q of list){
-      if (!bySec[q.section]) bySec[q.section] = [];
-      bySec[q.section].push(q);
+      const b = q.bucket || "UNSET";
+      if (!byB[b]) byB[b] = [];
+      byB[b].push(q);
     }
 
-    const secOrder = (mode === "section" && sectionName) ? [sectionName] : SECTION_ORDER.slice();
-    for (const sec of secOrder){
-      const qs = bySec[sec] || [];
+    const order = (mode === "bucket" && bucketId) ? [bucketId] : (BUCKET_ORDER || []);
+    for (const b of order){
+      const qs = byB[b] || [];
       if (!qs.length) continue;
+
+      const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
 
       const trS = document.createElement("tr");
       trS.className = "export-section";
-      trS.innerHTML = `<td colspan="4">${escapeHtml(sec)}</td>`;
+      trS.innerHTML = `<td colspan="4">${escapeHtml(label)}</td>`;
       tbody.appendChild(trS);
 
       for (const q of qs){
@@ -1725,39 +1758,6 @@
     a("#switchFilm", TYPE==="film");
   }
 
-  function renderBucketNav(){
-    const host = document.getElementById("bucketNav");
-    if (!host) return;
-    host.innerHTML = "";
-
-    // 每个 bucket 的第一题，用于跳转
-    const first = {};
-    for (const q of (QUESTIONS || [])){
-      const b = q.bucket;
-      if (!b) continue;
-      if (!first[b]) first[b] = q.id;
-    }
-
-    for (const b of (BUCKET_ORDER || [])){
-      const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "bucket-pill";
-      btn.textContent = label;
-      btn.dataset.bucket = b;
-
-      btn.addEventListener("click", ()=>{
-        const qid = first[b];
-        if (!qid) return;
-        const el = document.getElementById(qid);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-
-      host.appendChild(btn);
-    }
-  }
-
-
   function initType(type){
     const qs = pickQuestionSet(type);
     if (!qs){
@@ -1769,6 +1769,9 @@
 
     // 把 question.js 的结构映射成当前页面渲染需要的字段
     SECTION_ORDER = qs.sectionOrder || [];
+    // bucket labels / order（右侧汇总与导出顺序）
+    BUCKET_LABELS = window.SCORE_BUCKET_LABELS || BUCKET_LABELS || {};
+    BUCKET_ORDER = Object.keys(BUCKET_LABELS || {}).sort((a,b)=>Number(String(a).slice(1)) - Number(String(b).slice(1)));
     QUESTIONS = (qs.questions || []).map(q=>{
       const ui = q.ui || {};
       const mapped = {
@@ -1788,6 +1791,17 @@
       return mapped;
     });
 
+    if (!BUCKET_ORDER.length){
+      const seen = new Set();
+      BUCKET_ORDER = [];
+      for (const q of QUESTIONS){
+        if (q.bucket && !seen.has(q.bucket)){
+          seen.add(q.bucket);
+          BUCKET_ORDER.push(q.bucket);
+        }
+      }
+    }
+
     state = loadState();
     loadWorkName();
     loadBrief();
@@ -1801,7 +1815,6 @@
 
     setPillActive();
     render();
-    renderBucketNav();
     updateAll();
     setupActiveObserver();
     applyRemarksToggle(true);
