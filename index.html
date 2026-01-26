@@ -1121,6 +1121,46 @@ function extractQuestionSetsJSON(src){
   })();
 })();
 
+  // ---- spec 回填：当 SPEC_READY 完成后，把缺失的 q.spec 补回，并更新页面显示 ----
+  function applySpecMapToQuestions(){
+    try{
+      if (typeof QUESTIONS === "undefined" || !QUESTIONS) return;
+      let changed = false;
+      for (const q of (QUESTIONS || [])){
+        if (q && q.id && (!q.spec || !String(q.spec).trim()) && SPEC_MAP[q.id]){
+          q.spec = SPEC_MAP[q.id];
+          changed = true;
+        }
+      }
+      if (changed) refreshSpecInDOM();
+      else refreshSpecInDOM(); // 也刷新一次（比如第一次渲染时隐藏了）
+    }catch(e){}
+  }
+
+  function refreshSpecInDOM(){
+    try{
+      if (typeof QUESTIONS === "undefined" || !QUESTIONS) return;
+      const nodes = document.querySelectorAll(".qspec[data-qid]");
+      if (!nodes || !nodes.length) return;
+      const qById = new Map((QUESTIONS || []).map(q=>[q.id, q]));
+      nodes.forEach(el=>{
+        const id = el.dataset.qid;
+        const q = qById.get(id);
+        const t = (q && (q.spec || SPEC_MAP[id])) ? (q.spec || SPEC_MAP[id]) : (SPEC_MAP[id] || "");
+        if (t){
+          el.textContent = t;
+          el.style.display = "";
+        }else{
+          el.textContent = "";
+          el.style.display = "none";
+        }
+      });
+    }catch(e){}
+  }
+
+  // 当源码解析完成后，自动回填一次
+  SPEC_READY.then(()=>{ applySpecMapToQuestions(); });
+
 
   // 当前类型
   let TYPE = null;
@@ -1548,12 +1588,19 @@ function extractQuestionSetsJSON(src){
         title.textContent = q.title;
         block.appendChild(title);
 
-        if (q.spec){
-          const sp = document.createElement("div");
-          sp.className = "qspec";
-          sp.textContent = q.spec;
-          block.appendChild(sp);
+
+        // 评分标准（question.js 运行时会 delete q.spec，所以这里用 SPEC_MAP 回填）
+        const sp = document.createElement("div");
+        sp.className = "qspec";
+        sp.dataset.qid = q.id;
+        const specText = (q.spec || SPEC_MAP[q.id] || "");
+        if (specText){
+          sp.textContent = specText;
+        } else {
+          sp.style.display = "none";
+          sp.textContent = "";
         }
+        block.appendChild(sp);
 
         const row = document.createElement("div");
         row.className = "qrow";
@@ -2316,7 +2363,7 @@ function updateScoresAndChips(){
         section: q.section,
         bucket: q.bucket,
         title: q.title,
-        spec: (q.spec || ""),
+        spec: (q.spec || SPEC_MAP[q.id] || ""),
         note: q.note || "",
         type: ui.type,
         options: ui.options || [],
@@ -2353,6 +2400,8 @@ function updateScoresAndChips(){
     setPillActive();
     render();
     updateAll();
+    // spec 可能还没准备好：先尝试用已有 SPEC_MAP 回填；SPEC_READY 后也会再回填一次
+    applySpecMapToQuestions();
     setupActiveObserver();
     applyRemarksToggle(true);
   }
