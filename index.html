@@ -695,13 +695,14 @@
   /* ====== Type switch pills ====== */
   .type-switch{
     display:flex;
-    gap:8px;
-    padding: 0 12px;   /* ← 关键：左右留白 */
-    margin-top: 6px;   /* 可选：跟上面文字拉开 */
+    gap:10px;
+    padding: 8px 12px;   /* 左右缩进 + 上下留白 */
+  margin: 6px 0 10px;   
   }
   .pill{
     border: 1px solid var(--line);
     background: #fff;
+    font-size: 10px;
     border-radius: 999px;
     padding: 6px 8px;
     cursor: pointer;
