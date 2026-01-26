@@ -713,6 +713,13 @@
   #sideScroll.hover{ overflow: auto; }
 
   /* ====== Brief & tags ====== */
+  /* export: smaller tag chips */
+  .export-stage .tag-chip{
+    padding: 4px 8px;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
   .brief-ta{
     width: 100%;
     resize: vertical;
@@ -728,12 +735,15 @@
     border-color: rgba(123,109,240,.45);
     box-shadow: 0 0 0 4px rgba(123,109,240,.12);
   }
-  .tag-chips{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 10px; }
+  .tag-chips{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 10px;   padding: 2px 2px;
+}
   .tag-chip{
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.2;
     border-radius: 999px;
     border: 1px solid var(--line);
     background: #fff;
@@ -1465,17 +1475,56 @@
   function downloadImage(canvas, filename){
     try{
       canvas.toBlob((blob)=>{
-        if (!blob){
-          alert("导出失败：无法生成图片数据");
+        if (blob){
+          downloadBlob(blob, filename);
           return;
         }
-        downloadBlob(blob, filename);
+        // Fallback: some browsers return null for very large canvases
+        try{
+          const dataUrl = canvas.toDataURL("image/png");
+          const a = document.createElement("a");
+          a.href = dataUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }catch(err){
+          console.error(err);
+          alert("导出失败：图片过大或浏览器不支持该导出方式");
+        }
       }, "image/png");
     }catch(e){
       console.error(e);
       alert("导出失败：" + (e && e.message ? e.message : String(e)));
     }
   }
+
+  // Avoid huge canvases that make toBlob() fail (Chrome max ~16384px per side)
+  async function safeHtml2Canvas(el, baseScale=2){
+    const rect = el.getBoundingClientRect();
+    const w = Math.max(1, Math.ceil(el.scrollWidth || rect.width || 1));
+    const h = Math.max(1, Math.ceil(el.scrollHeight || rect.height || 1));
+
+    const MAX_DIM = 16000;      // stay under the common 16384 cap
+    const MAX_PIXELS = 140e6;   // keep memory reasonable
+
+    let scale = baseScale;
+    scale = Math.min(scale, MAX_DIM / w, MAX_DIM / h);
+    scale = Math.min(scale, Math.sqrt(MAX_PIXELS / (w * h)));
+    scale = Math.max(1, Math.floor(scale * 100) / 100);
+
+    return await window.html2canvas(el, {
+      backgroundColor: "#ffffff",
+      scale,
+      useCORS: true,
+      allowTaint: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: w,
+      windowHeight: h
+    });
+  }
+
 
 
   async function exportFullImage(){
@@ -1490,7 +1539,7 @@
 
     await new Promise(r=>setTimeout(r, 50));
 
-    const canvas = await window.html2canvas(stage, {backgroundColor: "#ffffff", scale: 2});
+    const canvas = await safeHtml2Canvas(stage, 2);
     downloadImage(canvas, `rating_${TYPE}_full.png`);
 
     stage.style.display = "none";
@@ -1515,7 +1564,7 @@
       stage.innerHTML = "";
       stage.appendChild(buildExportBriefCard(name, tags, brief));
       await new Promise(r=>setTimeout(r, 50));
-      const c1 = await window.html2canvas(stage, {backgroundColor:"#ffffff", scale: 2});
+      const c1 = await safeHtml2Canvas(stage, 2);
       downloadImage(c1, `rating_${TYPE}_brief_tags.png`);
     }
 
@@ -1535,7 +1584,7 @@
       stage.appendChild(buildExportContent({ mode: "section", sectionName: secName, questions: picked }));
 
       await new Promise(r=>setTimeout(r, 50));
-      const c = await window.html2canvas(stage, {backgroundColor:"#ffffff", scale: 2});
+      const c = await safeHtml2Canvas(stage, 2);
       downloadImage(c, `rating_${TYPE}_${secName}.png`);
     }
 
@@ -1544,7 +1593,7 @@
   }
 
   function getSelectedTags(){
-    return selectedTags.slice();
+    return getTags();
   }
 
   function buildExportBriefCard(name, tags, brief){
