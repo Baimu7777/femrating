@@ -1052,115 +1052,33 @@
     return null;
   }
 
-  // ---- Export needs 'spec' (评分标准). question.js 会在运行时 delete q.spec，
-// 所以导出时我们从 question.js 源码里“解析出 window.QUESTION_SETS 的初始 JSON”，
-// 再可靠地构建 {Qid -> spec} 映射（避免正则跨题错配）。
-const SPEC_MAP = {};
-let SPEC_READY = Promise.resolve();
-
-function extractQuestionSetsJSON(src){
-  try{
-    const key = "window.QUESTION_SETS";
-    let k = src.indexOf(key);
-    if (k < 0) return null;
-    k = src.indexOf("=", k);
-    if (k < 0) return null;
-
-    const start = src.indexOf("{", k);
-    if (start < 0) return null;
-
-    let depth = 0;
-    let inStr = false;
-    let esc = false;
-
-    for (let i = start; i < src.length; i++){
-      const ch = src[i];
-
-      if (inStr){
-        if (esc){ esc = false; continue; }
-        if (ch === "\\"){ esc = true; continue; }
-        if (ch === '"'){ inStr = false; continue; }
-        continue;
-      } else {
-        if (ch === '"'){ inStr = true; continue; }
-        if (ch === "{"){ depth++; continue; }
-        if (ch === "}"){
-          depth--;
-          if (depth === 0){
-            const jsonText = src.slice(start, i + 1);
-            return JSON.parse(jsonText);
+  // ---- Export needs 'spec' (评分标准). question.js deletes q.spec for on-page display,
+  // so we rebuild a {Qid -> spec} map by reading question.js as plain text.
+  const SPEC_MAP = {};
+  (function buildSpecMap(){
+    try {
+      fetch("./question.js", { cache: "no-store" })
+        .then(r => r.text())
+        .then(txt => {
+          const re = /\"id\"\s*:\s*\"([^\"]+)\"[\s\S]*?\"spec\"\s*:\s*\"([^\"]*)\"/g;
+          let m;
+          while ((m = re.exec(txt))) {
+            const id = m[1];
+            if (SPEC_MAP[id]) continue;
+            let s = m[2];
+            // basic JS string unescape (enough for our data)
+            s = s.replace(/\\n/g, "\n")
+                 .replace(/\\r/g, "\r")
+                 .replace(/\\t/g, "\t")
+                 .replace(/\\\"/g, '"')
+                 .replace(/\\\'/g, "'")
+                 .replace(/\\\\/g, "\\");
+            SPEC_MAP[id] = s;
           }
-        }
-      }
-    }
-    return null;
-  }catch(e){
-    return null;
-  }
-}
-
-(function buildSpecMap(){
-  SPEC_READY = (async ()=>{
-    try{
-      const r = await fetch("./question.js", { cache: "no-store" });
-      const src = await r.text();
-      const sets = extractQuestionSetsJSON(src);
-
-      if (sets && typeof sets === "object"){
-        Object.keys(sets).forEach(t=>{
-          const qs = sets[t];
-          const list = (qs && qs.questions) ? qs.questions : [];
-          list.forEach(q=>{
-            if (q && q.id && typeof q.spec === "string" && !SPEC_MAP[q.id]){
-              SPEC_MAP[q.id] = q.spec;
-            }
-          });
-        });
-      }
-    }catch(e){}
+        })
+        .catch(()=>{});
+    } catch(e) {}
   })();
-})();
-
-  // ---- spec 回填：当 SPEC_READY 完成后，把缺失的 q.spec 补回，并更新页面显示 ----
-  function applySpecMapToQuestions(){
-    try{
-      if (typeof QUESTIONS === "undefined" || !QUESTIONS) return;
-      let changed = false;
-      for (const q of (QUESTIONS || [])){
-        if (q && q.id && (!q.spec || !String(q.spec).trim()) && SPEC_MAP[q.id]){
-          q.spec = SPEC_MAP[q.id];
-          changed = true;
-        }
-      }
-      if (changed) refreshSpecInDOM();
-      else refreshSpecInDOM(); // 也刷新一次（比如第一次渲染时隐藏了）
-    }catch(e){}
-  }
-
-  function refreshSpecInDOM(){
-    try{
-      if (typeof QUESTIONS === "undefined" || !QUESTIONS) return;
-      const nodes = document.querySelectorAll(".qspec[data-qid]");
-      if (!nodes || !nodes.length) return;
-      const qById = new Map((QUESTIONS || []).map(q=>[q.id, q]));
-      nodes.forEach(el=>{
-        const id = el.dataset.qid;
-        const q = qById.get(id);
-        const t = (q && (q.spec || SPEC_MAP[id])) ? (q.spec || SPEC_MAP[id]) : (SPEC_MAP[id] || "");
-        if (t){
-          el.textContent = t;
-          el.style.display = "";
-        }else{
-          el.textContent = "";
-          el.style.display = "none";
-        }
-      });
-    }catch(e){}
-  }
-
-  // 当源码解析完成后，自动回填一次
-  SPEC_READY.then(()=>{ applySpecMapToQuestions(); });
-
 
   // 当前类型
   let TYPE = null;
@@ -1588,19 +1506,12 @@ function extractQuestionSetsJSON(src){
         title.textContent = q.title;
         block.appendChild(title);
 
-
-        // 评分标准（question.js 运行时会 delete q.spec，所以这里用 SPEC_MAP 回填）
-        const sp = document.createElement("div");
-        sp.className = "qspec";
-        sp.dataset.qid = q.id;
-        const specText = (q.spec || SPEC_MAP[q.id] || "");
-        if (specText){
-          sp.textContent = specText;
-        } else {
-          sp.style.display = "none";
-          sp.textContent = "";
+        if (q.spec){
+          const sp = document.createElement("div");
+          sp.className = "qspec";
+          sp.textContent = q.spec;
+          block.appendChild(sp);
         }
-        block.appendChild(sp);
 
         const row = document.createElement("div");
         row.className = "qrow";
@@ -2112,7 +2023,6 @@ function updateScoresAndChips(){
 
 
   async function exportFullImage(){
-    await SPEC_READY;
     if (!window.html2canvas){
       alert("缺少 html2canvas，无法导出图片。");
       return;
@@ -2132,7 +2042,6 @@ function updateScoresAndChips(){
   }
 
   async function exportSplitBySections(){
-    await SPEC_READY;
     if (!window.html2canvas){
       alert("缺少 html2canvas，无法导出图片。");
       return;
@@ -2363,7 +2272,7 @@ function updateScoresAndChips(){
         section: q.section,
         bucket: q.bucket,
         title: q.title,
-        spec: (q.spec || SPEC_MAP[q.id] || ""),
+        spec: (q.spec || ""),
         note: q.note || "",
         type: ui.type,
         options: ui.options || [],
@@ -2400,8 +2309,6 @@ function updateScoresAndChips(){
     setPillActive();
     render();
     updateAll();
-    // spec 可能还没准备好：先尝试用已有 SPEC_MAP 回填；SPEC_READY 后也会再回填一次
-    applySpecMapToQuestions();
     setupActiveObserver();
     applyRemarksToggle(true);
   }
