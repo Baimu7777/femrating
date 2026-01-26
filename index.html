@@ -1008,6 +1008,34 @@
     return null;
   }
 
+  // ---- Export needs 'spec' (评分标准). question.js deletes q.spec for on-page display,
+  // so we rebuild a {Qid -> spec} map by reading question.js as plain text.
+  const SPEC_MAP = {};
+  (function buildSpecMap(){
+    try {
+      fetch("./question.js", { cache: "no-store" })
+        .then(r => r.text())
+        .then(txt => {
+          const re = /\"id\"\s*:\s*\"([^\"]+)\"[\s\S]*?\"spec\"\s*:\s*\"([^\"]*)\"/g;
+          let m;
+          while ((m = re.exec(txt))) {
+            const id = m[1];
+            if (SPEC_MAP[id]) continue;
+            let s = m[2];
+            // basic JS string unescape (enough for our data)
+            s = s.replace(/\\n/g, "\n")
+                 .replace(/\\r/g, "\r")
+                 .replace(/\\t/g, "\t")
+                 .replace(/\\\"/g, '"')
+                 .replace(/\\\'/g, "'")
+                 .replace(/\\\\/g, "\\");
+            SPEC_MAP[id] = s;
+          }
+        })
+        .catch(()=>{});
+    } catch(e) {}
+  })();
+
   // 当前类型
   let TYPE = null;
   let QUESTIONS = [];
@@ -2071,7 +2099,7 @@ function updateScoresAndChips(){
         tr.className = "export-row";
         tr.innerHTML = `
           <td class="col-title">${escapeHtml(q.title || "")}</td>
-          <td class="col-range">${escapeHtml(q.spec || "")}</td>
+          <td class="col-range">${escapeHtml((q.spec || SPEC_MAP[q.id] || ""))}</td>
           <td class="col-score">${hasScore ? score : ""}</td>
           <td class="col-remark">${remark ? escapeHtml(remark) : ""}</td>
         `;
@@ -2128,7 +2156,7 @@ function updateScoresAndChips(){
         section: q.section,
         bucket: q.bucket,
         title: q.title,
-        spec: q.spec || "",
+        spec: (q.spec || SPEC_MAP[q.id] || ""),
         note: q.note || "",
         type: ui.type,
         options: ui.options || [],
