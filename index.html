@@ -247,12 +247,17 @@
   }
 
   .side {
-    height: 100%;
-    overflow: auto;
-    padding: 22px 18px;
-    border-left: 1px solid var(--line);
-    background: linear-gradient(180deg, #ffffff, var(--panel));
-  }
+  height: 100%;
+  overflow: auto;
+  padding: 22px 18px;
+  border-left: 1px solid var(--line);
+  background: linear-gradient(180deg, #ffffff, var(--panel));
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* ← 卡片之间的外部间隔，想更大就 16/18 */
+}
+
 
   .sec {
     border: 1px solid var(--line);
@@ -697,7 +702,7 @@
     display:flex;
     gap:10px;
     padding: 8px 12px;   /* 左右缩进 + 上下留白 */
-  margin: 6px 0 18px;   
+  margin: 6px 0 6px;   
   }
   .pill{
     border: 1px solid var(--line);
