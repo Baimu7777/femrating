@@ -439,6 +439,22 @@
   .chip.answered { background: var(--blue-2); border-color: rgba(124,58,237,.25); }
   .chip.active { outline: 2px solid rgba(124,58,237,.35); outline-offset: 1px; }
 
+
+  /* ====== Q number grouping (right sidebar / mobile footer) ====== */
+  .qgroup-title{
+    grid-column: 1 / -1;
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--muted);
+    margin: 10px 0 2px;
+    letter-spacing: .2px;
+  }
+  .qgroup-spacer{
+    grid-column: 1 / -1;
+    height: 8px;
+  }
+
+
   
   /* 说明/补充：移动端置顶开关  */
   .mobile-top-toggle{
@@ -1010,8 +1026,8 @@
     // 仅高亮右侧题号与分区，不高亮左侧题目卡片
 
     document.querySelectorAll(".chip.active").forEach(el=>el.classList.remove("active"));
-    const chip = document.querySelector(`.chip[data-qid="${qid}"]`);
-    if (chip) chip.classList.add("active");
+    const chips = document.querySelectorAll(`.chip[data-qid="${qid}"]`);
+    chips.forEach(ch=>ch.classList.add("active"));
 
     document.querySelectorAll("#summaryBody tr.active").forEach(el=>el.classList.remove("active"));
     const q = QUESTIONS.find(x=>x.id === qid);
@@ -1287,6 +1303,26 @@
     return wrap;
   }
 
+
+  // ---- Q number grouping (叙事者/作品/女性/男性/其她) ----
+  const Q_GROUP_ORDER = ["narrator","work","female","male","other"];
+  const Q_GROUP_LABEL = {
+    narrator: "叙事者",
+    work: "作品",
+    female: "女性",
+    male: "男性",
+    other: "其她"
+  };
+
+  function qGroupKeyForSection(section){
+    const s = String(section || "");
+    if (/(创作者|传播|叙事者)/.test(s)) return "narrator";
+    if (/(作品|世界观)/.test(s)) return "work";
+    if (/女性/.test(s)) return "female";
+    if (/男性/.test(s)) return "male";
+    return "other";
+  }
+
   // ---- Render ----
   function render(){
     const content = $("#content");
@@ -1442,20 +1478,41 @@
       content.appendChild(sec);
     }
 
-    // 右侧 Q chips
+    // 右侧 Q chips（按：叙事者 / 作品 / 女性 / 男性 / 其她 分组）
     const grid = $("#qGrid");
     if (grid){
       grid.innerHTML = "";
+
+      const grouped = { narrator:[], work:[], female:[], male:[], other:[] };
       for (const q of QUESTIONS){
-        const chip = document.createElement("div");
-        chip.className = "chip";
-        chip.textContent = q.id;
-        chip.dataset.qid = q.id;
-        chip.addEventListener("click", ()=>{
-          const el = document.getElementById(q.id);
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-        grid.appendChild(chip);
+        const k = qGroupKeyForSection(q.section);
+        (grouped[k] || grouped.other).push(q);
+      }
+
+      for (const k of Q_GROUP_ORDER){
+        const arr = grouped[k] || [];
+        if (!arr.length) continue;
+
+        const title = document.createElement("div");
+        title.className = "qgroup-title";
+        title.textContent = Q_GROUP_LABEL[k] || k;
+        grid.appendChild(title);
+
+        for (const q of arr){
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          chip.textContent = q.id;
+          chip.dataset.qid = q.id;
+          chip.addEventListener("click", ()=>{
+            const el = document.getElementById(q.id);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+          grid.appendChild(chip);
+        }
+
+        const spacer = document.createElement("div");
+        spacer.className = "qgroup-spacer";
+        grid.appendChild(spacer);
       }
     }
   
@@ -1526,18 +1583,40 @@
     const grid = $("#mobileQGrid");
     if (!grid) return;
     grid.innerHTML = "";
+
+    const grouped = { narrator:[], work:[], female:[], male:[], other:[] };
     for (const q of QUESTIONS){
-      const chip = document.createElement("div");
-      chip.className = "chip";
-      chip.textContent = q.id;
-      chip.dataset.qid = q.id;
-      chip.addEventListener("click", ()=>{
-        const el = document.getElementById(q.id);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-      grid.appendChild(chip);
+      const k = qGroupKeyForSection(q.section);
+      (grouped[k] || grouped.other).push(q);
+    }
+
+    for (const k of Q_GROUP_ORDER){
+      const arr = grouped[k] || [];
+      if (!arr.length) continue;
+
+      const title = document.createElement("div");
+      title.className = "qgroup-title";
+      title.textContent = Q_GROUP_LABEL[k] || k;
+      grid.appendChild(title);
+
+      for (const q of arr){
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = q.id;
+        chip.dataset.qid = q.id;
+        chip.addEventListener("click", ()=>{
+          const el = document.getElementById(q.id);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        grid.appendChild(chip);
+      }
+
+      const spacer = document.createElement("div");
+      spacer.className = "qgroup-spacer";
+      grid.appendChild(spacer);
     }
   }
+
 
 function updateScoresAndChips(){
     for (const q of QUESTIONS){
