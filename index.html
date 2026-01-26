@@ -609,7 +609,14 @@
     margin: 0 0 6px;
   }
 
-  /* 导出预览弹窗 */
+  
+
+  /* ensure mobile footer visible on small screens (override default rule below) */
+  @media (max-width: 680px){
+    .mobile-footer{ display:block; }
+  }
+
+/* 导出预览弹窗 */
   .export-modal{
     position: fixed;
     inset: 0;
