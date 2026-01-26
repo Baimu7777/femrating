@@ -693,7 +693,12 @@
   .home-foot{ margin-top: 12px; color: var(--muted); font-size: 12px; }
 
   /* ====== Type switch pills ====== */
-  .type-switch{ display: flex; gap: 6px; }
+  .type-switch{
+    display:flex;
+    gap:8px;
+    padding: 0 12px;   /* ← 关键：左右留白 */
+    margin-top: 6px;   /* 可选：跟上面文字拉开 */
+  }
   .pill{
     border: 1px solid var(--line);
     background: #fff;
