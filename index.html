@@ -713,13 +713,6 @@
   #sideScroll.hover{ overflow: auto; }
 
   /* ====== Brief & tags ====== */
-  /* export: smaller tag chips */
-  .export-stage .tag-chip{
-    padding: 4px 8px;
-    font-size: 11px;
-    line-height: 1.2;
-  }
-
   .brief-ta{
     width: 100%;
     resize: vertical;
@@ -735,8 +728,7 @@
     border-color: rgba(123,109,240,.45);
     box-shadow: 0 0 0 4px rgba(123,109,240,.12);
   }
-  .tag-chips{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 10px;   padding: 2px 2px;
-}
+  .tag-chips{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 10px; padding: 2px 2px; }
   .tag-chip{
     display: inline-flex;
     align-items: center;
@@ -932,6 +924,9 @@
   let TYPE = null;
   let QUESTIONS = [];
   let SECTION_ORDER = [];
+  // bucket（右侧汇总/导出顺序以 bucket 为准）
+  let BUCKET_LABELS = window.SCORE_BUCKET_LABELS || {};
+  let BUCKET_ORDER = Object.keys(BUCKET_LABELS || {}).sort((a,b)=>Number(String(a).slice(1)) - Number(String(b).slice(1)));
   let state = {};
   let activeQid = null;
   let activeIO = null;
@@ -949,7 +944,7 @@
     document.querySelectorAll("#summaryBody tr.active").forEach(el=>el.classList.remove("active"));
     const q = QUESTIONS.find(x=>x.id === qid);
     if (q){
-      const row = document.querySelector(`#summaryBody tr[data-section="${q.section}"]`);
+      const row = document.querySelector(`#summaryBody tr[data-bucket="${q.bucket}"]`);
       if (row) row.classList.add("active");
     }
   }
@@ -1116,15 +1111,21 @@
     const bySection = {};
     for (const s of SECTION_ORDER) bySection[s] = 0;
 
+    const byBucket = {};
+    for (const b of (BUCKET_ORDER || [])) byBucket[b] = 0;
+
     let total = 0;
     for (const q of QUESTIONS){
       const v = computeQuestionScore(q);
       if (typeof v === "number"){
         total += v;
         bySection[q.section] = (bySection[q.section] || 0) + v;
+        if (q.bucket){
+          byBucket[q.bucket] = (byBucket[q.bucket] || 0) + v;
+        }
       }
     }
-    return { total, bySection };
+    return { total, bySection, byBucket };
   }
 
   function sectionAnchorId(section){
@@ -1348,17 +1349,17 @@
   }
 
   function updateSummary(){
-    const { total, bySection } = computeTotals();
+    const { total, byBucket } = computeTotals();
     const body = $("#summaryBody");
     body.innerHTML = "";
 
-    function addRow(label, val, isTotal=false){
+    function addRow(displayLabel, val, bucketId=null, isTotal=false){
       const tr = document.createElement("tr");
       if (isTotal) tr.style.fontWeight = "900";
-      tr.dataset.section = label;
+      if (bucketId) tr.dataset.bucket = bucketId;
 
       const td1 = document.createElement("td");
-      td1.textContent = label;
+      td1.textContent = displayLabel;
 
       const td2 = document.createElement("td");
       td2.className = "score-cell";
@@ -1369,9 +1370,11 @@
       body.appendChild(tr);
     }
 
-    addRow("总分", total, true);
-    for (const sec of SECTION_ORDER){
-      addRow(sec, bySection[sec] || 0, false);
+    addRow("总分", total, "TOTAL", true);
+
+    for (const b of (BUCKET_ORDER || [])){
+      const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
+      addRow(label, (byBucket && typeof byBucket[b] === "number") ? byBucket[b] : 0, b, false);
     }
   }
 
@@ -1488,9 +1491,9 @@
           document.body.appendChild(a);
           a.click();
           a.remove();
-        }catch(err){
-          console.error(err);
-          alert("导出失败：图片过大或浏览器不支持该导出方式");
+        }catch(e2){
+          console.error(e2);
+          alert("导出失败：无法生成图片数据");
         }
       }, "image/png");
     }catch(e){
@@ -1499,32 +1502,30 @@
     }
   }
 
-  // Avoid huge canvases that make toBlob() fail (Chrome max ~16384px per side)
-  async function safeHtml2Canvas(el, baseScale=2){
-    const rect = el.getBoundingClientRect();
-    const w = Math.max(1, Math.ceil(el.scrollWidth || rect.width || 1));
-    const h = Math.max(1, Math.ceil(el.scrollHeight || rect.height || 1));
-
-    const MAX_DIM = 16000;      // stay under the common 16384 cap
-    const MAX_PIXELS = 140e6;   // keep memory reasonable
-
-    let scale = baseScale;
-    scale = Math.min(scale, MAX_DIM / w, MAX_DIM / h);
-    scale = Math.min(scale, Math.sqrt(MAX_PIXELS / (w * h)));
-    scale = Math.max(1, Math.floor(scale * 100) / 100);
-
-    return await window.html2canvas(el, {
-      backgroundColor: "#ffffff",
-      scale,
-      useCORS: true,
-      allowTaint: false,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: w,
-      windowHeight: h
-    });
+  function safeFilename(s){
+    return String(s).replace(/[\\/:*?"<>|]/g, "_").replace(/\s+/g, " ").trim();
   }
 
+  async function safeHtml2Canvas(el, baseScale=2){
+    // 确保在 DOM 且可见，避免部分浏览器克隆失败
+    if (!document.body.contains(el)) document.body.appendChild(el);
+    const prev = el.style.display;
+    if (getComputedStyle(el).display === "none") el.style.display = "block";
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+
+    try{
+      const canvas = await window.html2canvas(el, {
+        backgroundColor: "#ffffff",
+        scale: baseScale,
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+      });
+      return canvas;
+    } finally {
+      el.style.display = prev;
+    }
+  }
 
 
   async function exportFullImage(){
@@ -1568,10 +1569,10 @@
       downloadImage(c1, `rating_${TYPE}_brief_tags.png`);
     }
 
-    // 分区导出（仅导出有填写/有补充说明的题目）
-    for (const secName of SECTION_ORDER){
-      const secQs = QUESTIONS.filter(q=>q.section === secName);
-      const picked = secQs.filter(q=>{
+    // 按 bucket 分节导出（仅导出有填写/有补充说明的题目）
+    for (const b of (BUCKET_ORDER || [])){
+      const bucketQs = QUESTIONS.filter(q=>q.bucket === b);
+      const picked = bucketQs.filter(q=>{
         const a = getAnswer(q.id);
         const score = computeQuestionScore(q);
         const hasScore = typeof score === "number";
@@ -1580,12 +1581,15 @@
       });
       if (!picked.length) continue;
 
+      const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
+      const fname = safeFilename(`${b}_${label}`);
+
       stage.innerHTML = "";
-      stage.appendChild(buildExportContent({ mode: "section", sectionName: secName, questions: picked }));
+      stage.appendChild(buildExportContent({ mode: "bucket", bucketId: b, bucketLabel: label, questions: picked }));
 
       await new Promise(r=>setTimeout(r, 50));
       const c = await safeHtml2Canvas(stage, 2);
-      downloadImage(c, `rating_${TYPE}_${secName}.png`);
+      downloadImage(c, `rating_${TYPE}_${fname}.png`);
     }
 
     stage.style.display = "none";
@@ -1623,13 +1627,13 @@
     return wrap;
   }
 
-  function buildExportContent({ mode, sectionName=null, questions=null }){
+  function buildExportContent({ mode, bucketId=null, bucketLabel=null, questions=null }){
     const name = ($("#gameName").value || "").trim() || "未命名作品";
     const url  = (($("#workUrl") ? $("#workUrl").value : "") || "").trim();
     const tags = getSelectedTags();
     const brief = ($("#briefAvoid").value || "").trim();
 
-    const { total, bySection } = computeTotals();
+    const { total, byBucket } = computeTotals();
 
     const wrap = document.createElement("div");
     wrap.className = "export-wrap";
@@ -1637,7 +1641,7 @@
 
     const topbar = document.createElement("div");
     topbar.className = "export-topbar";
-    const mid = (mode === "section" && sectionName) ? `${sectionName}：${bySection[sectionName] || 0}` : `总分：${total}`;
+    const mid = (mode === "bucket" && bucketId) ? `${bucketLabel || bucketId}：${(byBucket && typeof byBucket[bucketId] === "number") ? byBucket[bucketId] : 0}` : `总分：${total}`;
     topbar.innerHTML = `<div></div><div style="font-weight:900;color:var(--blue-dark);">${escapeHtml(mid)}</div><div style="color:var(--muted);font-size:12px;">${escapeHtml(TYPE)}</div>`;
     wrap.appendChild(topbar);
 
@@ -1680,20 +1684,23 @@
 
     const list = questions ? questions.slice() : QUESTIONS.slice();
 
-    const bySec = {};
+    const byB = {};
     for (const q of list){
-      if (!bySec[q.section]) bySec[q.section] = [];
-      bySec[q.section].push(q);
+      const b = q.bucket || "UNSET";
+      if (!byB[b]) byB[b] = [];
+      byB[b].push(q);
     }
 
-    const secOrder = (mode === "section" && sectionName) ? [sectionName] : SECTION_ORDER.slice();
-    for (const sec of secOrder){
-      const qs = bySec[sec] || [];
+    const order = (mode === "bucket" && bucketId) ? [bucketId] : (BUCKET_ORDER || []);
+    for (const b of order){
+      const qs = byB[b] || [];
       if (!qs.length) continue;
+
+      const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
 
       const trS = document.createElement("tr");
       trS.className = "export-section";
-      trS.innerHTML = `<td colspan="4">${escapeHtml(sec)}</td>`;
+      trS.innerHTML = `<td colspan="4">${escapeHtml(label)}</td>`;
       tbody.appendChild(trS);
 
       for (const q of qs){
@@ -1756,6 +1763,9 @@
 
     // 把 question.js 的结构映射成当前页面渲染需要的字段
     SECTION_ORDER = qs.sectionOrder || [];
+    // bucket labels / order（右侧汇总与导出顺序）
+    BUCKET_LABELS = window.SCORE_BUCKET_LABELS || BUCKET_LABELS || {};
+    BUCKET_ORDER = Object.keys(BUCKET_LABELS || {}).sort((a,b)=>Number(String(a).slice(1)) - Number(String(b).slice(1)));
     QUESTIONS = (qs.questions || []).map(q=>{
       const ui = q.ui || {};
       const mapped = {
@@ -1774,6 +1784,17 @@
       };
       return mapped;
     });
+
+    if (!BUCKET_ORDER.length){
+      const seen = new Set();
+      BUCKET_ORDER = [];
+      for (const q of QUESTIONS){
+        if (q.bucket && !seen.has(q.bucket)){
+          seen.add(q.bucket);
+          BUCKET_ORDER.push(q.bucket);
+        }
+      }
+    }
 
     state = loadState();
     loadWorkName();
