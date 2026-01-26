@@ -1,0 +1,1462 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>女性友好度打分 · 3.0</title>
+
+<!-- favicon -->
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📚</text></svg>">
+
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<!-- 导出 JPG (html2canvas) -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  /* 字体 */
+  @font-face{
+    font-family: "XiqueJuzhen";
+    src: url("./霞鹜文楷.ttf") format("truetype");
+    font-display: swap;
+  }
+  :root {
+    --bg: #ffffff;
+    --text: #0b0c0f;
+    --muted: #667085;
+    --line: #e5e7eb;
+    --panel: #f7f7f9;
+    /* Purple theme */
+    --blue: #7c3aed;      /* accent */
+    --blue-dark: #6d28d9; /* active */
+    --blue-2: #f3e8ff;    /* light */
+    --chip: #ececec;
+    --shadow: 0 8px 24px rgba(16,24,40,.08);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    font-family: "XiqueJuzhen", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC","Hiragino Sans GB","Microsoft YaHei", Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    overflow: hidden;
+  }
+  
+  /* 让表单控件继承页面字体 */
+  button, input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  /* placeholder 也继承字体 */
+  textarea::placeholder, input::placeholder {
+    font-family: inherit;
+  }
+
+
+
+  /* ===== 导出用“表格版式” ===== */
+  .export-stage {
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    width: 1200px;
+    padding: 28px 28px 32px;
+    background: #fff;
+    font-family: "XiqueJuzhen", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC","Hiragino Sans GB","Microsoft YaHei", Arial, sans-serif;
+  }
+  .export-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 14px;
+  }
+  .export-title {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: .2px;
+    margin: 0;
+  }
+
+  .export-left{ min-width: 0; }
+  .export-game{
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.35;
+  }
+  .export-total{
+    margin: 6px 0 0;
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: .2px;
+  }
+
+  
+  /* 导出 */
+  .export-game-banner{
+    text-align: center;
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: .2px;
+    margin: 0 0 2px;
+  }
+  .export-topbar{
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 12px;
+  margin: 0 0 6px;
+}
+.export-topbar-left{ /* spacer */ }
+
+.export-total-top{
+  text-align: center;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: .2px;
+  margin: 0;
+  line-height: 1.15;
+}
+
+  .export-main-title{
+    text-align: center;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: .2px;
+    margin: 0 0 4px;
+  }
+  .export-right{
+  justify-self: end;
+  text-align: right;
+  line-height: 1.15;
+}
+  .export-source{
+    font-size: 14px;
+    font-weight: 900;
+    color: #4b5563;
+    margin: 2px 0 0;
+  }
+.export-meta {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
+    text-align: right;
+    line-height: 1.15;
+  }
+
+  table.export-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 16px;
+  }
+  .export-table th, .export-table td {
+    border: 1px solid #e5e7eb;
+    padding: 8px 10px;
+    vertical-align: top;
+    word-break: break-word;
+    white-space: pre-wrap;
+    line-height: 1.25;
+  }
+  .export-table thead th {
+    background: #fbf3dc; 
+    font-weight: 900;
+  }
+  .export-table col.col-item { width: 34%; }
+  .export-table col.col-range { width: 38%; }
+  .export-table col.col-score { width: 8%; }
+  .export-table col.col-remark { width: 20%; }
+
+  .export-section td {
+    background: #e7f3ff; 
+    font-weight: 900;
+    padding: 9px 12px;
+  }
+
+  .app {
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(720px, 1fr) 380px;
+  }
+
+  .main {
+    height: 100%;
+    overflow: auto;
+    padding: 24px 34px 40px;
+  }
+
+  .side {
+    height: 100%;
+    overflow: auto;
+    padding: 22px 18px;
+    border-left: 1px solid var(--line);
+    background: #fff;
+  }
+
+  .sec {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: var(--shadow);
+    padding: 18px 18px 6px;
+    margin: 0 0 22px;
+  }
+
+  h2.section-title {
+    margin: 0 0 14px;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .qblock {
+    padding: 14px 0 18px;
+    border-top: 1px solid var(--line);
+    scroll-margin-top: 16px;
+  }
+  .qblock:first-of-type { border-top: none; }
+
+  .qtitle {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 0 0 10px;
+  }
+
+  /* 选项（左）/ 分数（中）/ 备注（右） */
+  .qrow {
+    display: grid;
+    /* allow the remark column to shrink on smaller desktop widths */
+    grid-template-columns: minmax(0, 1fr) 56px minmax(220px, 320px);
+    gap: 12px;
+    align-items: start;
+  }
+
+  /* prevent grid children from overflowing the container */
+  .qrow > * { min-width: 0; }
+  .btn-group { max-width: 100%; }
+  .remark { min-width: 0; }
+  .remark textarea { max-width: 100%; }
+
+  .btn-group {
+    display: inline-flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .opt-btn {
+    border: 1.5px solid var(--blue);
+    background: #fff;
+    color: var(--blue);
+    padding: 10px 18px;       
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background .12s ease, color .12s ease, transform .02s ease, box-shadow .12s ease;
+  }
+  .opt-btn:active { transform: translateY(1px); }
+
+  /* 选中变深蓝 + 白字 + 加粗 + 阴影 */
+  .opt-btn.active {
+    background: var(--blue-dark);
+    color: #fff;
+    font-weight: 900;
+    box-shadow: 0 6px 14px rgba(109,40,217,.24);
+  }
+
+  .opt-btn.small {
+    padding: 9px 14px;
+    min-width: 46px;
+    text-align: center;
+  }
+
+  .score {
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 40px;
+    text-align: left;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+  }
+
+  .spec {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .remark textarea {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    outline: none;
+  }
+  .remark textarea:focus {
+    border-color: rgba(124,58,237,.45);
+    box-shadow: 0 0 0 4px rgba(124,58,237,.12);
+  }
+
+  .hidden { display: none !important; }
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .card td { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .card tr:last-child td { border-bottom: none; }
+  .card td:first-child { color: #111827; font-weight: 800; }
+  .card td:last-child {
+    text-align: right;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    font-weight: 900;
+  }
+  .card tr.jump { cursor: pointer; }
+  .card tr.jump:hover { background: #f8fafc; }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 12px 0 14px;
+  }
+  .toggle input { width: 16px; height: 16px; accent-color: var(--blue); }
+
+  .side-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 10px 0 14px;
+  }
+  .side-actions button {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .side-actions button:hover { background: #f2f4f7; }
+
+  .source-note{
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 800;
+    margin: 0 0 12px;
+    line-height: 1.35;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+  }
+  .chip {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--chip);
+    color: #111827;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid #e6e6e6;
+  }
+  .chip.answered { background: var(--blue-2); border-color: rgba(124,58,237,.25); }
+  .chip.active { outline: 2px solid rgba(124,58,237,.35); outline-offset: 1px; }
+
+  
+  /* 说明/补充：移动端置顶开关  */
+  .mobile-top-toggle{
+    display:none;
+    position: relative;
+    top: 0;
+    z-index: 50;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    padding: 10px 14px;
+  }
+  .mobile-toggle-inner{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .mobile-toggle-left{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .mobile-reset{
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .mobile-reset:active{ transform: translateY(1px); }
+  .mobile-toggle-inner input{ width:16px; height:16px; accent-color: var(--blue); }
+
+  /* mobile: 游戏名称容器（放在页面最上面，不悬浮） */
+  .mobile-game-host{
+    display:none;
+    background:#fff;
+    padding: 12px 14px 0;
+  }
+
+  /* 分区说明 */
+  .section-note{
+    margin: -6px 0 14px;
+    padding: 10px 12px;
+    border: 1px solid rgba(124,58,237,.18);
+    background: rgba(243,232,255,.55);
+    border-radius: 10px;
+    color: #4b5563;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+
+  @media (max-width: 1100px) {
+    body { overflow: auto; }
+    .app { grid-template-columns: 1fr; }
+    .side { border-left: none; border-top: 1px solid var(--line); }
+    .main, .side { height: auto; overflow: visible; }
+    .qrow { grid-template-columns: 1fr; }
+    .score { line-height: 24px; }
+  }
+
+  /* mobile tightening + remove outer “cards”, use dividers */
+  @media (max-width: 680px) {
+    .mobile-top-toggle{ display:block; }
+    .side .toggle{ display:none; }
+
+    .mobile-game-host{ display:block; }
+    .card.game-card{
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin: 0 0 12px;
+    }
+
+    .main { padding: 14px 14px 26px; }
+    .side { padding: 14px 14px 18px; }
+
+    .sec {
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+      margin: 0 0 18px;
+    }
+
+    h2.section-title {
+      position: sticky;
+      top: env(safe-area-inset-top, 0px); 
+      font-size: 22px;
+      margin: 0 0 8px;
+      padding: 10px 0 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .qtitle { font-size: 16px; }
+    .opt-btn { padding: 9px 14px; }
+
+    .card {
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    /* mobile: sidebar stays simple (remark toggle moved to page top) */
+    .side { display: flex; flex-direction: column; gap: 10px; }
+    .card { order: 0; }
+    .side-actions { order: 1; margin: 0; }
+    .grid { order: 2; }
+
+    .side-actions button { flex: 1; }
+    .side-actions #btnReset { display: none; }
+  }
+
+  /* 导出预览弹窗 */
+  .export-modal{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 9999;
+  }
+  .export-modal.show{ display: flex; }
+  .export-card{
+    width: min(760px, 100%);
+    max-height: calc(100vh - 36px);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 18px 60px rgba(0,0,0,.22);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .export-card header{
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .export-card h3{
+    margin: 0;
+    font-size: 16px;
+    font-weight: 900;
+  }
+  .export-card p{
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+  .export-card .actions{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .export-card .actions button{
+    border: 1.5px solid var(--blue);
+    background: #fff;
+    color: var(--blue);
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform .02s ease, box-shadow .12s ease, background .12s ease, color .12s ease;
+  }
+  .export-card .actions button:active{ transform: translateY(1px); }
+  .export-card .actions button.primary{
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue);
+  }
+  .export-card .actions button.ghost{
+    border-color: var(--line);
+    color: var(--text);
+  }
+  .export-card .imgwrap{
+    padding: 14px 16px 10px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .export-card img{
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    display: block;
+  }
+  .export-card .hint{
+    padding: 0 16px 14px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+
+  /* 侧栏：游戏名称 */
+  .game-card { padding: 14px 14px 12px; margin-bottom: 12px; }
+  .game-card .game-label{
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 900;
+    margin: 0 0 8px;
+  }
+  .game-card input{
+    width: 100%;
+    padding: 10px 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 14px;
+    outline: none;
+  }
+  .game-card input:focus{
+    border-color: rgba(124,58,237,.45);
+    box-shadow: 0 0 0 4px rgba(124,58,237,.12);
+  }
+
+
+
+  /* ====== Home screen ====== */
+  .home{
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(255,255,255,.92);
+    z-index: 50;
+  }
+  .home-card{
+    width: min(520px, 100%);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    background: #fff;
+    padding: 18px;
+  }
+  .home-title{ font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .home-sub{ color: var(--muted); margin-bottom: 14px; }
+  .home-actions{ display: flex; gap: 10px; flex-wrap: wrap; }
+  .home-foot{ margin-top: 12px; color: var(--muted); font-size: 12px; }
+
+  /* ====== Type switch pills ====== */
+  .type-switch{ display: flex; gap: 8px; }
+  .pill{
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 10px;
+    cursor: pointer;
+  }
+  .pill.active{
+    border-color: var(--blue);
+    background: var(--blue-2);
+    color: var(--blue-dark);
+    font-weight: 700;
+  }
+
+  /* ====== Right sidebar scroll only on hover ====== */
+  #sideScroll{ overflow: hidden; }
+  #sideScroll.hover{ overflow: auto; }
+
+  /* ====== Brief & tags ====== */
+  .brief-ta{ width: 100%; resize: vertical; }
+  .tag-chips{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 10px; }
+  .tag-chip{
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 999px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .tag-chip.active{
+    border-color: var(--blue);
+    background: var(--blue-2);
+    color: var(--blue-dark);
+  }
+  .tag-add{ display:flex; gap:8px; align-items:center; }
+  .tag-add input{ flex:1; }
+  .tag-hint{ margin-top: 8px; color: var(--muted); font-size: 12px; }
+
+  /* ====== Countable counter ====== */
+  .counter{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-left: 8px;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+  }
+  .cnt-btn{
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    cursor: pointer;
+  }
+  .cnt-num{
+    width: 52px;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  /* ====== Spec line under title ====== */
+  .qspec{ color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .spec{ color: var(--muted); font-size: 12px; margin-top: 8px; }
+
+</style>
+</head>
+
+<body>
+
+
+<div id="mobileGameHost" class="mobile-game-host" aria-label="游戏名称（移动端）"></div>
+
+
+<div class="mobile-top-toggle" role="region" aria-label="评定说明或补充开关">
+  <div class="mobile-toggle-inner">
+    <div class="mobile-toggle-left">
+      <input id="toggleRemarksTop" type="checkbox" checked />
+      <label for="toggleRemarksTop">评定说明或补充</label>
+    </div>
+    <button id="btnResetTop" class="mobile-reset" type="button" title="清空所有得分与备注">清空</button>
+  </div>
+</div>
+
+
+<div class="home" id="homeScreen" aria-label="选择打分类型">
+  <div class="home-card">
+    <div class="home-title">选择打分类型</div>
+    <div class="home-sub">叙事 / 社科 / 影视</div>
+    <div class="home-actions">
+      <button id="btnTypeNarrative" type="button" class="btn primary">叙事</button>
+      <button id="btnTypeSocSci" type="button" class="btn primary">社科</button>
+      <button id="btnTypeFilm" type="button" class="btn primary">影视</button>
+    </div>
+    <div class="home-foot">进入后可在右侧栏顶部切换类型（各类型分别保存）。</div>
+  </div>
+</div>
+
+<div class="app" id="appRoot" style="display:none;">
+  <div class="main" id="mainScroll">
+    <div id="content"></div>
+  </div>
+
+  <aside class="side" id="sideScroll">
+
+    <div class="source-note">打分表格来源：全女评审团</div>
+
+    <div class="card" aria-label="类型切换">
+      <div class="type-switch">
+        <button id="switchNarrative" type="button" class="pill">叙事</button>
+        <button id="switchSocSci" type="button" class="pill">社科</button>
+        <button id="switchFilm" type="button" class="pill">影视</button>
+      </div>
+    </div>
+
+    <div class="card game-card" aria-label="游戏名称（可选）">
+      <div class="game-label">作品名称</div>
+      <input id="gameName" type="text" placeholder="可选填（书名/片名）" />
+    </div>
+
+
+    <div class="card" aria-label="简评避雷">
+      <div class="game-label">简评避雷</div>
+      <textarea id="briefAvoid" class="brief-ta" rows="4" placeholder="可选填：简评、避雷点等"></textarea>
+    </div>
+
+    <div class="card" aria-label="Tag">
+      <div class="game-label">Tag</div>
+      <div id="tagChips" class="tag-chips"></div>
+      <div class="tag-add">
+        <input id="customTagInput" type="text" placeholder="自定义tag（回车添加）" />
+        <button id="btnAddCustomTag" type="button" class="btn small">添加</button>
+      </div>
+      <div class="tag-hint">可多选；再次点击可取消。</div>
+    </div>
+
+
+    <div class="card">
+      <table><tbody id="summaryBody"></tbody></table>
+    </div>
+
+    <div class="toggle" title="勾选可隐藏/显示所有评定说明或补充框">
+      <input id="toggleRemarks" type="checkbox" checked />
+      <label for="toggleRemarks">评定说明或补充</label>
+    </div>
+
+    <div class="side-actions">
+      <button id="btnExportImageFull" type="button">整图导出</button>
+      <button id="btnExportImageSplit" type="button">分节导出</button>
+      <button id="btnReset" type="button">清空</button>
+    </div>
+
+
+    <div class="grid" id="qGrid"></div>
+  </aside>
+</div>
+
+
+<script src="./question.js"></script>
+<script>
+  // =============================
+  // 书影打分 · 题库来自 question.js
+  // =============================
+
+  const $ = (sel, root=document) => root.querySelector(sel);
+
+  const TYPE_KEY = "female_friendly_3_0_type";
+  const NAME_KEY_PREFIX  = "female_friendly_3_0_work_name_";
+  const STATE_KEY_PREFIX = "female_friendly_3_0_state_";
+  const BRIEF_KEY_PREFIX = "female_friendly_3_0_brief_";
+  const TAG_KEY_PREFIX   = "female_friendly_3_0_tags_";
+
+  const PRESET_TAGS = (window.TAG_PRESETS || [
+    "全男主角","VGBTQ友好","支持身体剥削","情色合法化等","男凝严重","美化虐女","雌竞","荡妇羞辱"
+  ]);
+
+  function getStorageKey(t){ return STATE_KEY_PREFIX + t; }
+  function getNameKey(t){ return NAME_KEY_PREFIX + t; }
+  function getBriefKey(t){ return BRIEF_KEY_PREFIX + t; }
+  function getTagKey(t){ return TAG_KEY_PREFIX + t; }
+
+  function pickQuestionSet(type){
+    if (window.QUESTION_SETS && window.QUESTION_SETS[type]) return window.QUESTION_SETS[type];
+    return null;
+  }
+
+  // 当前类型
+  let TYPE = null;
+  let QUESTIONS = [];
+  let SECTION_ORDER = [];
+  let state = {};
+
+  // ---- Work name ----
+  const nameInput = $("#gameName"); // 沿用旧 id，减少改动
+  function loadWorkName(){
+    if (!TYPE || !nameInput) return;
+    nameInput.value = localStorage.getItem(getNameKey(TYPE)) || "";
+  }
+  function saveWorkName(){
+    if (!TYPE || !nameInput) return;
+    localStorage.setItem(getNameKey(TYPE), nameInput.value || "");
+  }
+  if (nameInput) nameInput.addEventListener("input", saveWorkName);
+
+  // ---- 简评避雷 ----
+  const briefInput = $("#briefAvoid");
+  function loadBrief(){
+    if (!TYPE || !briefInput) return;
+    briefInput.value = localStorage.getItem(getBriefKey(TYPE)) || "";
+  }
+  function saveBrief(){
+    if (!TYPE || !briefInput) return;
+    localStorage.setItem(getBriefKey(TYPE), briefInput.value || "");
+  }
+  if (briefInput) briefInput.addEventListener("input", saveBrief);
+
+  // ---- Tags ----
+  const tagChips = $("#tagChips");
+  const customTagInput = $("#customTagInput");
+  const btnAddCustomTag = $("#btnAddCustomTag");
+
+  function getTags(){
+    try {
+      const raw = localStorage.getItem(getTagKey(TYPE));
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch { return []; }
+  }
+  function setTags(arr){
+    localStorage.setItem(getTagKey(TYPE), JSON.stringify(arr));
+    renderTags();
+  }
+  function toggleTag(tag){
+    const cur = new Set(getTags());
+    if (cur.has(tag)) cur.delete(tag); else cur.add(tag);
+    setTags(Array.from(cur));
+  }
+  function addCustomTag(){
+    if (!customTagInput) return;
+    const t = (customTagInput.value || "").trim();
+    if (!t) return;
+    customTagInput.value = "";
+    const cur = new Set(getTags());
+    cur.add(t);
+    setTags(Array.from(cur));
+  }
+  if (btnAddCustomTag) btnAddCustomTag.addEventListener("click", addCustomTag);
+  if (customTagInput) customTagInput.addEventListener("keydown", (e)=>{
+    if (e.key === "Enter"){ e.preventDefault(); addCustomTag(); }
+  });
+
+  function renderTags(){
+    if (!tagChips) return;
+    const selected = new Set(getTags());
+    tagChips.innerHTML = "";
+
+    for (const tag of PRESET_TAGS){
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tag-chip" + (selected.has(tag) ? " active" : "");
+      chip.textContent = tag;
+      chip.addEventListener("click", ()=>toggleTag(tag));
+      tagChips.appendChild(chip);
+    }
+    // 显示自定义 tag（不在 presets 的）
+    for (const tag of Array.from(selected).filter(t=>!PRESET_TAGS.includes(t))){
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tag-chip active";
+      chip.textContent = tag;
+      chip.title = "点击取消";
+      chip.addEventListener("click", ()=>toggleTag(tag));
+      tagChips.appendChild(chip);
+    }
+  }
+
+  // ---- State ----
+  function loadState(){
+    try {
+      const raw = localStorage.getItem(getStorageKey(TYPE));
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return (parsed && typeof parsed === "object") ? parsed : {};
+    } catch { return {}; }
+  }
+  function saveState(){
+    localStorage.setItem(getStorageKey(TYPE), JSON.stringify(state));
+  }
+  function getAnswer(qid){
+    return state[qid] || { value: null, multi: {}, remark: "", count: 1 };
+  }
+  function setAnswer(qid, patch){
+    state[qid] = { ...getAnswer(qid), ...patch };
+    saveState();
+    updateAll();
+  }
+
+  // ---- Scoring ----
+  function computeQuestionScore(q){
+    const a = getAnswer(q.id);
+
+    if (q.type === "multi"){
+      const selected = Object.entries(a.multi || {}).filter(([_,v])=>!!v).map(([k])=>k);
+      if (!selected.length) return null;
+      let sum = 0;
+      for (const label of selected){
+        const opt = (q.options||[]).find(o=>o.label===label);
+        if (opt) sum += Number(opt.value);
+      }
+      return sum;
+    }
+
+    if (a.value === null || a.value === undefined) return null;
+    const base = Number(a.value);
+    if (!Number.isFinite(base)) return null;
+
+    if (q.countable && base !== 0){
+      const c = Number(a.count || 1);
+      const count = (Number.isFinite(c) && c > 0) ? c : 1;
+      return base * count;
+    }
+    return base;
+  }
+
+  function computeTotals(){
+    const labels = window.SCORE_BUCKET_LABELS || {};
+    const byBucket = {};
+    for (const k of Object.keys(labels)) byBucket[k] = 0;
+
+    let total = 0;
+    let creator = 0;
+
+    for (const q of QUESTIONS){
+      const v = computeQuestionScore(q);
+      if (typeof v === "number"){
+        total += v;
+        if (q.section === "创作者及传播环节") creator += v;
+        if (q.bucket && (q.bucket in byBucket)) byBucket[q.bucket] += v;
+      }
+    }
+    return { total, creator, byBucket };
+  }
+
+  function sectionAnchorId(section){
+    return "sec-" + SECTION_ORDER.indexOf(section);
+  }
+
+  function makeCounter(q){
+    const wrap = document.createElement("div");
+    wrap.className = "counter";
+    wrap.dataset.counterFor = q.id;
+
+    const btnMinus = document.createElement("button");
+    btnMinus.type = "button";
+    btnMinus.className = "cnt-btn";
+    btnMinus.textContent = "−";
+
+    const num = document.createElement("input");
+    num.type = "number";
+    num.className = "cnt-num";
+    num.min = "1";
+    num.step = "1";
+    num.value = String(getAnswer(q.id).count || 1);
+
+    const btnPlus = document.createElement("button");
+    btnPlus.type = "button";
+    btnPlus.className = "cnt-btn";
+    btnPlus.textContent = "+";
+
+    function setCount(v){
+      const n = Math.max(1, Number(v || 1));
+      setAnswer(q.id, { count: n });
+    }
+
+    btnMinus.addEventListener("click", ()=>{
+      const cur = getAnswer(q.id).count || 1;
+      setCount(cur - 1);
+    });
+    btnPlus.addEventListener("click", ()=>{
+      const cur = getAnswer(q.id).count || 1;
+      setCount(cur + 1);
+    });
+    num.addEventListener("input", ()=>setCount(num.value));
+
+    wrap.appendChild(btnMinus);
+    wrap.appendChild(num);
+    wrap.appendChild(btnPlus);
+    return wrap;
+  }
+
+  // ---- Render ----
+  function render(){
+    const content = $("#content");
+    content.innerHTML = "";
+
+    for (const section of SECTION_ORDER){
+      const qs = QUESTIONS.filter(q=>q.section === section);
+      if (!qs.length) continue;
+
+      const sec = document.createElement("section");
+      sec.className = "sec";
+      sec.id = sectionAnchorId(section);
+
+      const h2 = document.createElement("h2");
+      h2.className = "section-title";
+      h2.textContent = section;
+      sec.appendChild(h2);
+
+      for (const q of qs){
+        const block = document.createElement("div");
+        block.className = "qblock";
+        block.id = q.id;
+
+        const title = document.createElement("div");
+        title.className = "qtitle";
+        title.textContent = q.title;
+        block.appendChild(title);
+
+        if (q.spec){
+          const sp = document.createElement("div");
+          sp.className = "qspec";
+          sp.textContent = q.spec;
+          block.appendChild(sp);
+        }
+
+        const row = document.createElement("div");
+        row.className = "qrow";
+
+        const btnGroup = document.createElement("div");
+        btnGroup.className = "btn-group";
+
+        const a = getAnswer(q.id);
+
+        if (q.type === "single"){
+          for (const opt of (q.options || [])){
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "opt-btn";
+            b.textContent = opt.label;
+
+            b.dataset.qid = q.id;
+            b.dataset.kind = "single";
+            b.dataset.value = String(opt.value);
+
+            if (a.value === opt.value) b.classList.add("active");
+
+            b.addEventListener("click", ()=>{
+              const cur = getAnswer(q.id);
+              const next = (cur.value === opt.value) ? null : opt.value;
+              const patch = (next === null) ? { value: null, count: 1 } : { value: next };
+              setAnswer(q.id, patch);
+            });
+
+            btnGroup.appendChild(b);
+          }
+
+          if (q.countable){
+            const c = makeCounter(q);
+            const show = (a.value !== null && Number(a.value) !== 0);
+            c.style.display = show ? "" : "none";
+            btnGroup.appendChild(c);
+          }
+
+        } else if (q.type === "scale"){
+          for (let v = q.min; v <= q.max; v += (q.step || 1)){
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "opt-btn small";
+            b.textContent = String(v);
+
+            b.dataset.qid = q.id;
+            b.dataset.kind = "single";
+            b.dataset.value = String(v);
+
+            if (a.value === v) b.classList.add("active");
+
+            b.addEventListener("click", ()=>{
+              const cur = getAnswer(q.id);
+              const next = (cur.value === v) ? null : v;
+              setAnswer(q.id, { value: next });
+            });
+
+            btnGroup.appendChild(b);
+          }
+
+        } else if (q.type === "multi"){
+          for (const opt of (q.options || [])){
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "opt-btn";
+            b.textContent = opt.label;
+
+            b.dataset.qid = q.id;
+            b.dataset.kind = "multi";
+            b.dataset.label = opt.label;
+
+            const on = !!(a.multi && a.multi[opt.label]);
+            if (on) b.classList.add("active");
+
+            b.addEventListener("click", ()=>{
+              const cur = getAnswer(q.id);
+              const nextMulti = { ...(cur.multi || {}) };
+              nextMulti[opt.label] = !nextMulti[opt.label];
+              setAnswer(q.id, { multi: nextMulti });
+            });
+
+            btnGroup.appendChild(b);
+          }
+        }
+
+        const score = document.createElement("div");
+        score.className = "score";
+        const sc = document.createElement("div");
+        sc.className = "score-num";
+        sc.dataset.scoreFor = q.id;
+        sc.textContent = "0";
+        const scLabel = document.createElement("div");
+        scLabel.className = "score-label";
+        scLabel.textContent = "得分";
+        score.appendChild(sc);
+        score.appendChild(scLabel);
+
+        const remark = document.createElement("div");
+        remark.className = "remark";
+        const ta = document.createElement("textarea");
+        ta.rows = 2;
+        ta.placeholder = "评定说明或补充（可选）";
+        ta.value = a.remark || "";
+        ta.addEventListener("input", ()=>setAnswer(q.id, { remark: ta.value }));
+        remark.appendChild(ta);
+
+        row.appendChild(btnGroup);
+        row.appendChild(score);
+        row.appendChild(remark);
+        block.appendChild(row);
+
+        if (q.note){
+          const note = document.createElement("div");
+          note.className = "spec";
+          note.textContent = q.note;
+          block.appendChild(note);
+        }
+
+        sec.appendChild(block);
+      }
+
+      content.appendChild(sec);
+    }
+
+    // 右侧 Q chips
+    const grid = $("#qGrid");
+    if (grid){
+      grid.innerHTML = "";
+      for (const q of QUESTIONS){
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = q.id;
+        chip.dataset.qid = q.id;
+        chip.addEventListener("click", ()=>{
+          const el = document.getElementById(q.id);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        grid.appendChild(chip);
+      }
+    }
+  }
+
+  function updateSummary(){
+    const { total, creator, byBucket } = computeTotals();
+    const body = $("#summaryBody");
+    body.innerHTML = "";
+
+    function addRow(label, val, jumpSection=null){
+      const tr = document.createElement("tr");
+      if (jumpSection){
+        tr.classList.add("jump");
+        tr.title = "点击跳转到该分区";
+        tr.addEventListener("click", ()=>{
+          const id = sectionAnchorId(jumpSection);
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+      const td1 = document.createElement("td");
+      td1.textContent = label;
+      const td2 = document.createElement("td");
+      td2.textContent = String(val);
+      tr.appendChild(td1);
+      tr.appendChild(td2);
+      body.appendChild(tr);
+    }
+
+    addRow("总分", total);
+    addRow("创作者及传播环节", creator, "创作者及传播环节");
+
+    const labels = window.SCORE_BUCKET_LABELS || {};
+    const order = ["S1","S2","S3","S4","S5","S6","S7","S8"];
+    for (const k of order){
+      if (k in labels) addRow(labels[k], byBucket[k] ?? 0);
+    }
+  }
+
+  function updateScoresAndChips(){
+    for (const q of QUESTIONS){
+      const v = computeQuestionScore(q);
+      const el = document.querySelector(`[data-score-for="${q.id}"]`);
+      if (el) el.textContent = (typeof v === "number") ? String(v) : "0";
+
+      if (q.countable){
+        const cnt = document.querySelector(`[data-counter-for="${q.id}"]`);
+        if (cnt){
+          const a = getAnswer(q.id);
+          const show = (a.value !== null && Number(a.value) !== 0);
+          cnt.style.display = show ? "" : "none";
+          const num = cnt.querySelector(".cnt-num");
+          if (num) num.value = String(a.count || 1);
+        }
+      }
+    }
+    for (const chip of document.querySelectorAll(".chip")){
+      const qid = chip.dataset.qid;
+      const q = QUESTIONS.find(x=>x.id===qid);
+      const v = q ? computeQuestionScore(q) : null;
+      chip.classList.toggle("answered", typeof v === "number");
+    }
+  }
+
+  function updateButtonStates(){
+    const btns = document.querySelectorAll(".opt-btn");
+    for (const b of btns){
+      const qid = b.dataset.qid;
+      const kind = b.dataset.kind;
+      if (!qid || !kind) continue;
+      const a = getAnswer(qid);
+
+      if (kind === "single"){
+        const v = Number(b.dataset.value);
+        b.classList.toggle("active", a.value === v);
+      } else if (kind === "multi"){
+        const lab = b.dataset.label;
+        b.classList.toggle("active", !!(a.multi && a.multi[lab]));
+      }
+    }
+  }
+
+  function updateAll(){
+    updateScoresAndChips();
+    updateSummary();
+    updateButtonStates();
+  }
+
+  // ---- Remarks toggle ----
+  function applyRemarksToggle(checked){
+    document.body.classList.toggle("hide-remarks", !checked);
+    const top = $("#toggleRemarksTop");
+    const side = $("#toggleRemarks");
+    if (top) top.checked = checked;
+    if (side) side.checked = checked;
+  }
+  const toggleTop = $("#toggleRemarksTop");
+  const toggleSide = $("#toggleRemarks");
+  if (toggleTop) toggleTop.addEventListener("change", ()=>applyRemarksToggle(toggleTop.checked));
+  if (toggleSide) toggleSide.addEventListener("change", ()=>applyRemarksToggle(toggleSide.checked));
+
+  // ---- Reset ----
+  function resetCurrentType(){
+    if (!TYPE) return;
+    if (confirm("确定清空当前类型的所有得分与备注吗？")){
+      state = {};
+      saveState();
+      if (briefInput){ briefInput.value=""; saveBrief(); }
+      setTags([]);
+      updateAll();
+    }
+  }
+  const btnResetTop = $("#btnResetTop");
+  if (btnResetTop) btnResetTop.addEventListener("click", resetCurrentType);
+  const btnResetSide = $("#btnReset");
+  if (btnResetSide) btnResetSide.addEventListener("click", resetCurrentType);
+
+  // ---- Sidebar hover class ----
+  const sideScroll = $("#sideScroll");
+  if (sideScroll){
+    sideScroll.addEventListener("mouseenter", ()=>sideScroll.classList.add("hover"));
+    sideScroll.addEventListener("mouseleave", ()=>sideScroll.classList.remove("hover"));
+  }
+
+  // ---- Export (minimal) ----
+  function downloadBlob(blob, filename){
+    const a = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function exportFullImage(){
+    if (!window.html2canvas){
+      alert("缺少 html2canvas，无法导出图片。");
+      return;
+    }
+    const root = document.querySelector(".app");
+    const canvas = await window.html2canvas(root, { scale: 2, backgroundColor: "#ffffff" });
+    const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "export";
+    canvas.toBlob((blob)=>{
+      if (blob) downloadBlob(blob, `${name}_${TYPE}_整图.png`);
+    }, "image/png");
+  }
+
+  async function exportSplitBySections(){
+    if (!window.html2canvas){
+      alert("缺少 html2canvas，无法导出图片。");
+      return;
+    }
+    const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "export";
+    for (const section of SECTION_ORDER){
+      const el = document.getElementById(sectionAnchorId(section));
+      if (!el) continue;
+      const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: "#ffffff" });
+      canvas.toBlob((blob)=>{
+        if (blob) downloadBlob(blob, `${name}_${TYPE}_${section}.png`);
+      }, "image/png");
+    }
+  }
+
+  const btnExportFull = $("#btnExportImageFull");
+  const btnExportSplit = $("#btnExportImageSplit");
+  if (btnExportFull) btnExportFull.addEventListener("click", exportFullImage);
+  if (btnExportSplit) btnExportSplit.addEventListener("click", exportSplitBySections);
+
+  // ---- Type switching ----
+  function setPillActive(){
+    const a = (id, on)=>{ const el = $(id); if (el) el.classList.toggle("active", !!on); };
+    a("#switchNarrative", TYPE==="narrative");
+    a("#switchSocSci", TYPE==="socsci");
+    a("#switchFilm", TYPE==="film");
+  }
+
+  function initType(type){
+    const qs = pickQuestionSet(type);
+    if (!qs){
+      alert("未找到题库，请确认 question.js 已加载。");
+      return;
+    }
+    TYPE = type;
+    localStorage.setItem(TYPE_KEY, TYPE);
+
+    // 把 question.js 的结构映射成当前页面渲染需要的字段
+    SECTION_ORDER = qs.sectionOrder || [];
+    QUESTIONS = (qs.questions || []).map(q=>{
+      const ui = q.ui || {};
+      const mapped = {
+        id: q.id,
+        section: q.section,
+        bucket: q.bucket,
+        title: q.title,
+        spec: q.spec || "",
+        note: q.note || "",
+        type: ui.type,
+        options: ui.options || [],
+        min: ui.min,
+        max: ui.max,
+        step: ui.step,
+        countable: !!ui.countable
+      };
+      return mapped;
+    });
+
+    state = loadState();
+    loadWorkName();
+    loadBrief();
+    renderTags();
+
+    // show app / hide home
+    const appRoot = $("#appRoot");
+    const home = $("#homeScreen");
+    if (appRoot) appRoot.style.display = "";
+    if (home) home.style.display = "none";
+
+    setPillActive();
+    render();
+    updateAll();
+    applyRemarksToggle(true);
+  }
+
+  // Home buttons
+  const btnTypeNarrative = $("#btnTypeNarrative");
+  const btnTypeSocSci = $("#btnTypeSocSci");
+  const btnTypeFilm = $("#btnTypeFilm");
+  if (btnTypeNarrative) btnTypeNarrative.addEventListener("click", ()=>initType("narrative"));
+  if (btnTypeSocSci) btnTypeSocSci.addEventListener("click", ()=>initType("socsci"));
+  if (btnTypeFilm) btnTypeFilm.addEventListener("click", ()=>initType("film"));
+
+  // Sidebar switch pills
+  const swN = $("#switchNarrative");
+  const swS = $("#switchSocSci");
+  const swF = $("#switchFilm");
+  if (swN) swN.addEventListener("click", ()=>initType("narrative"));
+  if (swS) swS.addEventListener("click", ()=>initType("socsci"));
+  if (swF) swF.addEventListener("click", ()=>initType("film"));
+
+  // Init on load: last used type -> direct open; otherwise show home
+  const last = (localStorage.getItem(TYPE_KEY) || "").toLowerCase();
+  if (last === "narrative" || last === "socsci" || last === "film"){
+    initType(last);
+  } else {
+    // show home, keep app hidden
+    const home = $("#homeScreen");
+    if (home) home.style.display = "flex";
+    const appRoot = $("#appRoot");
+    if (appRoot) appRoot.style.display = "none";
+  }
+</script>
+</body>
+</html>
