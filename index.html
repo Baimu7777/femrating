@@ -283,9 +283,6 @@
     margin: 0 0 10px;
   }
 
-  /* 做题页面：不显示题干（导出仍显示） */
-  .main .qtitle{ display:none !important; }
-
   /* 选项（左）/ 分数（中）/ 备注（右） */
   .qrow {
     display: grid;
@@ -1059,7 +1056,6 @@
 // 所以导出时我们从 question.js 源码里“解析出 window.QUESTION_SETS 的初始 JSON”，
 // 再可靠地构建 {Qid -> spec} 映射（避免正则跨题错配）。
 const SPEC_MAP = {};
-const TITLE_MAP = {};
 let SPEC_READY = Promise.resolve();
 
 function extractQuestionSetsJSON(src){
@@ -1115,14 +1111,9 @@ function extractQuestionSetsJSON(src){
           const qs = sets[t];
           const list = (qs && qs.questions) ? qs.questions : [];
           list.forEach(q=>{
-            if (q && q.id){
-            if (typeof q.spec === "string" && !SPEC_MAP[q.id]){
+            if (q && q.id && typeof q.spec === "string" && !SPEC_MAP[q.id]){
               SPEC_MAP[q.id] = q.spec;
             }
-            if (typeof q.title === "string" && !TITLE_MAP[q.id]){
-              TITLE_MAP[q.id] = q.title;
-            }
-          }
           });
         });
       }
@@ -1594,7 +1585,7 @@ function extractQuestionSetsJSON(src){
 
         const title = document.createElement("div");
         title.className = "qtitle";
-        title.textContent = (q.title || TITLE_MAP[q.id] || "");
+        title.textContent = q.title;
         block.appendChild(title);
 
 
@@ -2309,7 +2300,7 @@ function updateScoresAndChips(){
         const tr = document.createElement("tr");
         tr.className = "export-row";
         tr.innerHTML = `
-          <td class="col-title">${escapeHtml((q.title || TITLE_MAP[q.id] || ""))}</td>
+          <td class="col-title">${escapeHtml(q.title || "")}</td>
           <td class="col-range">${escapeHtml((q.spec || SPEC_MAP[q.id] || ""))}</td>
           <td class="col-score">${hasScore ? score : ""}</td>
           <td class="col-remark">${remark ? escapeHtml(remark) : ""}</td>
@@ -2371,7 +2362,7 @@ function updateScoresAndChips(){
         id: q.id,
         section: q.section,
         bucket: q.bucket,
-        title: (q.title || TITLE_MAP[q.id] || ""),
+        title: q.title,
         spec: (q.spec || SPEC_MAP[q.id] || ""),
         note: q.note || "",
         type: ui.type,
