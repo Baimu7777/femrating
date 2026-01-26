@@ -715,14 +715,13 @@
     font-weight: 700;
   }
 
-  /* ====== Right sidebar scroll only on hover (hide scrollbar) ====== */
-  #sideScroll{ overflow: hidden; }
-  #sideScroll.hover{
-    overflow: auto;
+  /* ====== Right sidebar: keep scrolling, hide scrollbar (no layout squeeze) ====== */
+  #sideScroll{
+    overflow: auto;             /* ✅ keep scrolling */
     scrollbar-width: none;      /* Firefox */
     -ms-overflow-style: none;   /* IE/Edge legacy */
   }
-  #sideScroll.hover::-webkit-scrollbar{ width: 0; height: 0; }
+  #sideScroll::-webkit-scrollbar{ width: 0; height: 0; } /* WebKit */
 
   /* ====== Brief & tags ====== */
   .brief-ta{
