@@ -443,13 +443,115 @@
   /* 说明/补充：移动端置顶开关  */
   .mobile-top-toggle{
     display:none;
-    position: relative;
-    top: 0;
-    z-index: 50;
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 999;
     background: #fff;
     border-bottom: 1px solid var(--line);
     padding: 10px 14px;
   }
+  /* ===== Mobile bottom bar ===== */
+  .mobile-bottom-bar{
+    display:none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    background: #fff;
+    border-top: 1px solid var(--line);
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -8px 24px rgba(16,24,40,.08);
+  }
+  .mobile-bottom-inner{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .mb-scores{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .mb-total{
+    font-weight: 900;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .mb-total span{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    font-weight: 900;
+    margin-left: 6px;
+  }
+  .mb-sections{
+    display:flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .mb-sec-chip{
+    flex: 0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    font-size: 12px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+  .mb-sec-chip .v{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    font-weight: 900;
+  }
+  .mb-actions{
+    display:flex;
+    gap: 10px;
+  }
+  .mb-actions button{
+    flex: 1;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 10px 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .mb-actions button:active{ transform: translateY(1px); }
+
+  .mb-qnums{
+    display:flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .mchip{
+    flex: 0 0 auto;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    height: 28px;
+    min-width: 34px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--chip);
+    color: #111827;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid #e6e6e6;
+  }
+  .mchip.answered { background: var(--blue-2); border-color: rgba(124,58,237,.25); }
+  .mchip.active { outline: 2px solid rgba(124,58,237,.35); outline-offset: 1px; }
+
+
   .mobile-toggle-inner{
     display:flex;
     align-items:center;
@@ -509,6 +611,7 @@
   /* mobile tightening + remove outer “cards”, use dividers */
   @media (max-width: 680px) {
     .mobile-top-toggle{ display:block; }
+    .mobile-bottom-bar{ display:block; }
     .side .toggle{ display:none; }
 
     .mobile-game-host{ display:block; }
@@ -520,7 +623,7 @@
       margin: 0 0 12px;
     }
 
-    .main { padding: 14px 14px 26px; }
+    .main { padding: 14px 14px calc(260px + env(safe-area-inset-bottom, 0px)); }
     .side { padding: 14px 14px 18px; }
 
     .sec {
@@ -532,13 +635,13 @@
     }
 
     h2.section-title {
-      position: sticky;
-      top: env(safe-area-inset-top, 0px); 
+      position: static;
+      top: auto;
       font-size: 22px;
       margin: 0 0 8px;
       padding: 10px 0 12px;
       border-bottom: 1px solid var(--line);
-      background: #fff;
+      background: transparent;
     }
 
     .qtitle { font-size: 16px; }
@@ -896,6 +999,22 @@
 </div>
 
 
+<div id="mobileBottomBar" class="mobile-bottom-bar" aria-label="移动端底栏">
+  <div class="mobile-bottom-inner">
+    <div class="mb-scores">
+      <div class="mb-total">总分 <span id="mbTotal">0</span></div>
+      <div id="mbSections" class="mb-sections"></div>
+    </div>
+
+    <div class="mb-actions">
+      <button id="mbExportFull" type="button">整图导出</button>
+      <button id="mbExportSplit" type="button">分节导出</button>
+    </div>
+
+    <div id="mbQGrid" class="mb-qnums" aria-label="题号（移动端）"></div>
+  </div>
+</div>
+
 <div id="exportStage" class="export-stage" style="display:none;"></div>
 
 <script src="./question.js"></script>
@@ -946,6 +1065,12 @@
     document.querySelectorAll(".chip.active").forEach(el=>el.classList.remove("active"));
     const chip = document.querySelector(`.chip[data-qid="${qid}"]`);
     if (chip) chip.classList.add("active");
+
+    // mobile bottom q chips active
+    document.querySelectorAll(".mchip.active").forEach(el=>el.classList.remove("active"));
+    const mch = document.querySelector(`.mchip[data-qid="${qid}"]`);
+    if (mch) mch.classList.add("active");
+
 
     document.querySelectorAll("#summaryBody tr.active").forEach(el=>el.classList.remove("active"));
     const q = QUESTIONS.find(x=>x.id === qid);
@@ -1352,6 +1477,7 @@
         grid.appendChild(chip);
       }
     }
+    renderMobileQGrid();
   }
 
   function updateSummary(){
@@ -1431,6 +1557,9 @@
     updateScoresAndChips();
     updateSummary();
     updateButtonStates();
+
+    updateMobileScores();
+    updateMobileChipsAnsweredAndActive();
   }
 
   // ---- Remarks toggle ----
@@ -1749,6 +1878,60 @@
   const btnExportSplit = $("#btnExportImageSplit");
   if (btnExportFull) btnExportFull.addEventListener("click", exportFullImage);
   if (btnExportSplit) btnExportSplit.addEventListener("click", exportSplitBySections);
+
+
+  // ---- Mobile bottom bar ----
+  const mbTotal = $("#mbTotal");
+  const mbSections = $("#mbSections");
+  const mbQGrid = $("#mbQGrid");
+  const mbExportFull = $("#mbExportFull");
+  const mbExportSplit = $("#mbExportSplit");
+
+  if (mbExportFull) mbExportFull.addEventListener("click", exportFullImage);
+  if (mbExportSplit) mbExportSplit.addEventListener("click", exportSplitBySections);
+
+  function renderMobileQGrid(){
+    if (!mbQGrid) return;
+    mbQGrid.innerHTML = "";
+    for (const q of QUESTIONS){
+      const chip = document.createElement("div");
+      chip.className = "mchip";
+      chip.textContent = q.id;
+      chip.dataset.qid = q.id;
+      chip.addEventListener("click", ()=>{
+        const el = document.getElementById(q.id);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      mbQGrid.appendChild(chip);
+    }
+  }
+
+  function updateMobileScores(){
+    const { total, bySection } = computeTotals();
+    if (mbTotal) mbTotal.textContent = String(total);
+
+    if (mbSections){
+      mbSections.innerHTML = "";
+      for (const sec of (SECTION_ORDER || [])){
+        const v = (bySection && typeof bySection[sec] === "number") ? bySection[sec] : 0;
+        const c = document.createElement("div");
+        c.className = "mb-sec-chip";
+        c.innerHTML = `<span class="t">${escapeHtml(sec)}</span> <span class="v">${v}</span>`;
+        mbSections.appendChild(c);
+      }
+    }
+  }
+
+  function updateMobileChipsAnsweredAndActive(){
+    if (!mbQGrid) return;
+    for (const chip of mbQGrid.querySelectorAll(".mchip")){
+      const qid = chip.dataset.qid;
+      const q = QUESTIONS.find(x=>x.id===qid);
+      const v = q ? computeQuestionScore(q) : null;
+      chip.classList.toggle("answered", typeof v === "number");
+      chip.classList.toggle("active", qid === activeQid);
+    }
+  }
 
   // ---- Type switching ----
   function setPillActive(){
