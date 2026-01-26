@@ -1486,24 +1486,29 @@
   }
 
   
-  // ---- Mobile bottom summary (total + by section + Q grid) ----
+  // ---- Mobile bottom summary (total + by score buckets + Q grid) ----
   function updateMobileFooter(){
     const totalEl = $("#mobileTotalScore");
     const secEl = $("#mobileSectionScores");
     if (!totalEl || !secEl) return;
 
-    const { total, bySection } = computeTotals();
+    const { total, byBucket } = computeTotals();
     totalEl.textContent = `总分：${total}`;
 
     secEl.innerHTML = "";
-    for (const s of (SECTION_ORDER || [])){
-      const v = (bySection && typeof bySection[s] === "number") ? bySection[s] : 0;
+    // 按“分区/分桶”（如 S1~S8）汇总，而不是按页面渲染 section（如“女性角色塑造/男性角色塑造”）
+    for (const b of (BUCKET_ORDER || [])){
+      const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
+      const v = (byBucket && typeof byBucket[b] === "number") ? byBucket[b] : 0;
+
       const k = document.createElement("div");
       k.className = "k";
-      k.textContent = s;
+      k.textContent = label;
+
       const vv = document.createElement("div");
       vv.className = "v";
       vv.textContent = String(v);
+
       secEl.appendChild(k);
       secEl.appendChild(vv);
     }
