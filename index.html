@@ -252,11 +252,6 @@
     padding: 22px 18px;
     border-left: 1px solid var(--line);
     background: linear-gradient(180deg, #ffffff, var(--panel));
-
-    /* cards spacing (desktop) */
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
   }
 
   .sec {
@@ -394,7 +389,7 @@
     gap: 8px;
     font-size: 13px;
     color: var(--muted);
-        margin: 0;
+    margin: 12px 0 14px;
   }
   .toggle input { width: 16px; height: 16px; accent-color: var(--blue); }
 
@@ -402,7 +397,7 @@
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
-        margin: 0;
+    margin: 10px 0 14px;
   }
   .side-actions button {
     border: 1px solid var(--line);
@@ -414,7 +409,13 @@
   }
   .side-actions button:hover { background: #f2f4f7; }
 
-  .source-note{ font-size: 13px; color: var(--muted); font-weight: 800; margin: 0; line-height: 1.35; }
+  .source-note{
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 800;
+    margin: 0 0 12px;
+    line-height: 1.35;
+  }
 
   .grid {
     display: grid;
@@ -507,11 +508,10 @@
 
   /* mobile tightening + remove outer “cards”, use dividers */
   @media (max-width: 680px) {
-    /* mobile: top sticky should be section title, not the remarks/reset bar */
-    .mobile-top-toggle{ display:block; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 999; margin-bottom: 10px; }
+    .mobile-top-toggle{ display:block; }
     .side .toggle{ display:none; }
 
-    .mobile-game-host{ display:flex; flex-direction: column; gap: 12px; padding: 12px 14px 12px; }
+    .mobile-game-host{ display:block; }
     .card.game-card{
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -533,7 +533,7 @@
 
     h2.section-title {
       position: sticky;
-      top: calc(env(safe-area-inset-top, 0px) + 54px); 
+      top: env(safe-area-inset-top, 0px); 
       font-size: 22px;
       margin: 0 0 8px;
       padding: 10px 0 12px;
@@ -550,12 +550,11 @@
       box-shadow: none;
     }
 
-    /* mobile: sidebar stays simple */
-    .side { display: flex; flex-direction: column; gap: 12px; }
+    /* mobile: sidebar stays simple (remark toggle moved to page top) */
+    .side { display: flex; flex-direction: column; gap: 10px; }
     .card { order: 0; }
     .side-actions { order: 1; margin: 0; }
-    .summary-card { order: 98; }
-    .grid { order: 99; }
+    .grid { order: 2; }
 
     .side-actions button { flex: 1; }
     .side-actions #btnReset { display: none; }
@@ -646,7 +645,7 @@
 
 
   /* 侧栏：游戏名称 */
-  .game-card { padding: 14px 14px 12px; margin-bottom: 0; }
+  .game-card { padding: 14px 14px 12px; margin-bottom: 12px; }
   .game-card .game-label{
     font-size: 13px;
     color: var(--muted);
@@ -715,13 +714,9 @@
     font-weight: 700;
   }
 
-  /* ====== Right sidebar: keep scrolling, hide scrollbar (no layout squeeze) ====== */
-  #sideScroll{
-    overflow: auto;             /* ✅ keep scrolling */
-    scrollbar-width: none;      /* Firefox */
-    -ms-overflow-style: none;   /* IE/Edge legacy */
-  }
-  #sideScroll::-webkit-scrollbar{ width: 0; height: 0; } /* WebKit */
+  /* ====== Right sidebar scroll only on hover ====== */
+  #sideScroll{ overflow: hidden; }
+  #sideScroll.hover{ overflow: auto; }
 
   /* ====== Brief & tags ====== */
   .brief-ta{
@@ -880,7 +875,7 @@
     </div>
 
 
-    <div class="card summary-card">
+    <div class="card">
       <table><tbody id="summaryBody"></tbody></table>
     </div>
 
@@ -1467,56 +1462,6 @@
   const btnResetSide = $("#btnReset");
   if (btnResetSide) btnResetSide.addEventListener("click", resetCurrentType);
 
-
-  // ---- Mobile: move top meta cards (type switch / name / brief / tags) above the main content ----
-  const mobileHost = $("#mobileGameHost");
-  const typeCard = document.querySelector('aside#sideScroll .card[aria-label="类型切换"]');
-  const nameCard = document.querySelector('aside#sideScroll .card.game-card[aria-label="游戏名称（可选）"]');
-  const briefCard = document.querySelector('aside#sideScroll .card.brief-card');
-  const tagCard = document.querySelector('aside#sideScroll .card.tag-card');
-  const sideRoot = $("#sideScroll");
-
-  const MOBILE_QUERY = window.matchMedia("(max-width: 680px)");
-  function syncMobileMetaCards(){
-    if (!mobileHost || !sideRoot || !typeCard) return;
-
-    const isMobile = MOBILE_QUERY.matches;
-    if (isMobile){
-      // move to top host (keep order)
-      mobileHost.innerHTML = "";
-      mobileHost.appendChild(typeCard);
-      if (nameCard) mobileHost.appendChild(nameCard);
-      if (briefCard) mobileHost.appendChild(briefCard);
-      if (tagCard) mobileHost.appendChild(tagCard);
-    } else {
-      // move back into sidebar (keep order: source-note -> type -> name -> brief -> tag -> summary ...)
-      const sourceNote = sideRoot.querySelector(".source-note");
-      const anchor = sourceNote ? sourceNote.nextElementSibling : sideRoot.firstElementChild;
-      // insert typeCard right after source note if possible
-      if (sourceNote && typeCard.parentElement !== sideRoot){
-        sideRoot.insertBefore(typeCard, anchor);
-      }
-      if (nameCard && nameCard.parentElement !== sideRoot){
-        sideRoot.insertBefore(nameCard, typeCard.nextElementSibling);
-      }
-      if (briefCard && briefCard.parentElement !== sideRoot){
-        sideRoot.insertBefore(briefCard, nameCard ? nameCard.nextElementSibling : typeCard.nextElementSibling);
-      }
-      if (tagCard && tagCard.parentElement !== sideRoot){
-        sideRoot.insertBefore(tagCard, briefCard ? briefCard.nextElementSibling : (nameCard ? nameCard.nextElementSibling : typeCard.nextElementSibling));
-      }
-      // clear host
-      if (mobileHost.children.length){
-        mobileHost.innerHTML = "";
-      }
-    }
-  }
-  if (MOBILE_QUERY.addEventListener){
-    MOBILE_QUERY.addEventListener("change", syncMobileMetaCards);
-  } else if (MOBILE_QUERY.addListener){
-    MOBILE_QUERY.addListener(syncMobileMetaCards);
-  }
-
   // ---- Sidebar hover class ----
   const sideScroll = $("#sideScroll");
   if (sideScroll){
@@ -1861,9 +1806,6 @@
     loadWorkName();
     loadBrief();
     renderTags();
-
-    // mobile/desktop: place meta cards correctly
-    syncMobileMetaCards();
 
     // show app / hide home
     const appRoot = $("#appRoot");
