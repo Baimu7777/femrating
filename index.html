@@ -169,7 +169,6 @@
   gap: 12px;
   margin: 0 0 6px;
 }
-.export-topbar-left{ /* spacer */ }
 
 .export-total-top{
   text-align: center;
@@ -714,7 +713,21 @@
   #sideScroll.hover{ overflow: auto; }
 
   /* ====== Brief & tags ====== */
-  .brief-ta{ width: 100%; resize: vertical; }
+  .brief-ta{
+    width: 100%;
+    resize: vertical;
+    padding: 10px 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 14px;
+    outline: none;
+    line-height: 1.5;
+  }
+  .brief-ta:focus{
+    border-color: rgba(123,109,240,.45);
+    box-shadow: 0 0 0 4px rgba(123,109,240,.12);
+  }
   .tag-chips{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 10px; }
   .tag-chip{
     display: inline-flex;
@@ -735,7 +748,20 @@
     color: var(--blue-dark);
   }
   .tag-add{ display:flex; gap:8px; align-items:center; }
-  .tag-add input{ flex:1; }
+  .tag-add input{
+    flex: 1;
+    width: 100%;
+    padding: 10px 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 14px;
+    outline: none;
+  }
+  .tag-add input:focus{
+    border-color: rgba(123,109,240,.45);
+    box-shadow: 0 0 0 4px rgba(123,109,240,.12);
+  }
   .tag-hint{ margin-top: 8px; color: var(--muted); font-size: 12px; }
 
   /* ====== Countable counter ====== */
@@ -825,12 +851,12 @@
     </div>
 
 
-    <div class="card" aria-label="简评避雷">
+    <div class="card game-card brief-card" aria-label="简评避雷">
       <div class="game-label">简评避雷</div>
       <textarea id="briefAvoid" class="brief-ta" rows="4" placeholder="可选填：简评、避雷点等"></textarea>
     </div>
 
-    <div class="card" aria-label="Tag">
+    <div class="card game-card tag-card" aria-label="Tag">
       <div class="game-label">Tag</div>
       <div id="tagChips" class="tag-chips"></div>
       <div class="tag-add">
@@ -904,9 +930,7 @@
     if (!qid || activeQid === qid) return;
     activeQid = qid;
 
-    document.querySelectorAll(".qblock.activeQ").forEach(el=>el.classList.remove("activeQ"));
-    const blk = document.getElementById(qid);
-    if (blk) blk.classList.add("activeQ");
+    // 仅高亮右侧题号与分区，不高亮左侧题目卡片
 
     document.querySelectorAll(".chip.active").forEach(el=>el.classList.remove("active"));
     const chip = document.querySelector(`.chip[data-qid="${qid}"]`);
@@ -926,18 +950,13 @@
     if (!root) return;
     const blocks = Array.from(root.querySelectorAll(".qblock"));
 
+    // 以“可视区域顶部附近”的题为准（翻页时取页面最上面那题）
     activeIO = new IntersectionObserver((entries)=>{
-      // pick the most visible one
-      let best = null;
-      for (const e of entries){
-        if (!e.isIntersecting) continue;
-        if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
-      }
-      if (best){
-        const id = best.target.id;
-        setActiveQuestion(id);
-      }
-    }, { root, threshold: [0.35, 0.5, 0.65] });
+      const visible = entries.filter(e=>e.isIntersecting);
+      if (!visible.length) return;
+      visible.sort((a,b)=>a.boundingClientRect.top - b.boundingClientRect.top);
+      setActiveQuestion(visible[0].target.id);
+    }, { root, threshold: 0.01, rootMargin: "0px 0px -80% 0px" });
 
     blocks.forEach(b=>activeIO.observe(b));
   }
@@ -1725,17 +1744,11 @@
   if (swS) swS.addEventListener("click", ()=>initType("socsci"));
   if (swF) swF.addEventListener("click", ()=>initType("film"));
 
-  // Init on load: last used type -> direct open; otherwise show home
-  const last = (localStorage.getItem(TYPE_KEY) || "").toLowerCase();
-  if (last === "narrative" || last === "socsci" || last === "film"){
-    initType(last);
-  } else {
-    // show home, keep app hidden
-    const home = $("#homeScreen");
-    if (home) home.style.display = "flex";
-    const appRoot = $("#appRoot");
-    if (appRoot) appRoot.style.display = "none";
-  }
+  // Init on load: always show type picker (even if local has saved state)
+  const home = $("#homeScreen");
+  if (home) home.style.display = "flex";
+  const appRoot = $("#appRoot");
+  if (appRoot) appRoot.style.display = "none";
 </script>
 </body>
 </html>
