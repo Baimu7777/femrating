@@ -118,9 +118,11 @@
   /* ===== 导出用“表格版式” ===== */
   .export-stage {
     position: fixed;
-    left: -10000px;
+        display: inline-block;
+left: -10000px;
     top: 0;
-    width: 1200px;
+    width: max-content;
+    max-width: none;
     padding: 28px 28px 32px;
     background: #fff;
     font-family: "XiqueJuzhen", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC","Hiragino Sans GB","Microsoft YaHei", Arial, sans-serif;
@@ -2015,7 +2017,7 @@ function updateScoresAndChips(){
       return;
     }
     const stage = $("#exportStage");
-    stage.style.display = "block";
+    stage.style.display = "inline-block";
     stage.innerHTML = "";
     stage.appendChild(buildExportContent({ mode: "full" }));
 
@@ -2034,7 +2036,7 @@ function updateScoresAndChips(){
       return;
     }
     const stage = $("#exportStage");
-    stage.style.display = "block";
+    stage.style.display = "inline-block";
     stage.innerHTML = "";
 
     const name = ($("#gameName").value || "").trim() || "未命名作品";
