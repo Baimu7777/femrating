@@ -517,10 +517,13 @@ left: -10000px;
 
 
   @media (max-width: 1100px) {
-    body { overflow: auto; }
-    .app { grid-template-columns: 1fr; }
+    html, body { height: auto; overflow: auto; }
+    body { overflow-x: hidden; }
+    .app { height: auto; min-height: 100vh; grid-template-columns: 1fr; }
     .side { border-left: none; border-top: 1px solid var(--line); }
     .main, .side { height: auto; overflow: visible; }
+    /* stacked layout: don't trap sidebar in a tiny scroll box */
+    #sideScroll { overflow: visible !important; }
     .qrow { grid-template-columns: 1fr; }
     .score { line-height: 24px; }
   }
