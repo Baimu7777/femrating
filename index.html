@@ -1860,10 +1860,26 @@ function updateScoresAndChips(){
   function resetCurrentType(){
     if (!TYPE) return;
     if (confirm("确定清空当前类型的所有得分与备注吗？")){
+      // 1) 清空答题状态
       state = {};
       saveState();
-      if (briefInput){ briefInput.value=""; saveBrief(); }
+
+      // 2) 清空作品名称（桌面/移动端会同步）
+      if (nameInput){
+        nameInput.value = "";
+        saveWorkName();
+      }
+
+      // 3) 清空简评避雷
+      if (briefInput){
+        briefInput.value = "";
+        saveBrief();
+      }
+
+      // 4) 清空 Tag（含自定义输入框）
+      if (customTagInput) customTagInput.value = "";
       setTags([]);
+
       updateAll();
     }
   }
