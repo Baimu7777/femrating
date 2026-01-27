@@ -1605,6 +1605,7 @@
         ta.rows = 2;
         ta.placeholder = "评定说明或补充（可选）";
         ta.value = a.remark || "";
+        ta.dataset.remarkFor = q.id;
         ta.addEventListener("input", ()=>setAnswer(q.id, { remark: ta.value }));
         remark.appendChild(ta);
 
@@ -1822,11 +1823,22 @@ function updateScoresAndChips(){
     }
   }
 
+  function updateRemarks(){
+    for (const q of QUESTIONS){
+      const ta = document.querySelector(`[data-remark-for="${q.id}"]`);
+      if (!ta) continue;
+      const v = String(getAnswer(q.id).remark || "");
+      if (ta.value !== v) ta.value = v;
+    }
+  }
+
+
   function updateAll(){
     updateScoresAndChips();
     updateSummary();
     updateMobileFooter();
     updateButtonStates();
+    updateRemarks();
   }
 
   // ---- Remarks toggle ----
