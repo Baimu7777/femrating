@@ -1948,36 +1948,63 @@ function updateScoresAndChips(){
     return isLikelyInAppBrowser();
   }
 
+  
   function showExportPreview(blob, filename){
-    // 不用弹窗：直接打开图片预览页，让用户长按保存
-    const url = URL.createObjectURL(blob);
-    const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><title>${(filename||"image.png").replace(/</g,"&lt;")}</title>
-<style>
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:#111;color:#fff;}
-  .hint{position:sticky;top:0;padding:12px 14px;background:rgba(0,0,0,.75);backdrop-filter:saturate(140%) blur(10px);font-size:14px;line-height:1.35;}
-  .hint b{color:#9effa6;}
-  img{display:block;max-width:100%;height:auto;margin:0 auto;}
-</style></head><body>
-<div class="hint">如果“保存/下载”被内置浏览器拦截：请 <b>长按图片</b> → 保存图片。</div>
-<img src="${url}" alt="export"/>
-</body></html>`;
-    // 尽量打开新页面；打不开就直接跳转
-    let w = null;
-    try{ w = window.open("", "_blank"); }catch(e){ w = null; }
-    if (w && w.document){
+    // 使用内置弹窗预览：用户长按图片保存；关闭后继续下一张（用于分节导出串行预览）
+    return new Promise((resolve) => {
       try{
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
+        // 清理上一次
+        try{
+          if (LAST_EXPORT && LAST_EXPORT.objectUrl) URL.revokeObjectURL(LAST_EXPORT.objectUrl);
+        }catch(e){}
+
+        const url = URL.createObjectURL(blob);
+        LAST_EXPORT = { objectUrl: url, filename: filename || "rating.png" };
+
+        exportPreviewImg.src = url;
+        exportPreviewImg.alt = LAST_EXPORT.filename || "导出图片";
+        exportPreviewHint.textContent = "提示：在部分 App 内置浏览器里，“保存图片/下载”会被拦截，这是 App 限制。此时长按图片即可保存。";
+        exportModal.classList.add("show");
+
+        const close = () => {
+          exportModal.classList.remove("show");
+          try{ exportPreviewImg.removeAttribute("src"); }catch(e){}
+          try{
+            if (LAST_EXPORT && LAST_EXPORT.objectUrl) URL.revokeObjectURL(LAST_EXPORT.objectUrl);
+          }catch(e){}
+          LAST_EXPORT = { objectUrl: "", filename: "rating.png" };
+          btnExportClose.removeEventListener("click", close);
+          exportModal.removeEventListener("click", onBackdrop);
+          resolve();
+        };
+
+        const onBackdrop = (ev) => {
+          if (ev && ev.target === exportModal) close();
+        };
+
+        btnExportClose.addEventListener("click", close);
+        exportModal.addEventListener("click", onBackdrop);
+
+        // “尝试保存”：普通浏览器可直接下载；内置浏览器常拦截，兜底为打开新页（长按保存）
+        btnExportTryDownload.onclick = () => {
+          try{
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = LAST_EXPORT.filename || "rating.png";
+            a.rel = "noopener";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }catch(e){
+            try{ window.open(url, "_blank"); }catch(_e){}
+          }
+        };
+
       }catch(e){
-        // fallback
-        try{ w.location.href = url; }catch(_){}
+        console.warn("showExportPreview failed:", e);
+        resolve();
       }
-    }else{
-      window.location.href = url;
-    }
-    // 延迟 revoke，避免图片还没加载完就失效
-    setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} }, 60_000);
+    });
   }
 
   function isSmallScreen(){
@@ -2061,6 +2088,55 @@ function updateScoresAndChips(){
   }
 
 
+  // canvas -> blob（Promise）
+  function canvasToBlobAsync(canvas, type){
+    type = type || "image/png";
+    return new Promise((resolve) => {
+      try{
+        canvas.toBlob((blob)=>resolve(blob), type);
+      }catch(e){
+        resolve(null);
+      }
+    });
+  }
+
+  // dataURL -> Blob（fallback）
+  function dataUrlToBlob(dataUrl){
+    try{
+      const parts = String(dataUrl || "").split(",");
+      if (parts.length < 2) return null;
+      const mimeMatch = parts[0].match(/data:([^;]+);base64/i);
+      const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+      const bin = atob(parts[1]);
+      const len = bin.length;
+      const bytes = new Uint8Array(len);
+      for (let i=0;i<len;i++) bytes[i] = bin.charCodeAt(i);
+      return new Blob([bytes], { type: mime });
+    }catch(e){
+      return null;
+    }
+  }
+
+  // 统一导出（手机内置浏览器：串行预览；普通浏览器：直接下载）
+  async function exportCanvasImage(canvas, filename){
+    if (!canvas) return;
+    const type = "image/png";
+    let blob = await canvasToBlobAsync(canvas, type);
+    if (!blob){
+      let dataUrl = "";
+      try{ dataUrl = canvas.toDataURL(type); }catch(e){}
+      blob = dataUrl ? dataUrlToBlob(dataUrl) : null;
+    }
+    if (!blob) return;
+
+    if (typeof isInAppWebView === "function" && isInAppWebView()){
+      await showExportPreview(blob, filename);
+    } else {
+      downloadBlob(blob, filename);
+    }
+  }
+
+
   async function safeHtml2Canvas(el, baseScale=2){
     // 确保在 DOM 且可见，避免部分浏览器克隆失败
     if (!document.body.contains(el)) document.body.appendChild(el);
@@ -2121,7 +2197,7 @@ function updateScoresAndChips(){
       stage.appendChild(buildExportBriefCard(name, tags, brief));
       await new Promise(r=>setTimeout(r, 50));
       const c1 = await safeHtml2Canvas(stage, 2);
-      downloadImage(c1, `rating_${TYPE}_brief_tags.png`);
+      await exportCanvasImage(c1, `rating_${TYPE}_brief_tags.png`);
     }
 
     // 按 bucket 分节导出（仅导出有填写/有补充说明的题目）
@@ -2144,7 +2220,7 @@ function updateScoresAndChips(){
 
       await new Promise(r=>setTimeout(r, 50));
       const c = await safeHtml2Canvas(stage, 2);
-      downloadImage(c, `rating_${TYPE}_${fname}.png`);
+      await exportCanvasImage(c, `rating_${TYPE}_${fname}.png`);
     }
 
     stage.style.display = "none";
