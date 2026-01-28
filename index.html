@@ -1911,8 +1911,8 @@ function updateScoresAndChips(){
   }
 
   function downloadBlob(blob, filename) {
-  // 移动端/内置浏览器：优先走预览（避免多张下载被拦截；长按保存）
-  if ((blob.type || "").startsWith("image/") && typeof shouldPreferPreview === "function" && shouldPreferPreview()) {
+  // 仅在 App 内置浏览器里用预览兜底（长按保存/分享）。
+  if ((blob.type || "").startsWith("image/") && typeof isLikelyInAppBrowser === "function" && isLikelyInAppBrowser()) {
     try{ showExportPreview(blob, filename); }catch(e){}
     return;
   }
@@ -1921,7 +1921,7 @@ function updateScoresAndChips(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename;
+  a.download = filename || "export.png";
   a.rel = "noopener";
   document.body.appendChild(a);
   a.click();
@@ -1941,7 +1941,10 @@ function updateScoresAndChips(){
 
   function isLikelyInAppBrowser(){
     const ua = String(navigator.userAgent || "");
-    return /MicroMessenger|QQ\/?|Weibo|douban|DingTalk|AlipayClient|toutiao|Bytedance|TikTok/i.test(ua);
+    const qs = String(location.search || "").toLowerCase();
+    // 豆瓣等内置浏览器常见参数：dt_dapp=1；也兼容一些常见内置浏览器 UA
+    if (qs.includes("dt_dapp=1")) return true;
+    return /MicroMessenger|QQ\/?|Weibo|douban|dbapp|DingTalk|AlipayClient|toutiao|Bytedance|TikTok/i.test(ua);
   }
 
   function isInAppWebView(){
@@ -2027,8 +2030,9 @@ function updateScoresAndChips(){
   }
 
   function shouldPreferPreview(){
-    // ✅ 手机端/内置浏览器：尽量用预览（避免多文件下载被拦截）
-    return isSmallScreen() || isMobileDevice() || isLikelyInAppBrowser();
+    // ✅ 只在 App 内置浏览器里使用“预览/长按保存”兜底；
+    // 普通手机浏览器也走直接下载（与桌面一致）。
+    return isLikelyInAppBrowser();
   }
 
   function showExportModal(dataUrl, filename){
