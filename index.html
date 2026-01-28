@@ -1911,17 +1911,17 @@ function updateScoresAndChips(){
   }
 
   function downloadBlob(blob, filename) {
-  // 移动端/内置浏览器：优先走预览（避免多张下载被拦截；长按保存）
-  if ((blob.type || "").startsWith("image/") && typeof shouldPreferPreview === "function" && shouldPreferPreview()) {
+  // App 内置浏览器：download 属性经常被拦截；用预览弹窗让用户长按保存/分享
+  if ((blob.type || "").startsWith("image/") && typeof isInAppWebView === "function" && isInAppWebView()) {
     try{ showExportPreview(blob, filename); }catch(e){}
     return;
   }
 
-  // 普通浏览器直接下载
+  // 普通浏览器：直接下载（含移动端 Safari/Chrome）
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename;
+  a.download = filename || "export.png";
   a.rel = "noopener";
   document.body.appendChild(a);
   a.click();
@@ -2027,8 +2027,9 @@ function updateScoresAndChips(){
   }
 
   function shouldPreferPreview(){
-    // ✅ 手机端/内置浏览器：尽量用预览（避免多文件下载被拦截）
-    return isSmallScreen() || isMobileDevice() || isLikelyInAppBrowser();
+    // 仅在 App 内置浏览器里优先走预览（因为常会拦截多文件下载）。
+    // 普通手机浏览器（Safari/Chrome）允许就直接下载，才能实现“批量下载”。
+    return isLikelyInAppBrowser();
   }
 
   function showExportModal(dataUrl, filename){
@@ -2146,11 +2147,13 @@ function updateScoresAndChips(){
     }
     if (!blob) return;
 
-    if (typeof shouldPreferPreview === "function" && shouldPreferPreview()){
-      // ✅ 关键：分节导出时必须 await，确保一张张预览/保存
+    // 只在 App 内置浏览器里串行预览；普通浏览器（含移动端）直接下载，支持批量下载
+    if (typeof isInAppWebView === "function" && isInAppWebView()){
       await showExportPreview(blob, filename);
     } else {
       downloadBlob(blob, filename);
+      // 给浏览器一点时间处理下载队列，降低“只下第一张”的概率
+      await new Promise(r=>setTimeout(r, 150));
     }
   }
 
