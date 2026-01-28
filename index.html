@@ -1910,81 +1910,24 @@ function updateScoresAndChips(){
     return (cleaned || "export").slice(0, 120);
   }
 
-  function isIosSafari(){
-  const ua = String(navigator.userAgent || "").toLowerCase();
-  const isIOS = /iphone|ipad|ipod/.test(ua);
-  const isSafari = isIOS && ua.includes("safari") && !ua.includes("crios") && !ua.includes("fxios") && !ua.includes("edgios");
-  return isSafari;
-}
-
-function blobToDataURL(blob){
-  return new Promise((resolve, reject)=>{
-    const r = new FileReader();
-    r.onload = ()=>resolve(r.result);
-    r.onerror = ()=>reject(r.error);
-    r.readAsDataURL(blob);
-  });
-}
-
-// 低层：真正触发一次下载（或内置浏览器预览）
-async function downloadDirect(blob, filename){
-  // App 内置浏览器：download 属性经常被拦截；用预览弹窗让用户长按保存/分享
-  if ((blob.type || "").startsWith("image/") && typeof isInAppWebView === "function" && isInAppWebView()) {
-    try{ await showExportPreview(blob, filename); }catch(e){}
+  function downloadBlob(blob, filename) {
+  // 移动端/内置浏览器：优先走预览（避免多张下载被拦截；长按保存）
+  if ((blob.type || "").startsWith("image/") && typeof shouldPreferPreview === "function" && shouldPreferPreview()) {
+    try{ showExportPreview(blob, filename); }catch(e){}
     return;
   }
 
-  // iOS Safari：blob + download 经常失效（会打开图片但不保存）
-  // 这里改用 dataURL + download（仍可能被系统限制，但比 blob 稳）
-  if (isIosSafari()){
-    try{
-      const dataUrl = await blobToDataURL(blob);
-      try{ tryDownloadDataUrl(dataUrl, filename || "export.png"); }catch(e){}
-    }catch(e){}
-    return;
-  }
-
-  // 其它浏览器：直接 blob 下载
+  // 普通浏览器直接下载
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename || "export.png";
+  a.download = filename;
   a.rel = "noopener";
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
-
-// 高层：下载队列（解决移动端“只允许一次自动下载”的常见限制）
-const __downloadQueue = [];
-let __downloadRunning = false;
-
-function queueDownloadBlob(blob, filename){
-  return new Promise((resolve)=>{
-    __downloadQueue.push({ blob, filename, resolve });
-    if (!__downloadRunning) runDownloadQueue();
-  });
-}
-
-async function runDownloadQueue(){
-  __downloadRunning = true;
-  while(__downloadQueue.length){
-    const it = __downloadQueue.shift();
-    try{ await downloadDirect(it.blob, it.filename); }catch(e){}
-    try{ it.resolve(); }catch(e){}
-    // 关键：拉开间隔，让浏览器把每次 click 当作独立下载动作
-    await new Promise(r=>setTimeout(r, 450));
-  }
-  __downloadRunning = false;
-}
-
-// 兼容旧调用：单次下载就用 downloadBlob
-function downloadBlob(blob, filename) {
-  // 不排队的直接下载（用于“整图导出”等单次下载）
-  downloadDirect(blob, filename);
-}
-
 
 
   // ---- Export preview modal (for in-app browsers / mobile) ----
@@ -2084,9 +2027,8 @@ function downloadBlob(blob, filename) {
   }
 
   function shouldPreferPreview(){
-    // 仅在 App 内置浏览器里优先走预览（因为常会拦截多文件下载）。
-    // 普通手机浏览器（Safari/Chrome）允许就直接下载，才能实现“批量下载”。
-    return isLikelyInAppBrowser();
+    // ✅ 手机端/内置浏览器：尽量用预览（避免多文件下载被拦截）
+    return isSmallScreen() || isMobileDevice() || isLikelyInAppBrowser();
   }
 
   function showExportModal(dataUrl, filename){
@@ -2204,13 +2146,13 @@ function downloadBlob(blob, filename) {
     }
     if (!blob) return;
 
-    // 只在 App 内置浏览器里串行预览；普通浏览器（含移动端）走下载队列（提高批量下载成功率）
-    if (typeof isInAppWebView === "function" && isInAppWebView()){
+    if (typeof shouldPreferPreview === "function" && shouldPreferPreview()){
+      // ✅ 关键：分节导出时必须 await，确保一张张预览/保存
       await showExportPreview(blob, filename);
     } else {
-      await queueDownloadBlob(blob, filename);
+      downloadBlob(blob, filename);
     }
-}
+  }
 
 
   async function safeHtml2Canvas(el, baseScale=2){
