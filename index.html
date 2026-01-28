@@ -1911,9 +1911,9 @@ function updateScoresAndChips(){
   }
 
   function downloadBlob(blob, filename) {
-  // 内置浏览器：优先走预览（长按保存）
-  if (typeof isInAppWebView === "function" && isInAppWebView() && (blob.type || "").startsWith("image/")) {
-    showExportPreview(blob, filename);
+  // 移动端/内置浏览器：优先走预览（避免多张下载被拦截；长按保存）
+  if ((blob.type || "").startsWith("image/") && typeof shouldPreferPreview === "function" && shouldPreferPreview()) {
+    try{ showExportPreview(blob, filename); }catch(e){}
     return;
   }
 
@@ -2008,10 +2008,27 @@ function updateScoresAndChips(){
   }
 
   function isSmallScreen(){
-    return window.matchMedia && window.matchMedia("(max-width: 680px)").matches;
+    // matchMedia 在极少数环境里可能不可用；兜底用 innerWidth
+    try{
+      if (window.matchMedia) return window.matchMedia("(max-width: 680px)").matches;
+    }catch(e){}
+    return (typeof window.innerWidth === "number") ? (window.innerWidth <= 680) : false;
   }
+
+  function isMobileDevice(){
+    try{
+      const ua = String(navigator.userAgent || "");
+      // iPadOS 可能伪装成 Macintosh，但通常有触控点
+      const isIPadOS = /Macintosh/i.test(ua) && (navigator.maxTouchPoints || 0) > 1;
+      return isIPadOS || /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    }catch(e){
+      return false;
+    }
+  }
+
   function shouldPreferPreview(){
-    return isSmallScreen() || isLikelyInAppBrowser();
+    // ✅ 手机端/内置浏览器：尽量用预览（避免多文件下载被拦截）
+    return isSmallScreen() || isMobileDevice() || isLikelyInAppBrowser();
   }
 
   function showExportModal(dataUrl, filename){
@@ -2117,7 +2134,7 @@ function updateScoresAndChips(){
     }
   }
 
-  // 统一导出（手机内置浏览器：串行预览；普通浏览器：直接下载）
+  // 统一导出（移动端/内置浏览器：串行预览；普通浏览器：直接下载）
   async function exportCanvasImage(canvas, filename){
     if (!canvas) return;
     const type = "image/png";
@@ -2129,7 +2146,8 @@ function updateScoresAndChips(){
     }
     if (!blob) return;
 
-    if (typeof isInAppWebView === "function" && isInAppWebView()){
+    if (typeof shouldPreferPreview === "function" && shouldPreferPreview()){
+      // ✅ 关键：分节导出时必须 await，确保一张张预览/保存
       await showExportPreview(blob, filename);
     } else {
       downloadBlob(blob, filename);
