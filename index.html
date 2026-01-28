@@ -1911,8 +1911,8 @@ function updateScoresAndChips(){
   }
 
   function downloadBlob(blob, filename) {
-  // 仅在 App 内置浏览器里用预览兜底（长按保存/分享）。
-  if ((blob.type || "").startsWith("image/") && typeof isLikelyInAppBrowser === "function" && isLikelyInAppBrowser()) {
+  // 移动端/内置浏览器：优先走预览（避免多张下载被拦截；长按保存）
+  if ((blob.type || "").startsWith("image/") && typeof shouldPreferPreview === "function" && shouldPreferPreview()) {
     try{ showExportPreview(blob, filename); }catch(e){}
     return;
   }
@@ -1921,123 +1921,13 @@ function updateScoresAndChips(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename || "export.png";
+  a.download = filename;
   a.rel = "noopener";
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
-
-  // ===== Export download helpers (mobile multi-download friendly) =====
-  let EXPORT_BUSY = false;
-  let PENDING_MULTI_DOWNLOADS = null;
-  let PENDING_MULTI_URLS = [];
-
-  function setExportButtonsDisabled(disabled){
-    const sels = ["#btnExportImageFull","#btnExportImageSplit","#btnExportImageFullMobile","#btnExportImageSplitMobile"];
-    for (const sel of sels){
-      const el = document.querySelector(sel);
-      if (el) el.disabled = !!disabled;
-    }
-  }
-
-  // Direct download: always try <a download>, no preview fallback.
-  function downloadBlobDirect(blob, filename){
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename || "export.png";
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    // Revoke later so the browser has time to start the download
-    PENDING_MULTI_URLS.push(url);
-    setTimeout(() => {
-      try{ URL.revokeObjectURL(url); }catch(e){}
-      const idx = PENDING_MULTI_URLS.indexOf(url);
-      if (idx >= 0) PENDING_MULTI_URLS.splice(idx, 1);
-    }, 15000);
-  }
-
-  function ensureMultiDownloadModal(){
-    let modal = document.getElementById("multiDlModal");
-    if (modal) return modal;
-
-    modal = document.createElement("div");
-    modal.id = "multiDlModal";
-    modal.className = "export-modal";
-    modal.innerHTML = `
-      <div class="export-card" role="dialog" aria-modal="true">
-        <header>
-          <h3>分节导出已准备好</h3>
-          <p id="multiDlMsg">点击“开始批量下载”后，浏览器可能会提示“允许下载多个文件”。请选择允许。</p>
-        </header>
-        <div class="actions">
-          <button id="btnMultiDlStart" type="button" class="primary">开始批量下载</button>
-          <button id="btnMultiDlClose" type="button" class="ghost">关闭</button>
-        </div>
-        <div class="imgwrap">
-          <div id="multiDlList" style="font-size:13px;line-height:1.5;"></div>
-        </div>
-        <div class="hint" id="multiDlHint">如果仍被拦截：可在此列表里逐个点击文件名下载；或在浏览器设置里允许本网站“自动下载多个文件”。</div>
-      </div>
-    `;
-    modal.addEventListener("click", (e)=>{ if (e.target === modal) modal.classList.remove("show"); });
-    document.body.appendChild(modal);
-    return modal;
-  }
-
-  function showMultiDownloadModal(items){
-    const modal = ensureMultiDownloadModal();
-    const list = modal.querySelector("#multiDlList");
-    const btnStart = modal.querySelector("#btnMultiDlStart");
-    const btnClose = modal.querySelector("#btnMultiDlClose");
-
-    // Clean old urls
-    try{
-      for (const u of PENDING_MULTI_URLS){ try{ URL.revokeObjectURL(u); }catch(e){} }
-    }catch(e){}
-    PENDING_MULTI_URLS = [];
-
-    PENDING_MULTI_DOWNLOADS = (items || []).slice();
-
-    // Build manual links (object URLs)
-    list.innerHTML = "";
-    const ul = document.createElement("ul");
-    ul.style.margin = "0";
-    ul.style.paddingLeft = "18px";
-
-    for (const it of PENDING_MULTI_DOWNLOADS){
-      const li = document.createElement("li");
-      const a = document.createElement("a");
-      const url = URL.createObjectURL(it.blob);
-      PENDING_MULTI_URLS.push(url);
-      a.href = url;
-      a.download = it.filename || "export.png";
-      a.textContent = it.filename || "export.png";
-      a.style.color = "var(--blue)";
-      a.style.textDecoration = "underline";
-      li.appendChild(a);
-      ul.appendChild(li);
-    }
-    list.appendChild(ul);
-
-    btnStart.disabled = false;
-    btnStart.onclick = () => {
-      // IMPORTANT: trigger all downloads synchronously in THIS click handler
-      btnStart.disabled = true;
-      const items = PENDING_MULTI_DOWNLOADS || [];
-      for (const it of items){
-        try{ downloadBlobDirect(it.blob, it.filename); }catch(e){}
-      }
-    };
-
-    btnClose.onclick = () => modal.classList.remove("show");
-    modal.classList.add("show");
-  }
-
 
 
   // ---- Export preview modal (for in-app browsers / mobile) ----
@@ -2051,10 +1941,7 @@ function updateScoresAndChips(){
 
   function isLikelyInAppBrowser(){
     const ua = String(navigator.userAgent || "");
-    const qs = String(location.search || "").toLowerCase();
-    // 豆瓣等内置浏览器常见参数：dt_dapp=1；也兼容一些常见内置浏览器 UA
-    if (qs.includes("dt_dapp=1")) return true;
-    return /MicroMessenger|QQ\/?|Weibo|douban|dbapp|DingTalk|AlipayClient|toutiao|Bytedance|TikTok/i.test(ua);
+    return /MicroMessenger|QQ\/?|Weibo|douban|DingTalk|AlipayClient|toutiao|Bytedance|TikTok/i.test(ua);
   }
 
   function isInAppWebView(){
@@ -2140,9 +2027,8 @@ function updateScoresAndChips(){
   }
 
   function shouldPreferPreview(){
-    // ✅ 只在 App 内置浏览器里使用“预览/长按保存”兜底；
-    // 普通手机浏览器也走直接下载（与桌面一致）。
-    return isLikelyInAppBrowser();
+    // ✅ 手机端/内置浏览器：尽量用预览（避免多文件下载被拦截）
+    return isSmallScreen() || isMobileDevice() || isLikelyInAppBrowser();
   }
 
   function showExportModal(dataUrl, filename){
@@ -2291,177 +2177,73 @@ function updateScoresAndChips(){
   }
 
 
-  
   async function exportFullImage(){
-    if (EXPORT_BUSY) return;
-    EXPORT_BUSY = true;
-    setExportButtonsDisabled(true);
-    try{
-      if (!window.html2canvas){
-        alert("缺少 html2canvas，无法导出图片。");
-        return;
-      }
-      const stage = $("#exportStage");
-      stage.style.display = "inline-block";
+    if (!window.html2canvas){
+      alert("缺少 html2canvas，无法导出图片。");
+      return;
+    }
+    const stage = $("#exportStage");
+    stage.style.display = "inline-block";
+    stage.innerHTML = "";
+    stage.appendChild(buildExportContent({ mode: "full" }));
+
+    await new Promise(r=>setTimeout(r, 50));
+
+    const canvas = await safeHtml2Canvas(stage, 2);
+    downloadImage(canvas, `rating_${TYPE}_full.png`);
+
+    stage.style.display = "none";
+    stage.innerHTML = "";
+  }
+
+  async function exportSplitBySections(){
+    if (!window.html2canvas){
+      alert("缺少 html2canvas，无法导出图片。");
+      return;
+    }
+    const stage = $("#exportStage");
+    stage.style.display = "inline-block";
+    stage.innerHTML = "";
+
+    const name = ($("#gameName").value || "").trim() || "未命名作品";
+
+    // 简评/Tag：如有内容，单独导出一张
+    const brief = ($("#briefAvoid").value || "").trim();
+    const tags = getSelectedTags();
+    if (brief || tags.length){
       stage.innerHTML = "";
-      stage.appendChild(buildExportContent({ mode: "full" }));
+      stage.appendChild(buildExportBriefCard(name, tags, brief));
+      await new Promise(r=>setTimeout(r, 50));
+      const c1 = await safeHtml2Canvas(stage, 2);
+      await exportCanvasImage(c1, `rating_${TYPE}_brief_tags.png`);
+    }
+
+    // 按 bucket 分节导出（仅导出有填写/有补充说明的题目）
+    for (const b of (BUCKET_ORDER || [])){
+      const bucketQs = QUESTIONS.filter(q=>q.bucket === b);
+      const picked = bucketQs.filter(q=>{
+        const a = getAnswer(q.id);
+        const score = computeQuestionScore(q);
+        const hasScore = typeof score === "number";
+        const hasRemark = !!String(a.remark || "").trim();
+        return hasScore || hasRemark;
+      });
+      if (!picked.length) continue;
+
+      const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
+      const fname = safeFilename(`${b}_${label}`);
+
+      stage.innerHTML = "";
+      stage.appendChild(buildExportContent({ mode: "bucket", bucketId: b, bucketLabel: label, questions: picked }));
 
       await new Promise(r=>setTimeout(r, 50));
-      const canvas = await safeHtml2Canvas(stage, 2);
-
-      // Normal browser: direct download; In-app: preview fallback
-      const filename = `rating_${TYPE}_full.png`;
-      if (typeof shouldPreferPreview === "function" && shouldPreferPreview()){
-        // Use the same pipeline as split (blob -> preview)
-        await exportCanvasImage(canvas, filename);
-      } else {
-        // Prefer blob direct download (single file)
-        let blob = await canvasToBlobAsync(canvas, "image/png");
-        if (!blob){
-          let dataUrl = "";
-          try{ dataUrl = canvas.toDataURL("image/png"); }catch(e){}
-          blob = dataUrl ? dataUrlToBlob(dataUrl) : null;
-        }
-        if (blob) downloadBlobDirect(blob, filename);
-      }
-
-      stage.style.display = "none";
-      stage.innerHTML = "";
-    }catch(e){
-      console.warn("exportFullImage failed", e);
-    }finally{
-      EXPORT_BUSY = false;
-      setExportButtonsDisabled(false);
+      const c = await safeHtml2Canvas(stage, 2);
+      await exportCanvasImage(c, `rating_${TYPE}_${fname}.png`);
     }
+
+    stage.style.display = "none";
+    stage.innerHTML = "";
   }
-
-
-  
-  async function exportSplitBySections(){
-    if (EXPORT_BUSY) return;
-    EXPORT_BUSY = true;
-    setExportButtonsDisabled(true);
-
-    try{
-      if (!window.html2canvas){
-        alert("缺少 html2canvas，无法导出图片。");
-        return;
-      }
-      const stage = $("#exportStage");
-      stage.style.display = "inline-block";
-      stage.innerHTML = "";
-
-      const name = ($("#gameName").value || "").trim() || "未命名作品";
-
-      // 内置浏览器：仍然一张张预览（因为自动下载会被拦截）
-      if (typeof shouldPreferPreview === "function" && shouldPreferPreview()){
-        const brief = ($("#briefAvoid").value || "").trim();
-        const tags = getSelectedTags();
-        if (brief || tags.length){
-          stage.innerHTML = "";
-          stage.appendChild(buildExportBriefCard(name, tags, brief));
-          await new Promise(r=>setTimeout(r, 50));
-          const c1 = await safeHtml2Canvas(stage, 2);
-          await exportCanvasImage(c1, `rating_${TYPE}_brief_tags.png`);
-        }
-
-        for (const b of (BUCKET_ORDER || [])){
-          const bucketQs = QUESTIONS.filter(q=>q.bucket === b);
-          const picked = bucketQs.filter(q=>{
-            const a = getAnswer(q.id);
-            const score = computeQuestionScore(q);
-            const hasScore = typeof score === "number";
-            const hasRemark = !!String(a.remark || "").trim();
-            return hasScore || hasRemark;
-          });
-          if (!picked.length) continue;
-
-          const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
-          const fname = safeFilename(`${b}_${label}`);
-
-          stage.innerHTML = "";
-          stage.appendChild(buildExportContent({ mode: "bucket", bucketId: b, bucketLabel: label, questions: picked }));
-
-          await new Promise(r=>setTimeout(r, 50));
-          const c = await safeHtml2Canvas(stage, 2);
-          await exportCanvasImage(c, `rating_${TYPE}_${fname}.png`);
-        }
-
-        stage.style.display = "none";
-        stage.innerHTML = "";
-        return;
-      }
-
-      // 普通浏览器：先生成所有图片，再让用户点击一次“开始批量下载”
-      const items = [];
-
-      // 简评/Tag：如有内容，单独导出一张
-      const brief = ($("#briefAvoid").value || "").trim();
-      const tags = getSelectedTags();
-      if (brief || tags.length){
-        stage.innerHTML = "";
-        stage.appendChild(buildExportBriefCard(name, tags, brief));
-        await new Promise(r=>setTimeout(r, 50));
-        const c1 = await safeHtml2Canvas(stage, 2);
-
-        let blob = await canvasToBlobAsync(c1, "image/png");
-        if (!blob){
-          let dataUrl = "";
-          try{ dataUrl = c1.toDataURL("image/png"); }catch(e){}
-          blob = dataUrl ? dataUrlToBlob(dataUrl) : null;
-        }
-        if (blob) items.push({ blob, filename: `rating_${TYPE}_brief_tags.png` });
-      }
-
-      // 按 bucket 分节导出（仅导出有填写/有补充说明的题目）
-      for (const b of (BUCKET_ORDER || [])){
-        const bucketQs = QUESTIONS.filter(q=>q.bucket === b);
-        const picked = bucketQs.filter(q=>{
-          const a = getAnswer(q.id);
-          const score = computeQuestionScore(q);
-          const hasScore = typeof score === "number";
-          const hasRemark = !!String(a.remark || "").trim();
-          return hasScore || hasRemark;
-        });
-        if (!picked.length) continue;
-
-        const label = (BUCKET_LABELS && BUCKET_LABELS[b]) ? BUCKET_LABELS[b] : b;
-        const fname = safeFilename(`${b}_${label}`);
-
-        stage.innerHTML = "";
-        stage.appendChild(buildExportContent({ mode: "bucket", bucketId: b, bucketLabel: label, questions: picked }));
-
-        await new Promise(r=>setTimeout(r, 50));
-        const c = await safeHtml2Canvas(stage, 2);
-
-        let blob = await canvasToBlobAsync(c, "image/png");
-        if (!blob){
-          let dataUrl = "";
-          try{ dataUrl = c.toDataURL("image/png"); }catch(e){}
-          blob = dataUrl ? dataUrlToBlob(dataUrl) : null;
-        }
-        if (blob) items.push({ blob, filename: `rating_${TYPE}_${fname}.png` });
-      }
-
-      stage.style.display = "none";
-      stage.innerHTML = "";
-
-      if (!items.length){
-        alert("没有可导出的内容（未填写得分且无补充说明）。");
-        return;
-      }
-
-      // Show “Start multi download” modal: user clicks once -> trigger all downloads synchronously
-      showMultiDownloadModal(items);
-
-    }catch(e){
-      console.warn("exportSplitBySections failed", e);
-    }finally{
-      EXPORT_BUSY = false;
-      setExportButtonsDisabled(false);
-    }
-  }
-
 
   function getSelectedTags(){
     return getTags();
