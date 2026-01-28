@@ -1899,25 +1899,16 @@ function updateScoresAndChips(){
   }
 
   // ---- Export (minimal) ----
-  function downloadBlob(blob, filename) {
-  // 内置浏览器：优先走预览（长按保存）
-  if (typeof isInAppWebView === "function" && isInAppWebView() && (blob.type || "").startsWith("image/")) {
-    showExportPreview(blob, filename);
-    return;
+  function downloadBlob(blob, filename){
+    const a = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
-
-  // 普通浏览器直接下载
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-
 
   // ---- Export preview modal (for in-app browsers / mobile) ----
   const exportModal = $("#exportModal");
@@ -1932,43 +1923,6 @@ function updateScoresAndChips(){
     const ua = String(navigator.userAgent || "");
     return /MicroMessenger|QQ\/?|Weibo|douban|DingTalk|AlipayClient|toutiao|Bytedance|TikTok/i.test(ua);
   }
-
-  function isInAppWebView(){
-    return isLikelyInAppBrowser();
-  }
-
-  function showExportPreview(blob, filename){
-    // 不用弹窗：直接打开图片预览页，让用户长按保存
-    const url = URL.createObjectURL(blob);
-    const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><title>${(filename||"image.png").replace(/</g,"&lt;")}</title>
-<style>
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:#111;color:#fff;}
-  .hint{position:sticky;top:0;padding:12px 14px;background:rgba(0,0,0,.75);backdrop-filter:saturate(140%) blur(10px);font-size:14px;line-height:1.35;}
-  .hint b{color:#9effa6;}
-  img{display:block;max-width:100%;height:auto;margin:0 auto;}
-</style></head><body>
-<div class="hint">如果“保存/下载”被内置浏览器拦截：请 <b>长按图片</b> → 保存图片。</div>
-<img src="${url}" alt="export"/>
-</body></html>`;
-    // 尽量打开新页面；打不开就直接跳转
-    let w = null;
-    try{ w = window.open("", "_blank"); }catch(e){ w = null; }
-    if (w && w.document){
-      try{
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
-      }catch(e){
-        // fallback
-        try{ w.location.href = url; }catch(_){}
-      }
-    }else{
-      window.location.href = url;
-    }
-    // 延迟 revoke，避免图片还没加载完就失效
-    setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} }, 60_000);
-  }
-
   function isSmallScreen(){
     return window.matchMedia && window.matchMedia("(max-width: 680px)").matches;
   }
@@ -2009,46 +1963,50 @@ function updateScoresAndChips(){
 
   function downloadImage(canvas, filename){
     try{
-      // 优先 blob 下载（普通浏览器最稳）
+      // Always build a dataUrl for preview (long-press save) — works better in in-app browsers
+      let dataUrl = "";
+      try{
+        dataUrl = canvas.toDataURL("image/png");
+      }catch(e){
+        console.warn("toDataURL failed", e);
+      }
+
+      // On mobile / in-app: prefer preview modal (then user can long-press save)
+      if (dataUrl && shouldPreferPreview()){
+        showExportModal(dataUrl, filename);
+        // Still try automatic download once (might work in system browsers)
+        try{ tryDownloadDataUrl(dataUrl, filename); } catch(e) {}
+        return;
+      }
+
+      // Desktop / normal browsers: use blob download first
       canvas.toBlob((blob)=>{
         if (blob){
-          try{ downloadBlob(blob, filename); }catch(e){ console.warn("downloadBlob failed", e); }
-          return;
-        }
-        // fallback：dataUrl
-        let dataUrl = "";
-        try{ dataUrl = canvas.toDataURL("image/png"); }catch(e){ console.warn("toDataURL failed", e); }
-        if (!dataUrl) return;
-
-        // 普通浏览器：尝试 download
-        try{ tryDownloadDataUrl(dataUrl, filename); }catch(e){}
-
-        // 内置浏览器：download 常被拦截，直接打开预览页让用户长按保存
-        if (typeof isInAppWebView === "function" && isInAppWebView()){
           try{
-            const w = window.open("", "_blank");
-            if (w && w.document){
-              w.document.open();
-              w.document.write(`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>${(filename||"image.png").replace(/</g,"&lt;")}</title>
-<style>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:#111;color:#fff;}
-.hint{position:sticky;top:0;padding:12px 14px;background:rgba(0,0,0,.75);backdrop-filter:saturate(140%) blur(10px);font-size:14px;line-height:1.35;}
-.hint b{color:#9effa6;}img{display:block;max-width:100%;height:auto;margin:0 auto;}</style>
-</head><body><div class="hint">请 <b>长按图片</b> → 保存图片。</div><img src="${dataUrl}" alt="export"/></body></html>`);
-              w.document.close();
-            } else {
-              window.location.href = dataUrl;
-            }
+            downloadBlob(blob, filename);
+            return;
           }catch(e){
-            window.location.href = dataUrl;
+            console.warn("blob download failed, fallback to preview", e);
           }
         }
+        // Fallback
+        if (dataUrl){
+          tryDownloadDataUrl(dataUrl, filename);
+          // Also show preview if it looks like download was blocked
+          if (shouldPreferPreview()) showExportModal(dataUrl, filename);
+          return;
+        }
+        alert("导出失败：无法生成图片数据");
       }, "image/png");
     }catch(e){
-      console.warn("downloadImage failed", e);
+      console.error(e);
+      alert("导出失败：" + (e && e.message ? e.message : String(e)));
     }
   }
 
+  function safeFilename(s){
+    return String(s).replace(/[\\/:*?"<>|]/g, "_").replace(/\s+/g, " ").trim();
+  }
 
   async function safeHtml2Canvas(el, baseScale=2){
     // 确保在 DOM 且可见，避免部分浏览器克隆失败
