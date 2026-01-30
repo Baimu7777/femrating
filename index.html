@@ -178,6 +178,12 @@ left: -10000px;
   margin: 0 0 6px;
 }
 
+.export-type{
+  color: var(--muted);
+  font-size: 26px;  /* 你想多大就改这里 */
+  font-weight: 700; /* 可选 */
+}
+
 .export-total-top{
   text-align: center;
   font-size: 20px;
@@ -2262,7 +2268,7 @@ function updateScoresAndChips(){
 
     const topbar = document.createElement("div");
     topbar.className = "export-topbar";
-    topbar.innerHTML = `<div></div><div style="font-weight:900;color:var(--blue-dark);">简评 / Tag</div><div style="color:var(--muted);font-size:12px;">${escapeHtml(TYPE)}</div>`;
+    topbar.innerHTML = `<div></div><div style="font-weight:900;color:var(--blue-dark);">简评 / Tag</div><div style="color:var(--muted);font-size:26px;">${escapeHtml(TYPE)}</div>`;
     wrap.appendChild(topbar);
 
     const banner = document.createElement("div");
@@ -2297,7 +2303,7 @@ function updateScoresAndChips(){
     const topbar = document.createElement("div");
     topbar.className = "export-topbar";
     const mid = (mode === "bucket" && bucketId) ? `${bucketLabel || bucketId}：${(byBucket && typeof byBucket[bucketId] === "number") ? byBucket[bucketId] : 0}` : `总分：${total}`;
-    topbar.innerHTML = `<div></div><div style="font-weight:900;color:var(--blue-dark);">${escapeHtml(mid)}</div><div style="color:var(--muted);font-size:12px;">${escapeHtml(TYPE)}</div>`;
+    topbar.innerHTML = `<div></div><div style="font-weight:900;color:var(--blue-dark);">${escapeHtml(mid)}</div><div class="export-type">${escapeHtml(getTypeLabel(TYPE))}</div>`;
     wrap.appendChild(topbar);
 
     const banner = document.createElement("div");
@@ -2497,6 +2503,14 @@ function updateScoresAndChips(){
   if (home) home.style.display = "flex";
   const appRoot = $("#appRoot");
   if (appRoot) appRoot.style.display = "none";
+
+  function getTypeLabel(t){
+  if (t === "narrative") return "叙事书籍";
+  if (t === "socsci") return "社科书籍";
+  if (t === "film") return "影视";
+  return t || "";
+}
+
 </script>
 </body>
 </html>
