@@ -156,5 +156,33 @@ window.DB_ITEMS = window.DB_ITEMS || [
     score: -75,
     brief: "atwood，你是被夺舍了吗？书简介非常吸引人，什么自我超越之作，十年恢宏叙事，那我必须要读一读啊。结果开篇第一本书：怎么是男主视角（没有放下接着读，这是我犯的第一个错），然后越读越烦，这几个男角色我真是要吐了，我接着读只是因为后两本是双女主视角（这是第二个错），第二本终于是女主视角了，怎么和第一本不一样呢，第一本那么爽，怎么女主就这么憋屈，甚至到哪都是男领导\n第三本，终于写到末世了，女主之一动不动开始回忆男角色经历，和她一直暗恋的男角色在一起了，还患得患失，然后这男角色死了，她还殉情，真的会谢，塑造了一个非常立体的女角色，最后让她去死\natwood你赔我点钱吧",
     link: "https://www.douban.com/group/topic/474611734/"
+  },{
+    type: "叙事书籍",
+    name: "素食者",
+    en: "채식주의자",
+    score: -65,
+    brief: "剧情梗概:女主结閻之后的无数痛苦描写以及自残自毁以达到所谓与自然融合。女主到底是一个符号还是一个人?这是我想问作者的。\n以及原书中有女主和姐姐老蚣发生关系还有与陌生男人发生关系的具体及艺术化描写。",
+    link: "https://www.douban.com/group/topic/474625720/"
+  },{
+    type: "影视",
+    name: "珀尔",
+    en: "Pearl",
+    score: -67,
+    brief: "",
+    link: "https://www.douban.com/group/topic/474621921/"
+  },{
+    type: "影视",
+    name: "好东西",
+    en: "Her Story",
+    score: -43,
+    brief: "好东西×\n坏东西√\n我的评价是导演明显什么都懂什么都知道，一看就是上网看了很多“女权”KOL，揣着明白装糊涂是真恶螙。",
+    link: "https://www.douban.com/group/topic/474335179/"
+  },{
+    type: "影视",
+    name: "紫颜色",
+    en: "The Color Purple",
+    score: -60,
+    brief: "不要靠近古早女权文艺作品",
+    link: "https://www.douban.com/group/topic/474685832/"
   }
 ];

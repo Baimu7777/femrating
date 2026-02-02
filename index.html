@@ -947,6 +947,55 @@ left: -10000px;
   .qspec{ color: var(--muted); font-size: 12px; margin-top: 4px; }
   .spec{ color: var(--muted); font-size: 12px; margin-top: 8px; }
 
+
+  /* ====== Floating back-to-top button ====== */
+  .back-top{
+    position: fixed;
+    right: calc(18px + env(safe-area-inset-right, 0px));
+    bottom: var(--backtop-gap);
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    border: 1px solid rgba(52,211,153,.35);
+    background: linear-gradient(180deg, var(--green-2), #ffffff);
+    color: #10b981;
+    box-shadow: 0 10px 26px rgba(16,24,40,.10);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    z-index: 999;
+
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1;
+
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity .18s ease, transform .18s ease, box-shadow .18s ease, filter .18s ease;
+  }
+  .back-top.show{
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .back-top:hover{
+    box-shadow: 0 14px 32px rgba(16,24,40,.12);
+    filter: saturate(115%);
+  }
+  .back-top:active{
+    transform: translateY(1px) scale(.98);
+  }
+  @media (max-width: 680px){
+    .back-top{
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      right: calc(14px + env(safe-area-inset-right, 0px));
+      font-size: 20px;
+    }
+  }
+
 </style>
 </head>
 
@@ -1093,7 +1142,7 @@ left: -10000px;
 
 <div id="exportStage" class="export-stage" style="display:none;"></div>
 
-<button id="btnBackTop" class="back-top" type="button" aria-label="回到顶部" title="回到顶部">˄</button>
+<button id="btnBackTop" class="back-top" type="button" aria-label="回到顶部" title="回到顶部">↑</button>
 
 
 <script src="./question.js"></script>
