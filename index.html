@@ -38,6 +38,12 @@
 
     --chip: #eef2ff;
     --shadow: 0 8px 24px rgba(16,24,40,.08);
+
+    /* Top sticky bar height (JS will sync actual height) */
+    --topbar-offset: calc(56px + env(safe-area-inset-top, 0px));
+
+    /* Floating back-to-top */
+    --backtop-gap: calc(18px + env(safe-area-inset-bottom, 0px));
   }
   * { box-sizing: border-box; }
   html, body {
@@ -249,7 +255,8 @@ left: -10000px;
   }
 
   .app {
-    height: 100%;
+    height: calc(100% - var(--topbar-offset));
+    margin-top: var(--topbar-offset);
     display: grid;
     grid-template-columns: minmax(720px, 1fr) 380px;
   }
@@ -287,7 +294,7 @@ left: -10000px;
   .qblock {
     padding: 14px 0 18px;
     border-top: 1px solid var(--line);
-    scroll-margin-top: 16px;
+    scroll-margin-top: calc(var(--topbar-offset) + 16px);
   }
   .qblock:first-of-type { border-top: none; }
 
@@ -470,17 +477,22 @@ left: -10000px;
 
 
   
-  /* 说明/补充：移动端置顶开关  */
+  /* 说明/补充：置顶栏（固定在页面最顶端） */
   .mobile-top-toggle{
     display:none;
-    position: sticky;
-    top: env(safe-area-inset-top, 0px);
-    z-index: 200;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 300;
     background: #fff;
     border-bottom: 1px solid var(--line);
     padding: 10px 14px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
     box-shadow: 0 4px 14px rgba(16,24,40,.06);
   }
+  body.app-on .mobile-top-toggle{ display:block; }
+
   .mobile-toggle-inner{
     display:flex;
     align-items:center;
@@ -546,7 +558,7 @@ left: -10000px;
   @media (max-width: 1100px) {
     html, body { height: auto; overflow: auto; }
     body { overflow-x: hidden; }
-    .app { height: auto; min-height: 100vh; grid-template-columns: 1fr; }
+    .app { height: auto; min-height: calc(100vh - var(--topbar-offset)); grid-template-columns: 1fr; }
     .side { border-left: none; border-top: 1px solid var(--line); }
     .main, .side { height: auto; overflow: visible; }
     /* stacked layout: don't trap sidebar in a tiny scroll box */
@@ -557,7 +569,6 @@ left: -10000px;
 
   /* mobile tightening + remove outer “cards”, use dividers */
   @media (max-width: 680px) {
-    .mobile-top-toggle{ display:block; }
     .side .toggle{ display:none; }
 
     .mobile-game-host{ display:block; }
@@ -607,8 +618,6 @@ left: -10000px;
 
     .side-actions button { flex: 1; }
     .side-actions #btnReset { display: none; }
-    /* mobile: scrollIntoView avoid being covered by top bar */
-    .qblock { scroll-margin-top: 96px; }
 
     /* mobile: hide sidebar work-name card (moved to top) */
     .side .card.game-card[aria-label="游戏名称（可选）"]{ display:none; }
@@ -1084,6 +1093,9 @@ left: -10000px;
 
 <div id="exportStage" class="export-stage" style="display:none;"></div>
 
+<button id="btnBackTop" class="back-top" type="button" aria-label="回到顶部" title="回到顶部">˄</button>
+
+
 <script src="./question.js"></script>
 <script>
   // =============================
@@ -1181,7 +1193,6 @@ left: -10000px;
       <input id="mobileGameName" type="text" placeholder="可选填（书名/片名）" />
       <div class="mobile-quick-actions" aria-label="快捷操作（移动端）">
         <a class="btn small" href="./database.html" title="打开数据库">📚 数据库</a>
-        <button id="btnScrollTopMobile" type="button" class="btn small" title="一键回到最顶端">⬆ 回到顶部</button>
       </div>
     `;
 
@@ -1210,6 +1221,99 @@ left: -10000px;
       });
     }
   }
+
+  // ===== Sticky top bar & floating back-to-top =====
+  const backTopBtn = $("#btnBackTop");
+
+  function syncTopbarOffset(){
+    const bar = $(".mobile-top-toggle");
+    if (!bar) return;
+    if (getComputedStyle(bar).display === "none") return;
+    const h = Math.ceil(bar.getBoundingClientRect().height);
+    if (h > 0) document.documentElement.style.setProperty("--topbar-offset", h + "px");
+  }
+
+  function getScrollHost(){
+    const ms = $("#mainScroll");
+    if (ms){
+      const st = getComputedStyle(ms);
+      const overflowY = st.overflowY || st.overflow || "";
+      if ((overflowY === "auto" || overflowY === "scroll") && ms.scrollHeight > ms.clientHeight + 2){
+        return ms;
+      }
+    }
+    return window;
+  }
+
+  let backTopHost = null;
+  let backTopHandler = null;
+
+  function getScrollTop(host){
+    if (host === window){
+      return window.pageYOffset || document.documentElement.scrollTop || 0;
+    }
+    return host ? (host.scrollTop || 0) : 0;
+  }
+
+  function updateBackTopVisibility(){
+    if (!backTopBtn) return;
+    if (!document.body.classList.contains("app-on")){
+      backTopBtn.classList.remove("show");
+      return;
+    }
+    const host = backTopHost || getScrollHost();
+    const top = getScrollTop(host);
+    backTopBtn.classList.toggle("show", top > 220);
+  }
+
+  function attachBackTop(){
+    if (!backTopBtn) return;
+
+    if (backTopHost && backTopHandler){
+      if (backTopHost === window) window.removeEventListener("scroll", backTopHandler);
+      else backTopHost.removeEventListener("scroll", backTopHandler);
+    }
+
+    backTopHost = getScrollHost();
+    backTopHandler = () => updateBackTopVisibility();
+
+    if (backTopHost === window){
+      window.addEventListener("scroll", backTopHandler, { passive: true });
+    } else {
+      backTopHost.addEventListener("scroll", backTopHandler, { passive: true });
+    }
+
+    updateBackTopVisibility();
+  }
+
+  if (backTopBtn){
+    backTopBtn.addEventListener("click", ()=> {
+      const host = getScrollHost();
+
+      if (host === window){
+        try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch(e){ window.scrollTo(0,0); }
+      } else {
+        try { host.scrollTo({ top: 0, behavior: "smooth" }); } catch(e){ host.scrollTop = 0; }
+      }
+
+      const ms = $("#mainScroll");
+      if (ms && ms !== host){
+        try { ms.scrollTo({ top: 0, behavior: "smooth" }); } catch(e){ ms.scrollTop = 0; }
+      }
+
+      const ss = $("#sideScroll");
+      if (ss){
+        try { ss.scrollTo({ top: 0, behavior: "smooth" }); } catch(e){ ss.scrollTop = 0; }
+      }
+    });
+  }
+
+  window.addEventListener("resize", ()=> {
+    // 断点切换时，滚动容器可能从 mainScroll ↔ window 变化
+    syncTopbarOffset();
+    attachBackTop();
+  });
+
   function loadWorkName(){
     if (!TYPE || !nameInput) return;
     nameInput.value = localStorage.getItem(getNameKey(TYPE)) || "";
@@ -2161,7 +2265,45 @@ function updateScoresAndChips(){
 <title>${(filename||"image.png").replace(/</g,"&lt;")}</title>
 <style>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:#111;color:#fff;}
 .hint{position:sticky;top:0;padding:12px 14px;background:rgba(0,0,0,.75);backdrop-filter:saturate(140%) blur(10px);font-size:14px;line-height:1.35;}
-.hint b{color:#9effa6;}img{display:block;max-width:100%;height:auto;margin:0 auto;}</style>
+.hint b{color:#9effa6;}img{display:block;max-width:100%;height:auto;margin:0 auto;}
+  /* ====== Floating back-to-top button ====== */
+  .back-top{
+    position: fixed;
+    right: 18px;
+    bottom: var(--backtop-gap);
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    border: 1px solid rgba(52,211,153,.35);
+    background: linear-gradient(180deg, var(--green-2), #ffffff);
+    color: #10b981;
+    box-shadow: 0 10px 26px rgba(16,24,40,.10);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    z-index: 320;
+
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1;
+
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity .18s ease, transform .18s ease, box-shadow .18s ease;
+  }
+  .back-top:hover{ box-shadow: 0 14px 32px rgba(16,24,40,.12); }
+  .back-top:active{ transform: translateY(11px); }
+  .back-top.show{
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  @media (max-width: 680px){
+    .back-top{ width: 56px; height: 56px; border-radius: 16px; right: 14px; }
+  }
+
+</style>
 </head><body><div class="hint">请 <b>长按图片</b> → 保存图片。</div><img src="${dataUrl}" alt="export"/></body></html>`);
               w.document.close();
             } else {
@@ -2533,8 +2675,15 @@ function updateScoresAndChips(){
     // show app / hide home
     const appRoot = $("#appRoot");
     const home = $("#homeScreen");
+    document.body.classList.add("app-on");
     if (appRoot) appRoot.style.display = "";
     if (home) home.style.display = "none";
+
+    // 置顶栏高度 + 回到顶部按钮：等布局稳定后再同步
+    requestAnimationFrame(()=>{ 
+      syncTopbarOffset();
+      attachBackTop();
+    });
 
     setPillActive();
     render();
