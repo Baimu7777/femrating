@@ -11,10 +11,10 @@
 window.DB_ITEMS = window.DB_ITEMS || [
   {
     type: "影视",
-    name: "示例条目",
-    en: "Sample Entry",
-    score: 0,
-    brief: "这是一个示例。你可以在 database.data.js 里新增更多对象。",
-    link: ""
+    name: "钢铁部队w女兵篇",
+    en: "강철부대W",
+    score: 4,
+    brief: "枪械是女人的浪漫",
+    link: "https://www.douban.com/group/topic/474386542/"
   }
 ];
