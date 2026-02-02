@@ -10,11 +10,25 @@
 
 window.DB_ITEMS = window.DB_ITEMS || [
   {
-    type: "影视",
+    type: "",
     name: "钢铁部队w女兵篇",
     en: "강철부대W",
     score: 4,
     brief: "枪械是女人的浪漫",
     link: "https://www.douban.com/group/topic/474386542/"
+  },{
+    type: "影视",
+    name: "反叛女人",
+    en: "Riot Women",
+    score: -39,
+    brief: "",
+    link: ""
+  },{
+    type: "",
+    name: "",
+    en: "",
+    score: ,
+    brief: "",
+    link: ""
   }
 ];
