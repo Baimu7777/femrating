@@ -801,6 +801,17 @@ left: -10000px;
   .home-actions{ display: flex; gap: 10px; flex-wrap: wrap; }
   .home-foot{ margin-top: 12px; color: var(--muted); font-size: 12px; }
 
+  /* Home: stacked cards (entry + database) */
+  .home-stack{ display:flex; flex-direction:column; gap: 12px; align-items: stretch; }
+  a.home-linkcard{ display:block; text-decoration:none; color: inherit; }
+  a.home-linkcard:hover{ border-color: rgba(123,109,240,.45); box-shadow: 0 10px 26px rgba(16,24,40,.10); }
+  a.home-linkcard:active{ transform: translateY(1px); }
+  .home-linkrow{ display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+  .home-linkmeta{ min-width: 0; }
+  .home-linktitle{ font-size: 18px; font-weight: 800; margin: 0; }
+  .home-linksub{ color: var(--muted); margin-top: 6px; font-size: 13px; }
+  .home-linkarrow{ font-size: 22px; font-weight: 900; color: var(--blue-dark); flex: 0 0 auto; }
+
   /* ====== Type switch pills ====== */
   .type-switch{
     display:flex;
@@ -933,15 +944,27 @@ left: -10000px;
 
 
 <div class="home" id="homeScreen" aria-label="选择打分类型">
-  <div class="home-card">
-    <div class="home-title">选择打分类型</div>
-    <div class="home-sub"></div>
-    <div class="home-actions">
-      <button id="btnTypeNarrative" type="button" class="btn primary">叙事书籍</button>
-      <button id="btnTypeSocSci" type="button" class="btn primary">社科书籍</button>
-      <button id="btnTypeFilm" type="button" class="btn primary">影视</button>
+  <div class="home-stack">
+    <div class="home-card">
+      <div class="home-title">选择打分类型</div>
+      <div class="home-sub"></div>
+      <div class="home-actions">
+        <button id="btnTypeNarrative" type="button" class="btn primary">叙事书籍</button>
+        <button id="btnTypeSocSci" type="button" class="btn primary">社科书籍</button>
+        <button id="btnTypeFilm" type="button" class="btn primary">影视</button>
+      </div>
+      <div class="home-foot">进入后可在右侧栏顶部切换类型（各类型分别保存）。</div>
     </div>
-    <div class="home-foot">进入后可在右侧栏顶部切换类型（各类型分别保存）。</div>
+
+    <a class="home-card home-linkcard" href="./database.html" aria-label="打开数据库">
+      <div class="home-linkrow">
+        <div class="home-linkmeta">
+          <div class="home-linktitle">📚 数据库</div>
+          <div class="home-linksub">搜索 / 浏览全部打分条目</div>
+        </div>
+        <div class="home-linkarrow">→</div>
+      </div>
+    </a>
   </div>
 </div>
 
