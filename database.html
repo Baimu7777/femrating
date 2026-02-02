@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>全女评审团 · 数据库</title>
+
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📚</text></svg>">
+
+  <style>
+    @font-face{
+      font-family: "XiqueJuzhen";
+      src: url("./霞鹜文楷.ttf") format("truetype");
+      font-display: swap;
+    }
+    :root {
+      --bg: #fbfcff;
+      --text: #0b0c0f;
+      --muted: #667085;
+      --line: #e2e8f0;
+      --panel: #f2fbf6;
+
+      --blue: #7b6df0;
+      --blue-dark: #6a5ce6;
+      --blue-2: #f1efff;
+      --green: #34d399;
+      --green-2: #eafff5;
+
+      --shadow: 0 8px 24px rgba(16,24,40,.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      font-family: "XiqueJuzhen", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC","Hiragino Sans GB","Microsoft YaHei", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    a{ color: inherit; }
+
+    .wrap{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 16px 30px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .top-left{
+      display:flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .title{
+      font-size: 18px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .meta{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .back{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--blue-2), #fff);
+      color: var(--blue-dark);
+      font-weight: 900;
+      text-decoration: none;
+      flex: 0 0 auto;
+    }
+
+    .controls{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .search-row{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+    }
+    .search{
+      flex: 1;
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: 0 1px 0 rgba(16,24,40,.04);
+    }
+    .search input{
+      width: 100%;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(16,24,40,.04);
+      transition: border-color .15s ease, box-shadow .15s ease, transform .05s ease;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .btn:hover{
+      border-color: rgba(123,109,240,.45);
+      box-shadow: 0 6px 14px rgba(16,24,40,.06);
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.small{ padding: 8px 10px; border-radius: 10px; font-size: 13px; }
+    .btn.ghost{ background: var(--panel); }
+
+    .chips{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 1px 0 rgba(16,24,40,.04);
+    }
+    .chip{
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 13px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .chip.active{
+      border-color: var(--blue);
+      background: var(--blue-2);
+      color: var(--blue-dark);
+      font-weight: 900;
+    }
+
+    .result-meta{
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .grid{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .db-card{
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 16px 16px 14px;
+      cursor: pointer;
+      position: relative;
+      transition: transform .06s ease, box-shadow .15s ease, border-color .15s ease;
+      font-family: inherit;
+    }
+    .db-card:hover{
+      border-color: rgba(123,109,240,.45);
+      box-shadow: 0 12px 28px rgba(16,24,40,.10);
+      transform: translateY(-1px);
+    }
+    .badge{
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(123,109,240,.35);
+      background: rgba(241,239,255,.9);
+      color: var(--blue-dark);
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .badge.big{
+      position: static;
+      display: inline-flex;
+    }
+
+    .name{
+      font-size: 18px;
+      font-weight: 900;
+      margin-top: 6px;
+      padding-right: 64px; /* avoid badge overlap */
+      line-height: 1.2;
+    }
+    .en{
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 800;
+      min-height: 18px;
+    }
+    .score{
+      margin-top: 10px;
+      font-size: 20px;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    }
+
+    .more{
+      margin-top: 16px;
+      display:flex;
+      justify-content:center;
+    }
+    .empty{
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      background: #fff;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ===== Modal ===== */
+    .modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 9999;
+    }
+    .modal.show{ display:flex; }
+
+    .modal-card{
+      width: min(860px, 100%);
+      max-height: calc(100vh - 32px);
+      background:#fff;
+      border-radius: 18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.22);
+      overflow: hidden;
+      display:flex;
+      flex-direction: column;
+    }
+    .modal-header{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fff, var(--panel));
+    }
+    .modal-header .h{
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+
+    .modal-body{
+      padding: 14px 16px 18px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .modal-top{
+      display:flex;
+      gap: 14px;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .modal-title{ min-width: 0; }
+    .modal-name{
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .modal-en{
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .modal-right{
+      text-align: right;
+      flex: 0 0 auto;
+      display:flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .modal-score{
+      font-size: 22px;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      min-width: 88px;
+      text-align: center;
+    }
+
+    .modal-section{
+      padding: 12px 0;
+      border-top: 1px solid var(--line);
+      display:grid;
+      grid-template-columns: 72px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    .modal-section .k{
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 900;
+    }
+    .modal-section .v{
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .pre{ white-space: pre-wrap; }
+    .muted{ color: var(--muted); font-weight: 700; }
+
+    .link{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(52,211,153,.45);
+      background: rgba(234,255,245,.8);
+      color: #065f46;
+      font-weight: 900;
+      text-decoration: none;
+      margin-right: 10px;
+    }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px){
+      .grid{ grid-template-columns: 1fr; }
+      .modal-top{ flex-direction: column; }
+      .modal-right{ align-items: flex-start; text-align: left; }
+      .name{ padding-right: 0; }
+      .badge{ max-width: 70%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar" role="region" aria-label="数据库顶部栏">
+      <div class="top-left">
+        <a class="back" href="./index.html">← 返回打分</a>
+        <div style="min-width:0;">
+          <div class="title">数据库</div>
+          <div id="totalMeta" class="meta">数据库条目：0 条</div>
+        </div>
+      </div>
+      <div class="meta" style="text-align:right;">
+        点击卡片查看详情
+      </div>
+    </div>
+
+    <div class="controls" aria-label="筛选与搜索">
+      <div class="search-row">
+        <div class="search" role="search">
+          🔎
+          <input id="searchInput" type="search" placeholder="搜索：名字 / 英文名 / 类型 / 简评" />
+        </div>
+        <button id="btnClear" type="button" class="btn ghost">清空</button>
+      </div>
+
+      <div class="chips" id="typeChips" aria-label="类型筛选">
+        <!-- rendered by JS -->
+      </div>
+
+      <div id="resultMeta" class="result-meta">共 0 条</div>
+    </div>
+
+    <div id="emptyState" class="empty" style="display:none;">
+      没有匹配的条目。<br/>
+      你可以试试：清空搜索、切换“全部”、或者检查 database.data.js 里的字段是否填写完整。
+    </div>
+
+    <div id="cardGrid" class="grid" aria-label="数据库卡片列表"></div>
+
+    <div class="more">
+      <button id="btnMore" type="button" class="btn">加载更多</button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="条目详情">
+      <div class="modal-header">
+        <div class="h">条目详情</div>
+        <button id="btnClose" type="button" class="btn small">关闭</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="./database.data.js"></script>
+  <script src="./database.js"></script>
+</body>
+</html>
