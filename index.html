@@ -515,6 +515,21 @@ left: -10000px;
     padding: 12px 14px 0;
   }
 
+  /* mobile: 顶部快速入口（作品名称下） */
+  .mobile-quick-actions{
+    display:flex;
+    gap: 10px;
+    padding: 0 0 12px;
+  }
+  .mobile-quick-actions .btn{
+    flex: 1 1 0;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .mobile-quick-actions a.btn{
+    text-decoration: none;
+  }
+
   /* 分区说明 */
   .section-note{
     margin: -6px 0 14px;
@@ -1164,6 +1179,10 @@ left: -10000px;
     card.innerHTML = `
       <div class="game-label">作品名称</div>
       <input id="mobileGameName" type="text" placeholder="可选填（书名/片名）" />
+      <div class="mobile-quick-actions" aria-label="快捷操作（移动端）">
+        <a class="btn small" href="./database.html" title="打开数据库">📚 数据库</a>
+        <button id="btnScrollTopMobile" type="button" class="btn small" title="一键回到最顶端">⬆ 回到顶部</button>
+      </div>
     `;
 
     mobileNameHost.innerHTML = "";
@@ -1174,6 +1193,20 @@ left: -10000px;
       mobileNameInput.addEventListener("input", ()=>{
         if (nameInput) nameInput.value = mobileNameInput.value;
         saveWorkName();
+      });
+    }
+
+    const btnTop = $("#btnScrollTopMobile", card);
+    if (btnTop){
+      btnTop.addEventListener("click", ()=>{
+        // 移动端通常是 window/body 在滚动；桌面端则可能是主容器滚动
+        try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch(e){ window.scrollTo(0,0); }
+        const ms = $("#mainScroll");
+        if (ms) {
+          try { ms.scrollTo({ top: 0, behavior: "smooth" }); } catch(e){ ms.scrollTop = 0; }
+        }
+        const ss = $("#sideScroll");
+        if (ss) ss.scrollTop = 0;
       });
     }
   }
