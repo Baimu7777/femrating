@@ -10,7 +10,7 @@
 
 window.DB_ITEMS = window.DB_ITEMS || [
   {
-    type: "",
+    type: "影视",
     name: "钢铁部队w女兵篇",
     en: "강철부대W",
     score: 4,
@@ -21,14 +21,14 @@ window.DB_ITEMS = window.DB_ITEMS || [
     name: "反叛女人",
     en: "Riot Women",
     score: -39,
-    brief: "",
-    link: ""
+    brief: "打着反抗旗号的全女乐队却虐女从开头到结尾",
+    link: "https://www.douban.com/group/topic/474410568/"
   },{
-    type: "",
-    name: "",
-    en: "",
-    score: ,
-    brief: "",
-    link: ""
+    type: "影视",
+    name: "绝望写手",
+    en: "Hacks",
+    score: -52,
+    brief: "别一看到双女主就夸女性友好行吗？ ",
+    link: "https://www.douban.com/group/topic/474413327/"
   }
 ];
