@@ -310,5 +310,26 @@ window.DB_ITEMS = window.DB_ITEMS || [
     score: -83,
     brief: "女性群像友谊？NONONO",
     link: "https://www.douban.com/group/topic/475097832/"
+  },{
+    type: "影视",
+    name: "我想做的是",
+    en: "All I Wanna Do",
+    score: -43,
+    brief: "改译名是女性的功劳，但不代表这部电影女性友好\n将原本恶俗的译名改名固然是好事，争取vote权也是好事，但是性缘情节和擦亮眼情节过多，还有美化sexual harassment情节，我不认为这是一部可以被推荐的女性电影。 ",
+    link: "https://www.douban.com/group/topic/475105741/"
+  },{
+    type: "影视",
+    name: "魔法满屋",
+    en: "Encanto",
+    score: -42,
+    brief: "叫啥“encanto”啊，干脆叫MMFGA算了！/n标题含义：Make My Family Great Again😊",
+    link: "https://www.douban.com/group/topic/475115209/"
+  },{
+    type: "影视",
+    name: "布莱切利四人组",
+    en: "The Bletchley Circle",
+    score: -95,
+    brief: "省流:\n1、每部必有虐女虐主角情节(艳尸、家暴etc)\n2、与男犯罪慊疑人对峙时从来不带武器防身，任其宰割\n3、抽烟以展示主角个性\n4、说着打破女性刻板印象但坚持服弱刑5、上刀山下火海破案，三季归来依旧无人问津的退伍军人(身份保密且无救助版)，问就是破案只为图个心安\n\n三部换汤不换药，破案手法和矛盾冲突几乎没有太大变化。\nS3新增武力担当Hailey，看一半公布她女同身份(和男人合租版)，并安排主角一行人拯救战:后男同互助小组，临了还安插一套俄男spy玩转女同、Hailey深情表白同事的戏码。不得不说浓缩的确实是精华啊，谁成想以上狗血剧情仅用时两集。\n总而言之不管什么类型的“女”，进了Bletchley不是死路一条就是拉磨无止境，赐强虜称号。",
+    link: "https://www.douban.com/group/topic/475114381/"
   }
 ];
