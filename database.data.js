@@ -475,7 +475,7 @@ window.DB_ITEMS = window.DB_ITEMS || [
     type: "影视",
     name: "怪奇物语",
     en: "Stranger Things",
-    score: -129,
+    score: -135,
     brief: "大女主× 工具人√",
     link: "https://www.douban.com/group/topic/475670432/"
   },{
@@ -492,5 +492,54 @@ window.DB_ITEMS = window.DB_ITEMS || [
     score: +43,
     brief: "不同社会形态的碰撞，最后融汇为女社形态 ",
     link: "https://www.douban.com/group/topic/475719501/"
+  },{
+    type: "影视",
+    name: "善意的竞争",
+    en: "선의의 경쟁",
+    score: -62,
+    brief: "很不喜欢韩国的校服是女裙装，剧情里虽然反跌但跌出现到多的有点烦了，主角四人之间的友情感觉被性缘遮盖了",
+    link: "https://www.douban.com/group/topic/475791683/"
+  },{
+    type: "影视",
+    name: "莫阿娜2",
+    en: "Moana 2",
+    score: -19,
+    brief: "含()量远超第一部;依旧译名扣分(很难不怀疑第三部再拍下去就要变成部落大团结的“魔法满洋”了)",
+    link: "https://www.douban.com/group/topic/475804731/"
+  },{
+    type: "影视",
+    name: "金字塔游戏",
+    en: "피라미드 게임",
+    score: -27,
+    brief: "",
+    link: "https://www.douban.com/group/topic/475870017/"
+  },{
+    type: "影视",
+    name: "澳洲女足：踢遍世界",
+    en: "Matildas: The World at Our Feet",
+    score: -11,
+    brief: "能不能别拍。教练了 ",
+    link: "https://www.douban.com/group/topic/476206901/"
+  },{
+    type: "叙事书籍",
+    name: "敢亮血条就杀给你看",
+    en: "",
+    score: 41,
+    brief: "看名字以为爽文小说，其实是非常深刻的作品 ",
+    link: "https://www.douban.com/group/topic/476218903/"
+  },{
+    type: "影视",
+    name: "猫头鹰魔法社",
+    en: "The Owl House",
+    score: -42,
+    brief: "性别共荣=偷偷爱。，续作是男主 ",
+    link: "https://www.douban.com/group/topic/476273769/"
+  },{
+    type: "影视",
+    name: "希瑞与非凡的公主们",
+    en: "She-Ra and the Princesses of Power",
+    score: -33,
+    brief: "开头含女量高且女性形象丰富但剧情越往后越插.子进来，到最后一季开始搞性缘配对，全都要两两配对。",
+    link: "https://www.douban.com/group/topic/476302077/"
   }
 ];
